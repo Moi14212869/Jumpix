@@ -1,4 +1,4 @@
-dans ce code, j'ai une erreure sur mobile mais pas sur PC : <!DOCTYPE html>
+rend ce jeu compatible mobile : <!DOCTYPE html>
 <html lang="fr">
     <head>
         <meta charset="UTF-8">
@@ -13,99 +13,12 @@ dans ce code, j'ai une erreure sur mobile mais pas sur PC : <!DOCTYPE html>
 				display: block;
 				margin: 75px auto;
 			}
-			#mobile-controls {
-   				 position: fixed;
-    			bottom: 15px;
-    			left: 0;
-    			right: 0;
-    			width: 100%;
-    			pointer-events: none;
-    			display: flex;
-    			justify-content: center;
-			}
-
-			.control-btn {
-    			width: 80px;
-    			height: 80px;
-    			background: rgba(255,255,255,0.25);
-    			border: 2px solid white;
-    			border-radius: 50%;
-    			pointer-events: auto;
-    			display: inline-flex;
-    			justify-content: center;
-    			align-items: center;
-    			font-size: 40px;
-    			color: white;
-    			margin: 0 20px;
-    			user-select: none;
-			}
 		</style>
         <script src="phaser.min.js"></script>
 		<script src="https://poki.com/sdk/poki.js"></script>
     </head>
     <body>
-		<div id="mobile-controls">
-    		<div>
-       			<div id="btn-left" class="control-btn">←</div>
-       	 		<div id="btn-jump" class="control-btn">⤒</div>
-        		<div id="btn-right" class="control-btn">→</div>
-    		</div>
-		</div>
         <script>
-			window.addEventListener("resize", () => {
-    if (game && game.scale) {
-        game.scale.resize(window.innerWidth, window.innerHeight);
-    }
-});
-
-			/* ======================================================================================
-    CONFIG MOBILE
-====================================================================================== */
-
-let isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-
-if (!isMobile) {
-    document.getElementById("mobile-controls").style.display = "none";
-}
-
-let mobile = {
-    left: false,
-    right: false,
-    jump: false
-};
-
-function setupMobileControls() {
-    const left = document.getElementById("btn-left");
-    const right = document.getElementById("btn-right");
-    const jump = document.getElementById("btn-jump");
-
-    left.addEventListener("touchstart", () => mobile.left = true);
-    left.addEventListener("touchend",   () => mobile.left = false);
-
-    right.addEventListener("touchstart", () => mobile.right = true);
-    right.addEventListener("touchend",   () => mobile.right = false);
-
-    jump.addEventListener("touchstart", () => mobile.jump = true);
-    jump.addEventListener("touchend",   () => mobile.jump = false);
-}
-
-setupMobileControls();
-			/* ======================================================================================
-    FONCTION DEFINITION MOUVEMENT MOBILE
-====================================================================================== */
-
-function handleMobileMovement(scene) {
-    const p = scene.player;
-
-    if (mobile.left) p.setVelocityX(-160);
-    else if (mobile.right) p.setVelocityX(160);
-    else p.setVelocityX(0);
-
-    if (mobile.jump && scene.jumpCount < 2) {
-        scene.mobileJumpRequest = true;
-    }
-}
-
 		/* =========================================================
                     FONCTIONS COMMUNES
 ========================================================= */
@@ -331,32 +244,9 @@ update() {
     const p = this.player;
 
     // Déplacements horizontaux
-    if (isMobile) handleMobileMovement(this);
-else {
-    if (this.cursors.left.isDown) this.player.setVelocityX(-160);
-    else if (this.cursors.right.isDown) this.player.setVelocityX(160);
-    else this.player.setVelocityX(0);
-}
-// --- SAUT MOBILE ---
-if (isMobile && this.mobileJumpRequest) {
-    this.mobileJumpRequest = false;
-
-    if (this.jumpCount < 2) {
-        this.player.setVelocityY(-330);
-
-        if (this.jumpCount === 1) {
-            this.tweens.add({
-                targets: this.player,
-                angle: this.player.angle + 180,
-                duration: 500,
-                ease: "Cubic.easeOut"
-            });
-        }
-
-        this.jumpCount++;
-    }
-}
-
+    if (this.cursors.left.isDown) p.setVelocityX(-160);
+    else if (this.cursors.right.isDown) p.setVelocityX(160);
+    else p.setVelocityX(0);
 
     // Reset du compteur de saut
     if (p.body.touching.down) this.jumpCount = 0;
@@ -495,32 +385,9 @@ update() {
     const p = this.player;
 
     // Déplacements horizontaux
-if (isMobile) handleMobileMovement(this);
-else {
-    if (this.cursors.left.isDown) this.player.setVelocityX(-160);
-    else if (this.cursors.right.isDown) this.player.setVelocityX(160);
-    else this.player.setVelocityX(0);
-}
-
-// --- SAUT MOBILE ---
-if (isMobile && this.mobileJumpRequest) {
-    this.mobileJumpRequest = false;
-
-    if (this.jumpCount < 2) {
-        this.player.setVelocityY(-330);
-
-        if (this.jumpCount === 1) {
-            this.tweens.add({
-                targets: this.player,
-                angle: this.player.angle + 180,
-                duration: 500,
-                ease: "Cubic.easeOut"
-            });
-        }
-
-        this.jumpCount++;
-    }
-}
+    if (this.cursors.left.isDown) p.setVelocityX(-160);
+    else if (this.cursors.right.isDown) p.setVelocityX(160);
+    else p.setVelocityX(0);
 
     // Reset du compteur de saut
     if (p.body.touching.down) this.jumpCount = 0;
@@ -832,31 +699,9 @@ class Level3 extends Phaser.Scene {
     const p = this.player;
 
     // Déplacements horizontaux
-if (isMobile) handleMobileMovement(this);
-else {
-    if (this.cursors.left.isDown) this.player.setVelocityX(-160);
-    else if (this.cursors.right.isDown) this.player.setVelocityX(160);
-    else this.player.setVelocityX(0);
-}
-// --- SAUT MOBILE ---
-if (isMobile && this.mobileJumpRequest) {
-    this.mobileJumpRequest = false;
-
-    if (this.jumpCount < 2) {
-        this.player.setVelocityY(-330);
-
-        if (this.jumpCount === 1) {
-            this.tweens.add({
-                targets: this.player,
-                angle: this.player.angle + 180,
-                duration: 500,
-                ease: "Cubic.easeOut"
-            });
-        }
-
-        this.jumpCount++;
-    }
-}
+    if (this.cursors.left.isDown) p.setVelocityX(-160);
+    else if (this.cursors.right.isDown) p.setVelocityX(160);
+    else p.setVelocityX(0);
 
     // Reset du compteur de saut
     if (p.body.touching.down) this.jumpCount = 0;
@@ -1005,32 +850,9 @@ class Level4 extends Phaser.Scene {
     const p = this.player;
 
     // Déplacements horizontaux
-   if (isMobile) handleMobileMovement(this);
-else {
-    if (this.cursors.left.isDown) this.player.setVelocityX(-160);
-    else if (this.cursors.right.isDown) this.player.setVelocityX(160);
-    else this.player.setVelocityX(0);
-}
-
-// --- SAUT MOBILE ---
-if (isMobile && this.mobileJumpRequest) {
-    this.mobileJumpRequest = false;
-
-    if (this.jumpCount < 2) {
-        this.player.setVelocityY(-330);
-
-        if (this.jumpCount === 1) {
-            this.tweens.add({
-                targets: this.player,
-                angle: this.player.angle + 180,
-                duration: 500,
-                ease: "Cubic.easeOut"
-            });
-        }
-
-        this.jumpCount++;
-    }
-}
+    if (this.cursors.left.isDown) p.setVelocityX(-160);
+    else if (this.cursors.right.isDown) p.setVelocityX(160);
+    else p.setVelocityX(0);
 
     // Reset du compteur de saut
     if (p.body.touching.down) this.jumpCount = 0;
@@ -1184,32 +1006,9 @@ class Level5 extends Phaser.Scene {
     const p = this.player;
 
     // Déplacements horizontaux
-    if (isMobile) handleMobileMovement(this);
-else {
-    if (this.cursors.left.isDown) this.player.setVelocityX(-160);
-    else if (this.cursors.right.isDown) this.player.setVelocityX(160);
-    else this.player.setVelocityX(0);
-}
-// --- SAUT MOBILE ---
-if (isMobile && this.mobileJumpRequest) {
-    this.mobileJumpRequest = false;
-
-    if (this.jumpCount < 2) {
-        this.player.setVelocityY(-330);
-
-        if (this.jumpCount === 1) {
-            this.tweens.add({
-                targets: this.player,
-                angle: this.player.angle + 180,
-                duration: 500,
-                ease: "Cubic.easeOut"
-            });
-        }
-
-        this.jumpCount++;
-    }
-}
-
+    if (this.cursors.left.isDown) p.setVelocityX(-160);
+    else if (this.cursors.right.isDown) p.setVelocityX(160);
+    else p.setVelocityX(0);
 
     // Reset du compteur de saut
     if (p.body.touching.down) this.jumpCount = 0;
