@@ -222,7 +222,7 @@ class Level1 extends Phaser.Scene {
     const targetY = this.blueCircle.y;
 
     this.tweens.add({
-      targets: player,
+      targets: this.player,
       x: targetX,
       y: targetY,
       scale: 0.3,
@@ -1060,6 +1060,7 @@ const game = new Phaser.Game(config);
     </body>
 
 </html>
+
 
 
 
