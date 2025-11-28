@@ -353,17 +353,17 @@ class Level2 extends Phaser.Scene {
 
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.collider(this.player, this.spikes, () => this.scene.restart());
-  this.physics.add.overlap(player, this.blueCircle, () => {
+   this.physics.add.overlap(this.player, this.blueCircle, () => {
     if (this.transitioning) return;
     this.transitioning = true;
 
-    player.body.enable = false;
+    this.player.body.enable = false;
 
     const targetX = this.blueCircle.x;
     const targetY = this.blueCircle.y;
 
     this.tweens.add({
-      targets: player,
+      targets: this.player,
       x: targetX,
       y: targetY,
       scale: 0.3,
@@ -668,17 +668,17 @@ class Level3 extends Phaser.Scene {
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p, s) => onPlayerHitSpike(p, s, this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
-  this.physics.add.overlap(player, this.blueCircle, () => {
+  this.physics.add.overlap(this.player, this.blueCircle, () => {
     if (this.transitioning) return;
     this.transitioning = true;
 
-    player.body.enable = false;
+    this.player.body.enable = false;
 
     const targetX = this.blueCircle.x;
     const targetY = this.blueCircle.y;
 
     this.tweens.add({
-      targets: player,
+      targets: this.player,
       x: targetX,
       y: targetY,
       scale: 0.3,
@@ -818,17 +818,17 @@ class Level4 extends Phaser.Scene {
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
-  this.physics.add.overlap(player, this.blueCircle, () => {
+ this.physics.add.overlap(this.player, this.blueCircle, () => {
     if (this.transitioning) return;
     this.transitioning = true;
 
-    player.body.enable = false;
+    this.player.body.enable = false;
 
     const targetX = this.blueCircle.x;
     const targetY = this.blueCircle.y;
 
     this.tweens.add({
-      targets: player,
+      targets: this.player,
       x: targetX,
       y: targetY,
       scale: 0.3,
@@ -974,17 +974,17 @@ class Level5 extends Phaser.Scene {
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
-  this.physics.add.overlap(player, this.blueCircle, () => {
+ this.physics.add.overlap(this.player, this.blueCircle, () => {
     if (this.transitioning) return;
     this.transitioning = true;
 
-    player.body.enable = false;
+    this.player.body.enable = false;
 
     const targetX = this.blueCircle.x;
     const targetY = this.blueCircle.y;
 
     this.tweens.add({
-      targets: player,
+      targets: this.player,
       x: targetX,
       y: targetY,
       scale: 0.3,
@@ -1060,6 +1060,7 @@ const game = new Phaser.Game(config);
     </body>
 
 </html>
+
 
 
 
