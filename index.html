@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+dans ce code, j'ai une erreure sur mobile mais pas sur PC : <!DOCTYPE html>
 <html lang="fr">
     <head>
         <meta charset="UTF-8">
@@ -44,7 +44,6 @@
 		<script src="https://poki.com/sdk/poki.js"></script>
     </head>
     <body>
-		<div id="game-container"></div>
 		<div id="mobile-controls">
     		<div>
        			<div id="btn-left" class="control-btn">←</div>
@@ -562,6 +561,29 @@ window.onerror = function (message, source, lineno, colno, error) {
 /* =========================================================
                     FONCTIONS COMMUNES
 ========================================================= */
+function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = 0xA0522D) {
+  const tileSize = 40;
+  const blocksPerRow = Math.floor(widthInPx / tileSize);
+  const blocksPerCol = Math.floor(heightInPx / tileSize);
+
+  for (let row = 0; row < blocksPerCol; row++) {
+    for (let col = 0; col < blocksPerRow; col++) {
+      const gfx = scene.add.graphics();
+      gfx.fillStyle(color, 1);
+      gfx.fillRect(0, 0, tileSize, tileSize);
+
+      const key = `block-${x + col * tileSize}-${y + row * tileSize}`;
+      gfx.generateTexture(key, tileSize, tileSize);
+      gfx.destroy();
+
+      const block = scene.platforms.create(x + col * tileSize, y + row * tileSize, key);
+      block.setOrigin(0, 0);
+      block.refreshBody();
+      block.body.setSize(tileSize, tileSize);
+      block.body.setOffset(0, 0);
+    }
+  }
+}
 
 function createRedCircle(scene, x, y, riseAmount = 100, direction = 'up') {
   const radius = 10;
@@ -594,7 +616,88 @@ function createRedCircle(scene, x, y, riseAmount = 100, direction = 'up') {
   return circle;
 }
 
+function createBlueCircle(scene, x, y) {
+  const radius = 20;
+  const gfx = scene.add.graphics();
+  gfx.fillStyle(0x0000FF, 1);
+  gfx.fillCircle(radius, radius, radius);
 
+  const key = `blueCircle-${x}-${y}`;
+  gfx.generateTexture(key, radius * 2, radius * 2);
+  gfx.destroy();
+
+  const circle = scene.physics.add.sprite(x, y, key);
+  circle.setCircle(radius);
+  circle.setOrigin(0.5);
+  circle.body.allowGravity = false;
+  circle.body.immovable = true;
+
+  scene.tweens.add({
+    targets: circle,
+    y: circle.y - 5,
+    duration: 800,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut'
+  });
+
+  return circle;
+}
+
+function createRedTriangle(scene, x, y, orientation = 'up') {
+  const size = 40;
+  const height = Math.sqrt(3) / 2 * size;
+  const key = `triangle-${x}-${y}-${orientation}`;
+
+  const gfx = scene.add.graphics();
+  gfx.fillStyle(0xFF0000, 1);
+  gfx.beginPath();
+
+  if (orientation === 'up') {
+    gfx.moveTo(size / 2, 0);
+    gfx.lineTo(0, height);
+    gfx.lineTo(size, height);
+  } else if (orientation === 'down') {
+    gfx.moveTo(size / 2, height);
+    gfx.lineTo(0, 0);
+    gfx.lineTo(size, 0);
+  } else if (orientation === 'left') {
+    gfx.moveTo(0, size / 2);
+    gfx.lineTo(height, 0);
+    gfx.lineTo(height, size);
+  } else if (orientation === 'right') {
+    gfx.moveTo(height, size / 2);
+    gfx.lineTo(0, 0);
+    gfx.lineTo(0, size);
+  }
+
+  gfx.closePath();
+  gfx.fillPath();
+
+  if (orientation === 'left' || orientation === 'right') {
+    gfx.generateTexture(key, height, size);
+  } else {
+    gfx.generateTexture(key, size, height);
+  }
+  gfx.destroy();
+
+  const triangle = scene.spikes.create(x, y, key);
+  switch (orientation) {
+    case 'up': triangle.setOrigin(0.5, 1); break;
+    case 'down': triangle.setOrigin(0.5, 0); break;
+    case 'left': triangle.setOrigin(1, 0.5); break;
+    case 'right': triangle.setOrigin(0, 0.5); break;
+  }
+
+  triangle.refreshBody();
+  const body = triangle.body;
+  const bodyWidth = body.width * 0.7;
+  const bodyHeight = body.height * 0.7;
+  body.setSize(bodyWidth, bodyHeight);
+  body.setOffset((body.width - bodyWidth)/2, (body.height - bodyHeight)/2);
+
+  return triangle;
+}
 
 function onPlayerHitSpike(player, spike, scene) {
   scene.scene.restart();
