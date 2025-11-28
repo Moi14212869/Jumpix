@@ -208,10 +208,29 @@ class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.spikes, () => this.scene.restart());
 
         // sortie vers niveau 2
-        this.physics.add.overlap(this.player, this.blueCircle, () => {
-			showInterstitial();
-            this.scene.start("MenuScene");
-        });
+  this.physics.add.overlap(player, this.blueCircle, () => {
+    if (this.transitioning) return;
+    this.transitioning = true;
+
+    player.body.enable = false;
+
+    const targetX = this.blueCircle.x;
+    const targetY = this.blueCircle.y;
+
+    this.tweens.add({
+      targets: player,
+      x: targetX,
+      y: targetY,
+      scale: 0.3,
+      angle: 720,
+      duration: 800,
+      ease: 'Cubic.easeInOut',
+      onComplete: () => {
+		showInterstitial()
+        this.scene.start("MenuScene");
+      }
+    });
+  }, null, this);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.jumpCount = 0;
@@ -330,10 +349,29 @@ class Level2 extends Phaser.Scene {
 
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.collider(this.player, this.spikes, () => this.scene.restart());
-        this.physics.add.overlap(this.player, this.blueCircle, () => {
-			showInterstitial()
-            this.scene.start("MenuScene");
-        });
+  this.physics.add.overlap(player, this.blueCircle, () => {
+    if (this.transitioning) return;
+    this.transitioning = true;
+
+    player.body.enable = false;
+
+    const targetX = this.blueCircle.x;
+    const targetY = this.blueCircle.y;
+
+    this.tweens.add({
+      targets: player,
+      x: targetX,
+      y: targetY,
+      scale: 0.3,
+      angle: 720,
+      duration: 800,
+      ease: 'Cubic.easeInOut',
+      onComplete: () => {
+		showInterstitial()
+        this.scene.start("MenuScene");
+      }
+    });
+  }, null, this);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.jumpCount = 0;
@@ -626,11 +664,29 @@ class Level3 extends Phaser.Scene {
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p, s) => onPlayerHitSpike(p, s, this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
-    this.physics.add.overlap(this.player, this.blueCircle, () => {
+  this.physics.add.overlap(player, this.blueCircle, () => {
+    if (this.transitioning) return;
+    this.transitioning = true;
+
+    player.body.enable = false;
+
+    const targetX = this.blueCircle.x;
+    const targetY = this.blueCircle.y;
+
+    this.tweens.add({
+      targets: player,
+      x: targetX,
+      y: targetY,
+      scale: 0.3,
+      angle: 720,
+      duration: 800,
+      ease: 'Cubic.easeInOut',
+      onComplete: () => {
 		showInterstitial()
         this.scene.start("MenuScene");
+      }
     });
-
+  }, null, this);
     this.cursors = this.input.keyboard.createCursorKeys();
     this.jumpCount = 0;
   }
@@ -758,10 +814,29 @@ class Level4 extends Phaser.Scene {
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
-    this.physics.add.overlap(this.player, this.blueCircle, () => {
+  this.physics.add.overlap(player, this.blueCircle, () => {
+    if (this.transitioning) return;
+    this.transitioning = true;
+
+    player.body.enable = false;
+
+    const targetX = this.blueCircle.x;
+    const targetY = this.blueCircle.y;
+
+    this.tweens.add({
+      targets: player,
+      x: targetX,
+      y: targetY,
+      scale: 0.3,
+      angle: 720,
+      duration: 800,
+      ease: 'Cubic.easeInOut',
+      onComplete: () => {
 		showInterstitial()
         this.scene.start("MenuScene");
+      }
     });
+  }, null, this);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.jumpCount = 0;
@@ -895,10 +970,29 @@ class Level5 extends Phaser.Scene {
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
-    this.physics.add.overlap(this.player, this.blueCircle, () => {
-      showInterstitial()
-	  this.scene.start("MenuScene");
+  this.physics.add.overlap(player, this.blueCircle, () => {
+    if (this.transitioning) return;
+    this.transitioning = true;
+
+    player.body.enable = false;
+
+    const targetX = this.blueCircle.x;
+    const targetY = this.blueCircle.y;
+
+    this.tweens.add({
+      targets: player,
+      x: targetX,
+      y: targetY,
+      scale: 0.3,
+      angle: 720,
+      duration: 800,
+      ease: 'Cubic.easeInOut',
+      onComplete: () => {
+		showInterstitial()
+        this.scene.start("MenuScene");
+      }
     });
+  }, null, this);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.jumpCount = 0;
@@ -962,5 +1056,6 @@ const game = new Phaser.Game(config);
     </body>
 
 </html>
+
 
 
