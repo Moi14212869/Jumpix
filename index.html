@@ -212,11 +212,11 @@ class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.spikes, () => this.scene.restart());
 
         // sortie vers niveau 2
-  this.physics.add.overlap(player, this.blueCircle, () => {
+  this.physics.add.overlap(this.player, this.blueCircle, () => {
     if (this.transitioning) return;
     this.transitioning = true;
 
-    player.body.enable = false;
+    this.player.body.enable = false;
 
     const targetX = this.blueCircle.x;
     const targetY = this.blueCircle.y;
@@ -1060,6 +1060,7 @@ const game = new Phaser.Game(config);
     </body>
 
 </html>
+
 
 
 
