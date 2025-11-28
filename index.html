@@ -125,7 +125,7 @@ class MenuScene extends Phaser.Scene {
 
         const title = this.add.text(400, 120, "Pixel Jumper", {
             fontSize: "50px",
-            color: "#0xA0522D"
+            color: "#ffffffff"
         }).setOrigin(0.5);
 
         // Création des boutons pour chaque niveau
@@ -141,7 +141,7 @@ class MenuScene extends Phaser.Scene {
         niveaux.forEach(niv => {
             const btn = this.add.text(400, yPos, niv.nom, {
                 fontSize: "34px",
-                color: "#00ff00"
+                color: "#0xA0522D"
             }).setOrigin(0.5).setInteractive();
 
             btn.on("pointerdown", () => this.scene.start(niv.scene));
@@ -1056,6 +1056,7 @@ const game = new Phaser.Game(config);
     </body>
 
 </html>
+
 
 
 
