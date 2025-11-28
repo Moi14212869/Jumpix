@@ -130,8 +130,8 @@ class MenuScene extends Phaser.Scene {
 		this.platforms = this.physics.add.staticGroup();
 		createPlatform(this, 0, 560, 800);
 		createPlatform(this, 0, 0, 800);
-		createPlatform(this, 0, 40, 0, 520);
-		createPlatform(this, 760, 40, 0, 520);
+		createPlatform(this, 0, 40, 40, 520);
+		createPlatform(this, 760, 40, 40, 520);
         // Création des boutons pour chaque niveau
         const niveaux = [
             { nom: "➡ Level 1", scene: "Level1" },
@@ -1060,6 +1060,7 @@ const game = new Phaser.Game(config);
     </body>
 
 </html>
+
 
 
 
