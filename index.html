@@ -843,7 +843,7 @@ playerGfx.fillRect(0, 0, playerSize, playerSize);
 playerGfx.generateTexture('playerSquare', playerSize, playerSize);
 playerGfx.destroy();
 
-this.player = this.physics.add.sprite(60, 370, 'playerSquare');
+this.player = this.physics.add.sprite(60, 0, 'playerSquare');
 this.player.setBounce(0.2);
 this.player.setCollideWorldBounds(true);
     // Piques Level 5
@@ -971,6 +971,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
