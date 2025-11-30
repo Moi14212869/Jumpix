@@ -820,16 +820,15 @@ class Level5 extends Phaser.Scene {
 
     // Joueur
     const playerSize = 40;
-    const playerGfx = this.add.graphics();
-    playerGfx.fillStyle(0xAA66CC, 1);
-    playerGfx.fillRect(0, 0, playerSize, playerSize);
-    playerGfx.generateTexture('playerSquare', playerSize, playerSize);
-    playerGfx.destroy();
+   const playerGfx = this.add.graphics();
+playerGfx.fillStyle(0xAA66CC, 1);
+playerGfx.fillRect(0, 0, playerSize, playerSize);
+playerGfx.generateTexture('playerSquare', playerSize, playerSize);
+playerGfx.destroy();
 
-    this.player = this.physics.add.sprite(60, 0, 'playerSquare');
-    this.player.setBounce(0.2);
-    this.player.setCollideWorldBounds(true);
-
+this.player = this.physics.add.sprite(60, 500, 'playerSquare');
+this.player.setBounce(0.2);
+this.player.setCollideWorldBounds(true);
     // Piques Level 5
     const spikePositions = [
       {x:280, y:20, orientation:'left'}, {x:280, y:60, orientation:'left'}, {x:280, y:100, orientation:'left'},
@@ -955,6 +954,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
