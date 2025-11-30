@@ -83,32 +83,28 @@ function createBlueCircle(scene, x, y) {
     return circle;
 }
 
-function createRedTriangle(x, y, orientation = 'up') {
+function createRedTriangle(scene, x, y, orientation = 'up') {
   const size = 40;
   const height = Math.sqrt(3) / 2 * size;
   const key = `triangle-${x}-${y}-${orientation}`;
 
-  const gfx = this.add.graphics();
+  const gfx = scene.add.graphics();
   gfx.fillStyle(0xFF0000, 1);
   gfx.beginPath();
 
   if (orientation === 'up') {
-    // Pointe vers le haut
     gfx.moveTo(size / 2, 0);
     gfx.lineTo(0, height);
     gfx.lineTo(size, height);
   } else if (orientation === 'down') {
-    // Pointe vers le bas
     gfx.moveTo(size / 2, height);
     gfx.lineTo(0, 0);
     gfx.lineTo(size, 0);
   } else if (orientation === 'left') {
-    // Pointe vers la gauche
     gfx.moveTo(0, size / 2);
     gfx.lineTo(height, 0);
     gfx.lineTo(height, size);
   } else if (orientation === 'right') {
-    // Pointe vers la droite
     gfx.moveTo(height, size / 2);
     gfx.lineTo(0, 0);
     gfx.lineTo(0, size);
@@ -117,7 +113,6 @@ function createRedTriangle(x, y, orientation = 'up') {
   gfx.closePath();
   gfx.fillPath();
 
-  // Génère une texture avec les dimensions adaptées
   if (orientation === 'left' || orientation === 'right') {
     gfx.generateTexture(key, height, size);
   } else {
@@ -125,28 +120,17 @@ function createRedTriangle(x, y, orientation = 'up') {
   }
   gfx.destroy();
 
-  // Ajoute le sprite dans la scène
-  const triangle = this.spikes.create(x, y, key);
+  const triangle = scene.spikes.create(x, y, key);
 
-  // Positionne précisément selon l'orientation
   switch (orientation) {
-    case 'up':
-      triangle.setOrigin(0.5, 1); // base collée au sol
-      break;
-    case 'down':
-      triangle.setOrigin(0.5, 0); // base collée au plafond
-      break;
-    case 'left':
-      triangle.setOrigin(1, 0.5); // base collée mur droit
-      break;
-    case 'right':
-      triangle.setOrigin(0, 0.5); // base collée mur gauche
-      break;
+    case 'up': triangle.setOrigin(0.5, 1); break;
+    case 'down': triangle.setOrigin(0.5, 0); break;
+    case 'left': triangle.setOrigin(1, 0.5); break;
+    case 'right': triangle.setOrigin(0, 0.5); break;
   }
 
   triangle.refreshBody();
 
-  // Hitbox ajustée
   const body = triangle.body;
   const bodyWidth = body.width * 0.7;
   const bodyHeight = body.height * 0.7;
@@ -158,6 +142,7 @@ function createRedTriangle(x, y, orientation = 'up') {
 
   return triangle;
 }
+
 
 /* =========================================================
                         MENU SCENE
@@ -1002,6 +987,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
