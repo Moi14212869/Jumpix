@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ajoute en java scripte, des boutons pour aller à droite et à gauche et pour sauter<!DOCTYPE html>
 <html lang="fr">
     <head>
         <meta charset="UTF-8">
@@ -253,50 +253,42 @@ class Level1 extends Phaser.Scene {
   }, null, this);
 
         this.cursors = this.input.keyboard.createCursorKeys();
-        const buttonStyle = { fontSize: '32px', color: '#ffffff', backgroundColor: '#00BFFF', padding: { x: 10, y: 5 }, borderRadius: 5 };
-
-    this.leftBtn = this.add.text(50, 500, '◀', buttonStyle).setInteractive();
-    this.rightBtn = this.add.text(150, 500, '▶', buttonStyle).setInteractive();
-    this.jumpBtn = this.add.text(700, 500, '⬆', buttonStyle).setInteractive();
-
-    // Pointer events
-    this.leftBtn.on('pointerdown', () => this.movingLeft = true);
-    this.leftBtn.on('pointerup', () => this.movingLeft = false);
-    this.rightBtn.on('pointerdown', () => this.movingRight = true);
-    this.rightBtn.on('pointerup', () => this.movingRight = false);
-    this.jumpBtn.on('pointerdown', () => this.jumpPlayer());
-    
-    this.movingLeft = false;
-    this.movingRight = false;
-
-    // Fonction de saut
-    this.jumpCount = 0;
-},
+        this.jumpCount = 0;
+    }
 
 update() {
+    const p = this.player;
+
     // Déplacements horizontaux
-    if (this.cursors.left.isDown || this.movingLeft) this.player.setVelocityX(-160);
-    else if (this.cursors.right.isDown || this.movingRight) this.player.setVelocityX(160);
-    else this.player.setVelocityX(0);
+    if (this.cursors.left.isDown) p.setVelocityX(-160);
+    else if (this.cursors.right.isDown) p.setVelocityX(160);
+    else p.setVelocityX(0);
 
     // Reset du compteur de saut
-    if (this.player.body.touching.down) this.jumpCount = 0;
+    if (p.body.touching.down) this.jumpCount = 0;
 
-    // Saut via clavier
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) this.jumpPlayer();
-},
+    // Saut + double saut rotatif
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && this.jumpCount < 2) {
+        p.setVelocityY(-330);
 
-jumpPlayer() {
-    if (this.jumpCount < 2) {
-        this.player.setVelocityY(-330);
-
+        // Rotation uniquement au second saut
         if (this.jumpCount === 1) {
             let direction = 0;
+
+            // direction selon touches
             if (this.cursors.left.isDown) direction = -1;
             else if (this.cursors.right.isDown) direction = 1;
-            if (direction === 0) direction = this.player.scaleX >= 0 ? 1 : -1;
 
-            this.tweens.add({ targets: this.player, angle: this.player.angle + 180 * direction, duration: 500, ease: "Cubic.easeOut" });
+            // sinon direction selon orientation du sprite
+            if (direction === 0)
+                direction = p.scaleX >= 0 ? 1 : -1;
+
+            this.tweens.add({
+                targets: p,
+                angle: p.angle + 180 * direction,
+                duration: 500,
+                ease: "Cubic.easeOut"
+            });
         }
 
         this.jumpCount++;
@@ -979,10 +971,6 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
-
-
-
-
 
 
 
