@@ -349,7 +349,7 @@ class Level2 extends Phaser.Scene {
         // joueur
         const size = 40;
         const g = this.add.graphics();
-        g.fillStyle(0xAA66CC, 1);
+        g.fillStyle(colorPlayer, 1);
         g.fillRect(0, 0, size, size);
         g.generateTexture("player", size, size);
         g.destroy();
@@ -537,7 +537,7 @@ class Level3 extends Phaser.Scene {
     // Joueur
     const playerSize = 40;
     const playerGfx = this.add.graphics();
-    playerGfx.fillStyle(0xAA66CC, 1);
+    playerGfx.fillStyle(colorPlayer, 1);
     playerGfx.fillRect(0, 0, playerSize, playerSize);
     playerGfx.generateTexture('playerSquare', playerSize, playerSize);
     playerGfx.destroy();
@@ -708,7 +708,7 @@ class Level4 extends Phaser.Scene {
     // Joueur
     const playerSize = 40;
     const playerGfx = this.add.graphics();
-    playerGfx.fillStyle(0xAA66CC, 1);
+    playerGfx.fillStyle(colorPlayer, 1);
     playerGfx.fillRect(0, 0, playerSize, playerSize);
     playerGfx.generateTexture('playerSquare', playerSize, playerSize);
     playerGfx.destroy();
@@ -865,7 +865,7 @@ class Level5 extends Phaser.Scene {
     // Joueur
     const playerSize = 40;
    const playerGfx = this.add.graphics();
-playerGfx.fillStyle(0xAA66CC, 1);
+playerGfx.fillStyle(colorPlayer, 1);
 playerGfx.fillRect(0, 0, playerSize, playerSize);
 playerGfx.generateTexture('playerSquare', playerSize, playerSize);
 playerGfx.destroy();
@@ -1005,6 +1005,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
