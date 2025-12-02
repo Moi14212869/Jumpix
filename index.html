@@ -196,6 +196,7 @@ class Level1 extends Phaser.Scene {
     }
 
     create() {
+		this.transitioning = false;
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
 		
@@ -328,6 +329,7 @@ class Level2 extends Phaser.Scene {
     }
 
     create() {
+		this.transitioning = false;
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
 		
@@ -512,6 +514,7 @@ class Level3 extends Phaser.Scene {
   constructor() { super("Level3"); }
 
   create() {
+	this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
@@ -685,6 +688,7 @@ class Level4 extends Phaser.Scene {
   constructor() { super("Level4"); }
 
   create() {
+	this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
@@ -844,6 +848,7 @@ class Level5 extends Phaser.Scene {
   constructor() { super("Level5"); }
 
   create() {
+	this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
@@ -1076,6 +1081,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
