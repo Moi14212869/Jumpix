@@ -24,6 +24,7 @@
 		/* =========================================================
                     FONCTIONS COMMUNES
 ========================================================= */
+let playerCoins = 0;
 let pokiReady = false;
 let colorPlayer = 0xAA66CC
 window.PokiSDK && PokiSDK.init && PokiSDK.init().then(() => {
@@ -145,11 +146,11 @@ class MenuScene extends Phaser.Scene {
             fontSize: "50px",
             color: "#ffffffff"
         }).setOrigin(0.5);
-		this.platforms = this.physics.add.staticGroup();
-		createPlatform(this, 0, 560, 800);
-		createPlatform(this, 0, 0, 800);
-		createPlatform(this, 0, 40, 40, 520);
-		createPlatform(this, 760, 40, 40, 520);
+		this.coinText = this.add.text(780, 20, `💰 ${playerCoins}`, {
+    		fontSize: "28px",
+    		color: "#ffff00"
+		}).setOrigin(1, 0); // aligné à droite
+
         // Création des boutons pour chaque niveau
 		const shopButton = this.add.text(5, 5, "🛒", {
             fontSize: "24px",
@@ -259,9 +260,11 @@ class Level1 extends Phaser.Scene {
       duration: 800,
       ease: 'Cubic.easeInOut',
       onComplete: () => {
-		showInterstitial()
-        this.scene.start("MenuScene");
-      }
+		  showInterstitial();
+		  playerCoins += 10; // ajoute 10 pièces
+		  this.scene.start("MenuScene");
+	  }
+
     });
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
@@ -1073,6 +1076,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
