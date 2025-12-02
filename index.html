@@ -25,7 +25,7 @@
                     FONCTIONS COMMUNES
 ========================================================= */
 let pokiReady = false;
-
+let colorPlayer = "0xAA66CC"
 window.PokiSDK && PokiSDK.init && PokiSDK.init().then(() => {
     pokiReady = true;
 });
@@ -210,7 +210,7 @@ class Level1 extends Phaser.Scene {
         // joueur
         const size = 40;
         const g = this.add.graphics();
-        g.fillStyle(0xAA66CC, 1);
+        g.fillStyle(colorPlayer, 1);
         g.fillRect(0, 0, size, size);
         g.generateTexture("player", size, size);
         g.destroy();
@@ -1005,6 +1005,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
