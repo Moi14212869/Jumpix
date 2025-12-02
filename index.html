@@ -934,7 +934,7 @@ this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
- this.physics.add.overlap(this.player, this.blueCircle, () => {
+ 	this.physics.add.overlap(this.player, this.blueCircle, () => {
     if (this.transitioning) return;
     this.transitioning = true;
 
@@ -1031,7 +1031,7 @@ class ShopScene extends Phaser.Scene {
         // Items à acheter (exemple)
         const items = [
             { name: "Couleur Joueur Violet", key: "0xAA66CC", price: 0 },
-            { name: "Couleur Joueur Vert", key: "green", price: 150 },
+            { name: "Couleur Joueur Vert", key: "#90EE90", price: 150 },
         ];
 
         let yPos = 150;
@@ -1045,8 +1045,7 @@ class ShopScene extends Phaser.Scene {
             }).setOrigin(0.5).setInteractive();
 
             itemText.on("pointerdown", () => {
-                alert(`Achat de ${item.name} pour ${item.price} pièces !`);
-                
+                let colorPlayer=${item.key}
             });
 
             yPos += 70;
@@ -1088,6 +1087,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
