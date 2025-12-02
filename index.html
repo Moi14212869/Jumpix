@@ -1030,9 +1030,8 @@ class ShopScene extends Phaser.Scene {
 
         // Items à acheter (exemple)
         const items = [
-            { name: "Couleur Joueur Rose", key: "pink", price: 100 },
+            { name: "Couleur Joueur Violet", key: "0xAA66CC", price: 0 },
             { name: "Couleur Joueur Vert", key: "green", price: 150 },
-            { name: "Double Jump", key: "doubleJump", price: 200 }
         ];
 
         let yPos = 150;
@@ -1047,7 +1046,7 @@ class ShopScene extends Phaser.Scene {
 
             itemText.on("pointerdown", () => {
                 alert(`Achat de ${item.name} pour ${item.price} pièces !`);
-                // Ici tu peux ajouter la logique d'achat réel
+                
             });
 
             yPos += 70;
@@ -1089,6 +1088,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
