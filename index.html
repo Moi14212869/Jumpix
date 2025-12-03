@@ -1326,7 +1326,7 @@ class ShowPlayer extends Phaser.Scene {
     }
 
     create() {
-
+		createPlatform(this, 200, 250, 160);
         // Bouton retour
         const backButton = this.add.text(5, 5, "←", {
             fontSize: "24px",
@@ -1361,6 +1361,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
