@@ -1205,7 +1205,7 @@ this.redCircles.add(createRedCircle(this, 580, 70, 60));
 
 //carrés rouges
   this.redSquares = this.physics.add.group();
-  this.physics.add.collider(this.redSquares, platforms);
+  this.physics.add.collider(this.redSquares, this.platforms);
   this.redSquares.add(createRedSquare(60, 540, this, 160, 'right'));
   this.redSquares.add(createRedSquare(220, 540, this, 160, 'left'));
   this.redSquares.add(createRedSquare(500, 260, this, 240, 'left'));
@@ -1313,6 +1313,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
