@@ -1242,6 +1242,31 @@ this.redCircles.add(createRedCircle(this, 580, 70, 60));
       }
     });
   }, null, this);
+	   this.physics.add.overlap(player, this.redSquares, (player, square) => {
+  const playerBottom = player.y + player.displayHeight / 2;
+  const squareTop = square.y - square.displayHeight / 2;
+
+  const verticalDiff = playerBottom - squareTop;
+
+  // Si le joueur touche par le haut (avec une petite marge de tolérance)
+  if (verticalDiff < 10 && player.body.velocity.y > 0) {
+    // Le joueur a sauté sur le carré rouge
+    player.setVelocityY(-200);
+    this.tweens.add({
+      targets: square,
+      scaleX: 0,
+      scaleY: 0,
+      duration: 300,
+      ease: 'Cubic.easeIn',
+      onComplete: () => {
+        square.destroy();
+      }
+    });
+    } else {
+    // Collision par côté ou par dessous : mort
+    this.scene.restart();
+  }
+  }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
     const btnStyle = { fontSize: "32px", color: "#ffffff", backgroundColor: "#00BFFF", padding: {x:10, y:5}, borderRadius: 5 };
     this.leftBtn = this.add.text(50, 520, "◀", btnStyle).setInteractive();
@@ -1313,6 +1338,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
