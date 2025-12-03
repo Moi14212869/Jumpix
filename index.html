@@ -1085,14 +1085,34 @@ class ShopScene extends Phaser.Scene {
                 padding: { x: 10, y: 5 },
                 borderRadius: 5
             }).setOrigin(0.5).setInteractive();
-itemText.on("pointerdown", () => {
-    colorPlayer = typeof item.key === 'string' && item.key.startsWith('#') 
-                  ? parseInt(item.key.replace('#',''), 16) 
-                  : parseInt(item.key);
-	localStorage.setItem("colorPlayer", colorPlayer);
-	this.scene.start("ShowPlayer");
-});
+ itemText.on("pointerdown", () => {
+                // Vérifier si le joueur a assez de pièces ou si le skin est gratuit
+                if (playerCoins >= item.price || item.price === 0) {
 
+                    // Décrémenter les pièces si ce n'est pas gratuit
+                    if (item.price > 0) {
+                        playerCoins -= item.price;
+                        localStorage.setItem("playerCoins", playerCoins);
+                    }
+
+                    // Ajouter le skin aux skins possédés si ce n'est pas déjà fait
+                    if (!ownedSkins.includes(item.key)) {
+                        ownedSkins.push(item.key);
+                        localStorage.setItem("ownedSkins", JSON.stringify(ownedSkins));
+                    }
+
+                    // Appliquer la couleur du joueur
+                    colorPlayer = typeof item.key === 'string' && item.key.startsWith('#') 
+                                  ? parseInt(item.key.replace('#',''), 16) 
+                                  : parseInt(item.key);
+                    localStorage.setItem("colorPlayer", colorPlayer);
+
+                    this.scene.start("ShowPlayer"); // afficher le joueur avec la nouvelle couleur
+                } else {
+                    // Pas assez de pièces
+                    alert("Vous n'avez pas assez de pièces !");
+                }
+            });
 
             yPos += 70;
         });
@@ -1402,6 +1422,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
