@@ -510,7 +510,46 @@ function createRedCircle(scene, x, y, riseAmount = 100, direction = 'up') {
 function onPlayerHitSpike(player, spike, scene) {
   scene.scene.restart();
 }
+function createRedSquare(x, y, scene, distance = 100, direction = 'right') {
+  const size = 40;
 
+  // Dessin du carré rouge
+  const gfx = scene.add.graphics();
+  gfx.fillStyle(0xFF0000, 1);
+  gfx.fillRect(0, 0, size, size);
+
+  const key = `redSquare-${x}-${y}-${direction}`;
+  gfx.generateTexture(key, size, size);
+  gfx.destroy();
+
+  const square = scene.physics.add.sprite(x, y, key);
+  square.setSize(size, size);
+  square.setOrigin(0.5);
+  square.body.allowGravity = false;
+  square.body.immovable = true;
+
+  // Animation horizontale
+  let targetX = x;
+
+  if (direction === 'right') {
+    targetX = x + distance;
+  } else if (direction === 'left') {
+    targetX = x - distance;
+  } else {
+    console.warn('Direction inconnue pour redSquare :', direction);
+  }
+
+  scene.tweens.add({
+    targets: square,
+    x: targetX,
+    duration: 2000,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut'
+  });
+
+  return square;
+}
 /* =========================================================
                         LEVEL 3
 ========================================================= */
@@ -1251,6 +1290,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
