@@ -26,7 +26,7 @@
 ========================================================= */
 let playerCoins = parseInt(localStorage.getItem("playerCoins")) || 0;
 let pokiReady = false;
-let colorPlayer = 0xAA66CC
+let colorPlayer = parseInt(localStorage.getItem("colorPlayer")) || 0xAA66CC;
 window.PokiSDK && PokiSDK.init && PokiSDK.init().then(() => {
     pokiReady = true;
 });
@@ -1401,6 +1401,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
