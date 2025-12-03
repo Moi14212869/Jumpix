@@ -1326,6 +1326,7 @@ class ShowPlayer extends Phaser.Scene {
     }
 
     create() {
+		this.platforms = this.physics.add.staticGroup();
 		createPlatform(this, 200, 250, 160);
 		const size = 40;
         const g = this.add.graphics();
@@ -1371,6 +1372,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
