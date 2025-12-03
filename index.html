@@ -1133,19 +1133,22 @@ class Level6 extends Phaser.Scene {
         });
 
     // Plateformes
-    createPlatform(this, 0, 560, 800, 40); // sol
-    createPlatform(this, 0, 80, 120, 80);
-    createPlatform(this, 0, 160, 80, 400);
-    createPlatform(this, 280, 0, 40, 480);
-    createPlatform(this, 320, 400, 360, 40);
-    createPlatform(this, 720, 520, 80, 40);
-    createPlatform(this, 760, 480, 40, 40);
-    createPlatform(this, 400, 280, 400, 40);
-    createPlatform(this, 680, 120, 120, 40);
-    createPlatform(this, 320, 40, 160, 160, 0xAA66CC);
-    createPlatform(this, 480, 0, 40, 200);
-    createPlatform(this, 320, 160, 160, 40);
-    createPlatform(this, 320, 0, 160, 40);
+  createPlatform(this, 0, 560, 800, 40); //sol
+  createPlatform(this, 0, 520, 40, 40);
+  createPlatform(this, 240, 520, 40, 40);
+  createPlatform(this, 0, 280, 360, 40);
+  createPlatform(this, 240, 320, 40, 80);
+  createPlatform(this, 320, 320, 40, 80);
+  createPlatform(this, 320, 520, 40, 40);
+  createPlatform(this, 280, 320, 40, 40);
+  createPlatform(this, 360, 280, 160, 80);
+  createPlatform(this, 480, 520, 40, 40);
+  createPlatform(this, 480, 360, 40, 40);
+  createPlatform(this, 640, 480, 40, 80);
+  createPlatform(this, 760, 360, 40, 40);
+  createPlatform(this, 760, 280, 40, 40);
+  createPlatform(this, 80, 80, 720, 40);
+  createPlatform(this, 0, 160);
 
     // Joueur
     const playerSize = 40;
@@ -1155,40 +1158,59 @@ playerGfx.fillRect(0, 0, playerSize, playerSize);
 playerGfx.generateTexture('playerSquare', playerSize, playerSize);
 playerGfx.destroy();
 
-this.player = this.physics.add.sprite(60, 0, 'playerSquare');
+this.player = this.physics.add.sprite(0, 440, 'playerSquare');
 this.player.setBounce(0.2);
 this.player.setCollideWorldBounds(true);
     // Piques Level 5
-    const spikePositions = [
-      {x:280, y:20, orientation:'left'}, {x:280, y:60, orientation:'left'}, {x:280, y:100, orientation:'left'},
-      {x:280, y:140, orientation:'left'}, {x:280, y:180, orientation:'left'}, {x:280, y:220, orientation:'left'},
-      {x:280, y:260, orientation:'left'}, {x:280, y:300, orientation:'left'}, {x:280, y:340, orientation:'left'},
-      {x:280, y:380, orientation:'left'}, {x:280, y:420, orientation:'left'}, {x:280, y:460, orientation:'left'},
-      {x:80, y:180, orientation:'right'}, {x:80, y:220, orientation:'right'}, {x:80, y:260, orientation:'right'},
-      {x:80, y:300, orientation:'right'}, {x:80, y:340, orientation:'right'}, {x:80, y:380, orientation:'right'},
-      {x:80, y:420, orientation:'right'}, {x:80, y:460, orientation:'right'}, {x:80, y:500, orientation:'right'},
-      {x:80, y:540, orientation:'right'}, {x:400, y:560}, {x:440, y:560},
-      {x:780, y:320, orientation:'down'}, {x:740, y:320, orientation:'down'}, {x:700, y:320, orientation:'down'},
-      {x:660, y:320, orientation:'down'}, {x:620, y:320, orientation:'down'}, {x:580, y:320, orientation:'down'},
-      {x:420, y:320, orientation:'down'}, {x:780, y:160, orientation:'down'}, {x:740, y:160, orientation:'down'},
-      {x:700, y:160, orientation:'down'}, {x:340, y:200, orientation:'down'}, {x:380, y:200, orientation:'down'},
-      {x:420, y:200, orientation:'down'}, {x:460, y:200, orientation:'down'}, {x:500, y:200, orientation:'down'},
-      {x:520, y:180, orientation:'right'}, {x:520, y:140, orientation:'right'}, {x:520, y:100, orientation:'right'},
-      {x:520, y:60, orientation:'right'}, {x:520, y:20, orientation:'right'}
-    ];
-    spikePositions.forEach(spike => createRedTriangle(this, spike.x, spike.y, spike.orientation));
-
+  createRedTriangle(this, 20, 320, 'down');
+  createRedTriangle(this, 60, 320, 'down');
+  createRedTriangle(this, 100, 320, 'down');
+  createRedTriangle(this, 140, 320, 'down');
+  createRedTriangle(this, 180, 320, 'down');
+  createRedTriangle(this, 220, 320, 'down');
+  createRedTriangle(this, 340, 400, 'down');
+  createRedTriangle(this, 260, 400, 'down');
+  createRedTriangle(this, 380, 560);
+  createRedTriangle(this, 420, 560);
+  createRedTriangle(this, 460, 560);
+  createRedTriangle(this, 500, 400, 'down');
+  createRedTriangle(this, 380, 360, 'down');
+  createRedTriangle(this, 420, 360, 'down');
+  createRedTriangle(this, 460, 360, 'down');
+  createRedTriangle(this, 540, 560);
+  createRedTriangle(this, 580, 560);
+  createRedTriangle(this, 620, 560);
+  createRedTriangle(this, 700, 560);
+  createRedTriangle(this, 740, 560);
+  createRedTriangle(this, 780, 560);
+  createRedTriangle(this, 780, 400, 'down');
+  createRedTriangle(this, 800, 260, 'left');
+  createRedTriangle(this, 800, 220, 'left');
+  createRedTriangle(this, 800, 180, 'left');
+  createRedTriangle(this, 800, 140, 'left');
+  createRedTriangle(this, 220, 280);
+  createRedTriangle(this, 180, 280);
+  createRedTriangle(this, 0, 260, 'right');
+  createRedTriangle(this, 0, 220, 'right');
+  createRedTriangle(this, 220, 120, 'down');
+  createRedTriangle(this, 180, 120, 'down');
     // Boules rouges
-    this.redCircles.add(createRedCircle(this, 220, 460, 0));
-    this.redCircles.add(createRedCircle(this, 140, 220, 0));
-    this.redCircles.add(createRedCircle(this, 560, 550));
-    this.redCircles.add(createRedCircle(this, 600, 550));
-    this.redCircles.add(createRedCircle(this, 640, 450, 100, 'down'));
-    this.redCircles.add(createRedCircle(this, 540, 330, 60, 'down'));
-    this.redCircles.add(createRedCircle(this, 470, 390, 60));
-
+  this.redCircles.add(createRedCircle(300, 370, this, 180, 'down'));
+  this.redCircles.add(createRedCircle(180, 10, this, 60, 'down'));
+  this.redCircles.add(createRedCircle(260, 70, this, 60));
+  this.redCircles.add(createRedCircle(340, 10, this, 60, 'down'));
+  this.redCircles.add(createRedCircle(420, 70, this, 60));
+  this.redCircles.add(createRedCircle(500, 10, this, 60, 'down'));
+  this.redCircles.add(createRedCircle(580, 70, this, 60));
+//carrés rouges
+  this.redSquares = this.physics.add.group();
+  this.physics.add.collider(this.redSquares, platforms);
+  this.redSquares.add(createRedSquare(60, 540, this, 160, 'right'));
+  this.redSquares.add(createRedSquare(220, 540, this, 160, 'left'));
+  this.redSquares.add(createRedSquare(500, 260, this, 240, 'left'));
+  this.redSquares.add(createRedSquare(260, 260, this, 240, 'right'));
     // Boule bleue
-    this.blueCircle = createBlueCircle(this, 740, 60);
+    this.blueCircle = createBlueCircle(this, 770, 30);
 
     // Collisions
     this.physics.add.collider(this.player, this.platforms);
@@ -1290,6 +1312,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
