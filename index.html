@@ -150,26 +150,9 @@ class MenuScene extends Phaser.Scene {
     		fontSize: "28px",
     		color: "#ffff00"
 		}).setOrigin(1, 0); // aligné à droite
-
-        // Création des boutons pour chaque niveau
-		const shopButton = this.add.text(5, 5, "🛒", {
-            fontSize: "24px",
-            color: "#ffffff",
-            backgroundColor: "#00BFFF",
-            padding: { x: 7, y: 4 },
-            borderRadius: 5
-        }).setInteractive();
-
-        shopButton.on("pointerdown", () => {
-            this.scene.start("ShopScene");
-        });
         const niveaux = [
-            { nom: "➡ Level 1", scene: "Level1" },
-            { nom: "➡ Level 2", scene: "Level2" },
-            { nom: "➡ Level 3", scene: "Level3" },
-            { nom: "➡ Level 4", scene: "Level4" },
-            { nom: "➡ Level 5", scene: "Level5" },
-			{ nom: "➡ Level 6", scene: "Level6" }
+            { nom: "➡ Shop 🛒", scene: "ShopScene" },
+            { nom: "➡ World 1", scene: "World1" },
         ];
 
         let yPos = 260;
