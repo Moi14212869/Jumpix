@@ -194,7 +194,7 @@ class Level1 extends Phaser.Scene {
         }).setInteractive();
 
         backButton.on("pointerdown", () => {
-            this.scene.start("MenuScene");
+            this.scene.start("World1");
         });
 		
         // plateformes
@@ -248,7 +248,7 @@ class Level1 extends Phaser.Scene {
 		  showInterstitial();
 		  playerCoins += 10;
 		  localStorage.setItem("playerCoins", playerCoins)
-		  this.scene.start("MenuScene");
+		  this.scene.start("World1");
 	  }
 
     });
@@ -345,7 +345,7 @@ class Level2 extends Phaser.Scene {
         }).setInteractive();
 
         backButton.on("pointerdown", () => {
-            this.scene.start("MenuScene");
+            this.scene.start("World1");
         });
         // joueur
         const size = 40;
@@ -398,7 +398,7 @@ class Level2 extends Phaser.Scene {
 		showInterstitial()
 		playerCoins += 10;
 		localStorage.setItem("playerCoins", playerCoins)
-        this.scene.start("MenuScene");
+        this.scene.start("World1");
       }
     });
   }, null, this);
@@ -575,7 +575,7 @@ class Level3 extends Phaser.Scene {
         }).setInteractive();
 
         backButton.on("pointerdown", () => {
-            this.scene.start("MenuScene");
+            this.scene.start("World1");
         });
     // Joueur
     const playerSize = 40;
@@ -653,7 +653,7 @@ class Level3 extends Phaser.Scene {
 		showInterstitial()
 		playerCoins += 10;
 		localStorage.setItem("playerCoins", playerCoins)
-        this.scene.start("MenuScene");
+        this.scene.start("World1");
       }
     });
   }, null, this);
@@ -747,7 +747,7 @@ class Level4 extends Phaser.Scene {
         }).setInteractive();
 
         backButton.on("pointerdown", () => {
-            this.scene.start("MenuScene");
+            this.scene.start("World1");
         });
 
     // Joueur
@@ -813,7 +813,7 @@ class Level4 extends Phaser.Scene {
 		showInterstitial()
 		playerCoins += 10;
 		localStorage.setItem("playerCoins", playerCoins)
-        this.scene.start("MenuScene");
+        this.scene.start("World1");
       }
     });
   }, null, this);
@@ -892,7 +892,7 @@ class Level5 extends Phaser.Scene {
         }).setInteractive();
 
         backButton.on("pointerdown", () => {
-            this.scene.start("MenuScene");
+            this.scene.start("World1");
         });
 
     // Plateformes
@@ -978,7 +978,7 @@ this.player.setCollideWorldBounds(true);
 		showInterstitial()
 		playerCoins += 10;
 		localStorage.setItem("playerCoins", playerCoins)
-        this.scene.start("MenuScene");
+        this.scene.start("World1");
       }
     });
   }, null, this);
@@ -1116,7 +1116,7 @@ class Level6 extends Phaser.Scene {
         }).setInteractive();
 
         backButton.on("pointerdown", () => {
-            this.scene.start("MenuScene");
+            this.scene.start("World1");
         });
 
     // Plateformes
@@ -1225,7 +1225,7 @@ this.redCircles.add(createRedCircle(this, 580, 70, 60));
 		showInterstitial()
 		playerCoins += 10;
 		localStorage.setItem("playerCoins", playerCoins)
-        this.scene.start("MenuScene");
+        this.scene.start("World1");
       }
     });
   }, null, this);
@@ -1430,13 +1430,14 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
    },
-  scene: [MenuScene, World1, Level1, Level2, Level3, Level4, Level5, ShopScene, Level6, ShowPlayer]
+  scene: [MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, Level6, ShowPlayer, World1]
 };
 
 const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
