@@ -1063,9 +1063,11 @@ class ShopScene extends Phaser.Scene {
         this.coinsText = this.add.text(20, 80, "Coins : " + playerCoins, { fontSize: "28px", fill: "#FFD700" });
 
         const ITEMS = [
-            { key: "AA66CC", label: "Violet (gratuit)", price: 0 },
+            { key: "AA66CC", label: "Violet", price: 0 },
             { key: "73BE73", label: "Vert", price: 50 },
-            { key: "CC99A2", label: "Rose", price: 100 }
+            { key: "CC99A2", label: "Rose", price: 100 },
+			{ key: "40E0D0", label: "Turquoise", price: 150 },
+			{ key: "FFA500", label: "Orange", price: 200 }
         ];
 
         let startY = 150;
@@ -1105,7 +1107,7 @@ class ShopScene extends Phaser.Scene {
         });
         back.setInteractive();
         back.on("pointerdown", () => {
-            this.scene.start("Menu");
+            this.scene.start("MenuScene");
         });
     }
 
@@ -1484,6 +1486,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
