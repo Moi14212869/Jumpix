@@ -1036,126 +1036,95 @@ jumpPlayer() {
 /* =========================================================
                         SHOP SCENE
 ========================================================= */
+// ----------- NORMALISATION DES COULEURS -----------
+function normalizeKeyToHex(key) {
+
+    if (typeof key === "number") {
+        return key.toString(16).toUpperCase().padStart(6, "0");
+    }
+
+    key = String(key).trim();
+
+    if (key.startsWith("0x") || key.startsWith("0X")) key = key.slice(2);
+    if (key.startsWith("#")) key = key.slice(1);
+
+    return key.toUpperCase();
+}
+
+// ----------- SHOP SCENE -----------
 class ShopScene extends Phaser.Scene {
     constructor() {
-        super("ShopScene");
+        super("Shop");
     }
 
     create() {
-        // Titre
-        this.add.text(400, 50, "Boutique", {
-            fontSize: "48px",
-            color: "#ffffff"
-        }).setOrigin(0.5);
 
-        // Items à acheter
-        const items = [
-            { id: 'violet', name: "Violet (défaut)", key: "0xAA66CC", price: 0 },
-            { id: 'vert', name: "Vert", key: "#73BE73", price: 150 },
-            { id: 'rose', name: "Rose", key: "#CC99A2", price: 200 },
-            { id: 'noir', name: "Noir", key: "#000000", price: 250 },
-            { id: 'orange', name: "Orange", key: "#FFA500", price: 300 },
-            { id: 'turquoise', name: "Turquoise", key: "#40E0D0", price: 350 }
+        this.add.text(20, 20, "SHOP", { fontSize: "40px", fill: "#ffffff" });
+        this.coinsText = this.add.text(20, 80, "Coins : " + playerCoins, { fontSize: "28px", fill: "#FFD700" });
+
+        const ITEMS = [
+            { key: "AA66CC", label: "Violet (gratuit)", price: 0 },
+            { key: "73BE73", label: "Vert", price: 50 },
+            { key: "CC99A2", label: "Rose", price: 100 }
         ];
 
-        // Info pièces courantes
-        this.coinText = this.add.text(780, 20, `💰 ${playerCoins}`, {
-            fontSize: "28px",
-            color: "#ffff00"
-        }).setOrigin(1, 0);
+        let startY = 150;
 
-        // zone d'items
-        let yPos = 140;
-        items.forEach(item => {
+        ITEMS.forEach(item => {
             const hexKey = normalizeKeyToHex(item.key);
-            const owned = ownedSkins.includes(hexKey);
+            const bought = localStorage.getItem("skin_" + hexKey) === "1";
+            const isSelected = localStorage.getItem("colorPlayer") === hexKey;
 
-            // Nom + prix
-            this.add.text(120, yPos, item.name, { fontSize: "26px", color: "#ffffff" }).setOrigin(0, 0.5);
-            this.add.text(420, yPos, `${item.price} pièces`, { fontSize: "22px", color: "#ffffff" }).setOrigin(0, 0.5);
+            this.add.rectangle(80, startY, 50, 50, parseInt("0x" + hexKey));
 
-            // Aperçu carré couleur
-            const previewGfx = this.add.graphics();
-            previewGfx.fillStyle(parseInt(hexKey, 16), 1);
-            previewGfx.fillRect(720, yPos - 16, 32, 32);
+            this.add.text(140, startY - 20, item.label, { fontSize: "24px", fill: "#ffffff" });
 
-            // Boutons : Acheter (si pas owned) / Sélectionner (si owned)
-            const btnX = 500;
-            if (!owned) {
-                const buyBtn = this.add.text(btnX, yPos, "Acheter", {
-                    fontSize: "22px",
-                    color: "#ffffff",
-                    backgroundColor: "#008000",
-                    padding: { x: 8, y: 6 },
-                    borderRadius: 4
-                }).setOrigin(0, 0.5).setInteractive();
+            if (!bought && item.price > 0) {
+                const buyText = this.add.text(350, startY - 20, "Acheter " + item.price + " ⬡", { fontSize: "22px", fill: "#00FFFF" });
+                buyText.setInteractive();
 
-                buyBtn.on("pointerdown", () => {
-                    if (playerCoins >= item.price) {
-                        playerCoins -= item.price;
-                        localStorage.setItem("playerCoins", playerCoins);
-                        ownedSkins.push(hexKey);
-                        saveOwnedSkins();
-                        // auto-select after purchase
-                        colorPlayer = parseColorToNumber(item.key);
-                        localStorage.setItem("colorPlayer", colorPlayer);
-                        // update coin display
-                        this.coinText.setText(`💰 ${playerCoins}`);
-                        updateCoinDisplays();
-                        // feedback
-                        const t = this.add.text(400, yPos + 28, "Achat réussi !", { fontSize: "18px", color: "#00FF00" }).setOrigin(0.5);
-                        this.time.delayedCall(1200, () => t.destroy());
-                        // rebuild scene to refresh buttons
-                        this.time.delayedCall(200, () => this.scene.restart());
-                    } else {
-                        const t = this.add.text(400, yPos + 28, "Pas assez de pièces", { fontSize: "18px", color: "#FF4444" }).setOrigin(0.5);
-                        this.time.delayedCall(1200, () => t.destroy());
-                    }
-                });
-            } else {
-                const selectBtn = this.add.text(btnX, yPos, "Sélectionner", {
-                    fontSize: "22px",
-                    color: "#ffffff",
-                    backgroundColor: "#00008B",
-                    padding: { x: 8, y: 6 },
-                    borderRadius: 4
-                }).setOrigin(0, 0.5).setInteractive();
-
-                selectBtn.on("pointerdown", () => {
-                    colorPlayer = parseColorToNumber(item.key);
-                    localStorage.setItem("colorPlayer", colorPlayer);
-                    const t = this.add.text(400, yPos + 28, "Skin sélectionné", { fontSize: "18px", color: "#00FF00" }).setOrigin(0.5);
-                    this.time.delayedCall(900, () => t.destroy());
-                    // apply change immediately to other scenes if open
-                    try {
-                        const scenesToUpdate = ['MenuScene', 'World1'];
-                        scenesToUpdate.forEach(k => {
-                            const s = game.scene.get(k);
-                            if (s && s.sys && s.sys.settings && s.coinText) s.coinText.setText(`💰 ${playerCoins}`);
-                        });
-                    } catch (e) {}
-                    // restart show player to display
-                    this.time.delayedCall(200, () => this.scene.start('ShowPlayer'));
-                });
+                buyText.on("pointerdown", () => this.buySkin(hexKey, item.price));
             }
 
-            yPos += 70;
+            if (bought || item.price === 0) {
+                const selectText = this.add.text(350, startY - 20, isSelected ? "Sélectionné" : "Sélectionner", {
+                    fontSize: "22px",
+                    fill: isSelected ? "#00FF66" : "#FFFFFF"
+                });
+                selectText.setInteractive();
+
+                selectText.on("pointerdown", () => this.selectSkin(hexKey));
+            }
+
+            startY += 90;
         });
 
-        // Bouton retour
-        const backButton = this.add.text(5, 5, "←", {
-            fontSize: "24px",
-            color: "#ffffff",
-            backgroundColor: "#00BFFF",
-            padding: { x: 7, y: 4 },
-            borderRadius: 5
-        }).setInteractive();
-
-        backButton.on("pointerdown", () => {
-            // ensure coin displays updated
-            updateCoinDisplays();
-            this.scene.start("MenuScene");
+        const back = this.add.text(20, 430, "Retour Menu", {
+            fontSize: "26px",
+            fill: "#AAAAAA"
         });
+        back.setInteractive();
+        back.on("pointerdown", () => {
+            this.scene.start("Menu");
+        });
+    }
+
+    buySkin(colorKey, price) {
+        if (playerCoins < price) {
+            alert("Pas assez de coins !");
+            return;
+        }
+
+        playerCoins -= price;
+        localStorage.setItem("playerCoins", playerCoins);
+
+        localStorage.setItem("skin_" + colorKey, "1");
+        this.scene.restart();
+    }
+
+    selectSkin(colorKey) {
+        localStorage.setItem("colorPlayer", colorKey);
+        this.scene.restart();
     }
 }
 /* =========================================================
@@ -1515,4 +1484,5 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
