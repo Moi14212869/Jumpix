@@ -1059,8 +1059,11 @@ class ShopScene extends Phaser.Scene {
 
     create() {
 
-        this.add.text(200, 20, "SHOP", { fontSize: "40px", fill: "#ffffff" });
-        this.coinsText = this.add.text(20, 80, "Coins : " + playerCoins, { fontSize: "28px", fill: "#FFD700" });
+        this.add.text(400, 20, "SHOP", { fontSize: "40px", fill: "#ffffff" });
+       this.coinText = this.add.text(780, 20, `💰 ${playerCoins}`, {
+    		fontSize: "28px",
+    		color: "#ffff00"
+		}).setOrigin(1, 0); // aligné à droite
 
         const ITEMS = [
             { key: "AA66CC", label: "Violet", price: 0 },
@@ -1486,6 +1489,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
