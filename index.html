@@ -1347,66 +1347,6 @@ jumpPlayer() {
 }
 }
 /* =========================================================
-                        SHOW PLAYER
-========================================================= */
-class ShowPlayer extends Phaser.Scene {
-    constructor() {
-        super("ShowPlayer");
-    }
-
-    create() {
-		this.platforms = this.physics.add.staticGroup();
-		createPlatform(this, 320, 280, 160);
-		const size = 40;
-        const g = this.add.graphics();
-        g.fillStyle(colorPlayer, 1);
-        g.fillRect(0, 0, size, size);
-        g.generateTexture("player", size, size);
-        g.destroy();
-
-        this.player = this.physics.add.sprite(400, 100, "player");
-        this.player.setBounce(0.2).setCollideWorldBounds(true);
-		this.physics.add.collider(this.player, this.platforms);
-        // Bouton retour
-        const backButton = this.add.text(5, 5, "←", {
-            fontSize: "24px",
-            color: "#ffffff",
-            backgroundColor: "#00BFFF",
-            padding: { x: 7, y: 4 },
-            borderRadius: 5
-        }).setInteractive();
-
-        backButton.on("pointerdown", () => {
-            this.scene.start("MenuScene");
-        });
-	this.input.on('pointerdown', () => this.jumpPlayer());
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.jumpCount = 0;
-    }
-	update() {
-    const p = this.player;
-    // Reset compteur saut
-    if (p.body.touching.down) this.jumpCount = 0;
-
-    // Saut via clavier
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) this.jumpPlayer();
-}
-
-// --- fonction saut + double saut ---
-jumpPlayer() {
-    if (this.jumpCount < 2) {
-        this.player.setVelocityY(-330);
-
-        if (this.jumpCount === 1) {
-            let dir = this.cursors.left.isDown ? -1 : (this.cursors.right.isDown ? 1 : 1);
-            this.tweens.add({ targets: this.player, angle: this.player.angle + 180 * dir, duration: 500, ease: "Cubic.easeOut" });
-        }
-
-        this.jumpCount++;
-    }
-}
-}
-/* =========================================================
                        World 1
 ========================================================= */
 
@@ -1485,13 +1425,14 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
    },
-  scene: [MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, Level6, ShowPlayer, World1]
+  scene: [MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, Level6, World1]
 };
 
 const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
