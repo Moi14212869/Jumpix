@@ -1217,11 +1217,11 @@ class ShopScene extends Phaser.Scene {
         back.on("pointerdown", () => {
             this.scene.start("MenuScene");
         });
-		const next = this.add.text(5, 5, "▶", {
+		const next = this.add.text(700, 400, "▶", {
            fontSize: "24px",
             color: "#ffffff",
             backgroundColor: "#00BFFF",
-            padding: { x: 700, y: 400 },
+            padding: { x: 7, y: 4 },
             borderRadius: 5
         });
         next.setInteractive();
@@ -1314,11 +1314,11 @@ class ShopScene2 extends Phaser.Scene {
         back.on("pointerdown", () => {
             this.scene.start("MenuScene");
         });
-		const prec = this.add.text(5, 5, "▶", {
+		const prec = this.add.text(10, 400, "◀", {
            fontSize: "24px",
             color: "#ffffff",
             backgroundColor: "#00BFFF",
-            padding: { x: 0, y: 400 },
+            padding: { x: 7, y: 4 },
             borderRadius: 5
         });
         prec.setInteractive();
@@ -1639,6 +1639,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
