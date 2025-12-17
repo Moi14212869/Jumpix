@@ -1130,11 +1130,14 @@ class ShopScene extends Phaser.Scene {
         this.scene.restart();
     }
 
-    selectSkin(colorKey) {
-        localStorage.setItem("colorPlayer", colorKey);
-		colorPlayer = colorKey;
-        this.scene.restart();
-    }
+selectSkin(colorKey) {
+    const colorNumber = parseInt("0x" + colorKey);
+
+    localStorage.setItem("colorPlayer", colorNumber);
+    colorPlayer = colorNumber;
+
+    this.scene.restart();
+}
 }
 /* =========================================================
                         LEVEL 6
@@ -1433,6 +1436,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
