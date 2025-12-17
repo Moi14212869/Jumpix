@@ -183,7 +183,8 @@ class Level1 extends Phaser.Scene {
 		this.transitioning = false;
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
-		
+		this.input.addPointer(2);
+
 				//bouton
 		const backButton = this.add.text(5, 5, "←", {
             fontSize: "24px",
@@ -317,7 +318,8 @@ class Level2 extends Phaser.Scene {
 		this.transitioning = false;
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
-		
+		this.input.addPointer(2);
+
         createPlatform(this, 0, 560, 800);
         createPlatform(this, 200, 480, 600, 80);
         createPlatform(this, 0, 280, 480, 80);
@@ -544,6 +546,7 @@ class Level3 extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
+	this.input.addPointer(2);
 
     // Plateformes Level 3
     createPlatform(this, 0, 560, 800);
@@ -719,6 +722,7 @@ class Level4 extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
+	this.input.addPointer(2);
 
     // Plateformes
     createPlatform(this, 0, 480, 120, 120);
@@ -881,6 +885,7 @@ class Level5 extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
+	this.input.addPointer(2);
 
 		//bouton
 		const backButton = this.add.text(5, 5, "←", {
@@ -1150,6 +1155,7 @@ class Level6 extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
+	this.input.addPointer(2);
 
 		//bouton
 		const backButton = this.add.text(5, 5, "←", {
@@ -1436,6 +1442,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
