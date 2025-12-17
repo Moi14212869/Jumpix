@@ -135,41 +135,86 @@ function createMobileControls(scene) {
   // ❌ PC = pas de boutons
   if (!scene.sys.game.device.input.touch) return;
 
-  const btnStyle = {
-    fontSize: "48px",
-    color: "#ffffff",
-    backgroundColor: "#00BFFF",
-    padding: { x: 25, y: 20 },
-    borderRadius: 15
-  };
-
-  scene.leftBtn  = scene.add.text(70, 500, "◀", btnStyle).setInteractive();
-  scene.rightBtn = scene.add.text(190, 500, "▶", btnStyle).setInteractive();
-  scene.jumpBtn  = scene.add.text(680, 500, "⬆", btnStyle).setInteractive();
-
-  // Transparence
-  [scene.leftBtn, scene.rightBtn, scene.jumpBtn].forEach(btn => {
-    btn.setAlpha(0.6);
-    btn.setScrollFactor(0); // reste fixe à l’écran
-  });
-
-  // États
   scene.movingLeft = false;
   scene.movingRight = false;
 
-  // Gauche
-  scene.leftBtn.on('pointerdown', () => scene.movingLeft = true);
-  scene.leftBtn.on('pointerup', () => scene.movingLeft = false);
-  scene.leftBtn.on('pointerout', () => scene.movingLeft = false);
+  const createButtons = () => {
 
-  // Droite
-  scene.rightBtn.on('pointerdown', () => scene.movingRight = true);
-  scene.rightBtn.on('pointerup', () => scene.movingRight = false);
-  scene.rightBtn.on('pointerout', () => scene.movingRight = false);
+    const { width, height } = scene.scale;
 
-  // Saut
-  scene.jumpBtn.on('pointerdown', () => scene.jumpPlayer());
+    // Supprimer anciens boutons (resize)
+    if (scene.leftBtn) {
+      scene.leftBtn.destroy();
+      scene.rightBtn.destroy();
+      scene.jumpBtn.destroy();
+    }
+
+    // Tailles dynamiques
+    const btnSize = Math.max(48, width * 0.08);
+    const padding = btnSize * 0.4;
+    const margin = width * 0.05;
+
+    const btnStyle = {
+      fontSize: `${btnSize}px`,
+      color: "#ffffff",
+      backgroundColor: "#00BFFF",
+      padding: { x: padding, y: padding * 0.6 },
+      borderRadius: 20
+    };
+
+    // Création boutons
+    scene.leftBtn = scene.add.text(
+      margin,
+      height - btnSize * 2,
+      "◀",
+      btnStyle
+    ).setInteractive();
+
+    scene.rightBtn = scene.add.text(
+      margin + btnSize * 1.4,
+      height - btnSize * 2,
+      "▶",
+      btnStyle
+    ).setInteractive();
+
+    scene.jumpBtn = scene.add.text(
+      width - margin - btnSize,
+      height - btnSize * 2,
+      "⬆",
+      btnStyle
+    ).setInteractive();
+
+    // Propriétés communes
+    [scene.leftBtn, scene.rightBtn, scene.jumpBtn].forEach(btn => {
+      btn.setAlpha(0.6);
+      btn.setScrollFactor(0);
+
+      // ✨ ANIMATION D’APPUI
+      btn.on('pointerdown', () => btn.setAlpha(0.9));
+      btn.on('pointerup', () => btn.setAlpha(0.6));
+      btn.on('pointerout', () => btn.setAlpha(0.6));
+    });
+
+    // Déplacements
+    scene.leftBtn.on('pointerdown', () => scene.movingLeft = true);
+    scene.leftBtn.on('pointerup', () => scene.movingLeft = false);
+    scene.leftBtn.on('pointerout', () => scene.movingLeft = false);
+
+    scene.rightBtn.on('pointerdown', () => scene.movingRight = true);
+    scene.rightBtn.on('pointerup', () => scene.movingRight = false);
+    scene.rightBtn.on('pointerout', () => scene.movingRight = false);
+
+    // Saut
+    scene.jumpBtn.on('pointerdown', () => scene.jumpPlayer());
+  };
+
+  // Création initiale
+  createButtons();
+
+  // 🔁 Auto-resize écran / rotation
+  scene.scale.on('resize', createButtons);
 }
+
 
 /* =========================================================
                         MENU SCENE
@@ -1389,6 +1434,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
