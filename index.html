@@ -516,6 +516,7 @@ this.jumpCount = 0;
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.collider(this.player, this.spikes, () => this.scene.restart());
    this.physics.add.overlap(this.player, this.blueCircle, () => {
+	this.sound.play('victory', { volume: 0.5 })
     if (this.transitioning) return;
     this.transitioning = true;
 
@@ -757,6 +758,7 @@ this.jumpCount = 0;
     this.physics.add.collider(this.player, this.spikes, (p, s) => onPlayerHitSpike(p, s, this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
   this.physics.add.overlap(this.player, this.blueCircle, () => {
+	this.sound.play('victory', { volume: 0.5 })
     if (this.transitioning) return;
     this.transitioning = true;
 
@@ -905,6 +907,7 @@ this.jumpCount = 0;
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
  this.physics.add.overlap(this.player, this.blueCircle, () => {
+	this.sound.play('victory', { volume: 0.5 })
     if (this.transitioning) return;
     this.transitioning = true;
 
@@ -1058,6 +1061,7 @@ this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
  	this.physics.add.overlap(this.player, this.blueCircle, () => {
+	this.sound.play('victory', { volume: 0.5 })
     if (this.transitioning) return;
     this.transitioning = true;
 
@@ -1338,6 +1342,7 @@ this.redCircles.add(createRedCircle(this, 580, 70, 60));
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => this.scene.restart());
  	this.physics.add.overlap(this.player, this.blueCircle, () => {
+	this.sound.play('victory', { volume: 0.5 })
     if (this.transitioning) return;
     this.transitioning = true;
 
@@ -1509,6 +1514,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
