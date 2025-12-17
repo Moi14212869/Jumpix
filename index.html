@@ -1217,6 +1217,115 @@ class ShopScene extends Phaser.Scene {
         back.on("pointerdown", () => {
             this.scene.start("MenuScene");
         });
+		const next = this.add.text(5, 5, "▶", {
+           fontSize: "24px",
+            color: "#ffffff",
+            backgroundColor: "#00BFFF",
+            padding: { x: 700, y: 400 },
+            borderRadius: 5
+        });
+        next.setInteractive();
+        next.on("pointerdown", () => {
+            this.scene.start("MenuScene2");
+        });
+    }
+
+    buySkin(colorKey, price) {
+        if (playerCoins < price) {
+            alert("Pas assez de coins !");
+            return;
+        }
+
+        playerCoins -= price;
+        localStorage.setItem("playerCoins", playerCoins);
+
+        localStorage.setItem("skin_" + colorKey, "1");
+        this.scene.restart();
+    }
+
+selectSkin(colorKey) {
+    const colorNumber = parseInt("0x" + colorKey);
+
+    localStorage.setItem("colorPlayer", colorNumber);
+    colorPlayer = colorNumber;
+
+    this.scene.restart();
+}
+}
+			// ----------- SHOP SCENE 2 -----------
+class ShopScene2 extends Phaser.Scene {
+    constructor() {
+        super("ShopScene2
+			  ");
+    }
+
+    preload() {}
+
+    create() {
+
+        this.add.text(360, 20, "SHOP", { fontSize: "40px", fill: "#ffffff" });
+       this.coinText = this.add.text(780, 20, `💰 ${playerCoins}`, {
+    		fontSize: "28px",
+    		color: "#ffff00"
+		}).setOrigin(1, 0); // aligné à droite
+
+        const ITEMS = [
+            { key: "7A0000", label: "Maroon", price: 250 }
+        ];
+
+        let startY = 150;
+
+        ITEMS.forEach(item => {
+            const hexKey = normalizeKeyToHex(item.key);
+            const bought = localStorage.getItem("skin_" + hexKey) === "1";
+			const isSelected = parseInt(localStorage.getItem("colorPlayer")) === parseInt("0x" + hexKey);
+
+            this.add.rectangle(80, startY, 50, 50, parseInt("0x" + hexKey));
+
+            this.add.text(140, startY - 20, item.label, { fontSize: "24px", fill: "#ffffff" });
+
+            if (!bought && item.price > 0) {
+                const buyText = this.add.text(350, startY - 20, "Acheter " + item.price + " ⬡", { fontSize: "22px", fill: "#00FFFF" });
+                buyText.setInteractive();
+
+                buyText.on("pointerdown", () => this.buySkin(hexKey, item.price));
+            }
+
+            if (bought || item.price === 0) {
+                const selectText = this.add.text(350, startY - 20, isSelected ? "Sélectionné" : "Sélectionner", {
+                    fontSize: "22px",
+                    fill: isSelected ? "#00FF66" : "#FFFFFF"
+                });
+                selectText.setInteractive();
+
+                selectText.on("pointerdown", () => this.selectSkin(hexKey));
+            }
+
+            startY += 90;
+        });
+
+        const back = this.add.text(5, 5, "←", {
+           fontSize: "24px",
+            color: "#ffffff",
+            backgroundColor: "#00BFFF",
+            padding: { x: 7, y: 4 },
+            borderRadius: 5
+        });
+        back.setInteractive();
+        back.on("pointerdown", () => {
+            this.scene.start("MenuScene");
+        });
+		const prec = this.add.text(5, 5, "▶", {
+           fontSize: "24px",
+            color: "#ffffff",
+            backgroundColor: "#00BFFF",
+            padding: { x: 0, y: 400 },
+            borderRadius: 5
+        });
+        prec.setInteractive();
+        prec.on("pointerdown", () => {
+            this.scene.start("MenuScene");
+        });
     }
 
     buySkin(colorKey, price) {
@@ -1524,13 +1633,14 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
    },
-  scene: [LoadingScene, MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, Level6, World1]
+  scene: [LoadingScene, MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, Level6, World1, ShopScene2]
 };
 
 const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
