@@ -423,10 +423,28 @@ class Level2 extends Phaser.Scene {
     });
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-    const btnStyle = { fontSize: "32px", color: "#ffffff", backgroundColor: "#00BFFF", padding: {x:10, y:5}, borderRadius: 5 };
-    this.leftBtn = this.add.text(50, 520, "◀", btnStyle).setInteractive();
-    this.rightBtn = this.add.text(150, 520, "▶", btnStyle).setInteractive();
-    this.jumpBtn = this.add.text(700, 520, "⬆", btnStyle).setInteractive();
+  const btnStyle = { 
+  fontSize: "48px",              // texte plus gros
+  color: "#ffffff",
+  backgroundColor: "#00BFFF",
+  padding: { x: 25, y: 20 },     // boutons plus larges
+  borderRadius: 15
+};
+
+this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
+this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
+this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
+
+// transparence
+this.leftBtn.setAlpha(0.6);
+this.rightBtn.setAlpha(0.6);
+this.jumpBtn.setAlpha(0.6);
+[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
+  btn.on('pointerdown', () => btn.setAlpha(0.9));
+  btn.on('pointerup', () => btn.setAlpha(0.6));
+  btn.on('pointerout', () => btn.setAlpha(0.6));
+});
+
 
     // Variables pour savoir si le bouton est pressé
     this.movingLeft = false;
@@ -679,10 +697,27 @@ class Level3 extends Phaser.Scene {
     });
   }, null, this);
 	   // --- BOUTONS DANS LE CANVAS ---
-    const btnStyle = { fontSize: "32px", color: "#ffffff", backgroundColor: "#00BFFF", padding: {x:10, y:5}, borderRadius: 5 };
-    this.leftBtn = this.add.text(50, 520, "◀", btnStyle).setInteractive();
-    this.rightBtn = this.add.text(150, 520, "▶", btnStyle).setInteractive();
-    this.jumpBtn = this.add.text(700, 520, "⬆", btnStyle).setInteractive();
+   const btnStyle = { 
+  fontSize: "48px",              // texte plus gros
+  color: "#ffffff",
+  backgroundColor: "#00BFFF",
+  padding: { x: 25, y: 20 },     // boutons plus larges
+  borderRadius: 15
+};
+
+this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
+this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
+this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
+
+// transparence
+this.leftBtn.setAlpha(0.6);
+this.rightBtn.setAlpha(0.6);
+this.jumpBtn.setAlpha(0.6);
+[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
+  btn.on('pointerdown', () => btn.setAlpha(0.9));
+  btn.on('pointerup', () => btn.setAlpha(0.6));
+  btn.on('pointerout', () => btn.setAlpha(0.6));
+});
 
     // Variables pour savoir si le bouton est pressé
     this.movingLeft = false;
@@ -840,10 +875,28 @@ class Level4 extends Phaser.Scene {
     });
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-    const btnStyle = { fontSize: "32px", color: "#ffffff", backgroundColor: "#00BFFF", padding: {x:10, y:5}, borderRadius: 5 };
-    this.leftBtn = this.add.text(50, 520, "◀", btnStyle).setInteractive();
-    this.rightBtn = this.add.text(150, 520, "▶", btnStyle).setInteractive();
-    this.jumpBtn = this.add.text(700, 520, "⬆", btnStyle).setInteractive();
+   const btnStyle = { 
+  fontSize: "48px",              // texte plus gros
+  color: "#ffffff",
+  backgroundColor: "#00BFFF",
+  padding: { x: 25, y: 20 },     // boutons plus larges
+  borderRadius: 15
+};
+
+this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
+this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
+this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
+
+// transparence
+this.leftBtn.setAlpha(0.6);
+this.rightBtn.setAlpha(0.6);
+this.jumpBtn.setAlpha(0.6);
+
+[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
+  btn.on('pointerdown', () => btn.setAlpha(0.9));
+  btn.on('pointerup', () => btn.setAlpha(0.6));
+  btn.on('pointerout', () => btn.setAlpha(0.6));
+});
 
     // Variables pour savoir si le bouton est pressé
     this.movingLeft = false;
@@ -1006,10 +1059,28 @@ this.player.setCollideWorldBounds(true);
     });
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-    const btnStyle = { fontSize: "32px", color: "#ffffff", backgroundColor: "#00BFFF", padding: {x:10, y:5}, borderRadius: 5 };
-    this.leftBtn = this.add.text(50, 520, "◀", btnStyle).setInteractive();
-    this.rightBtn = this.add.text(150, 520, "▶", btnStyle).setInteractive();
-    this.jumpBtn = this.add.text(700, 520, "⬆", btnStyle).setInteractive();
+  const btnStyle = { 
+  fontSize: "48px",              // texte plus gros
+  color: "#ffffff",
+  backgroundColor: "#00BFFF",
+  padding: { x: 25, y: 20 },     // boutons plus larges
+  borderRadius: 15
+};
+
+this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
+this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
+this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
+
+// transparence
+this.leftBtn.setAlpha(0.6);
+this.rightBtn.setAlpha(0.6);
+this.jumpBtn.setAlpha(0.6);
+[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
+  btn.on('pointerdown', () => btn.setAlpha(0.9));
+  btn.on('pointerup', () => btn.setAlpha(0.6));
+  btn.on('pointerout', () => btn.setAlpha(0.6));
+});
+
 
     // Variables pour savoir si le bouton est pressé
     this.movingLeft = false;
@@ -1324,10 +1395,28 @@ this.redCircles.add(createRedCircle(this, 580, 70, 60));
   }
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-    const btnStyle = { fontSize: "32px", color: "#ffffff", backgroundColor: "#00BFFF", padding: {x:10, y:5}, borderRadius: 5 };
-    this.leftBtn = this.add.text(50, 520, "◀", btnStyle).setInteractive();
-    this.rightBtn = this.add.text(150, 520, "▶", btnStyle).setInteractive();
-    this.jumpBtn = this.add.text(700, 520, "⬆", btnStyle).setInteractive();
+const btnStyle = { 
+  fontSize: "48px",              // texte plus gros
+  color: "#ffffff",
+  backgroundColor: "#00BFFF",
+  padding: { x: 25, y: 20 },     // boutons plus larges
+  borderRadius: 15
+};
+
+this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
+this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
+this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
+
+// transparence
+this.leftBtn.setAlpha(0.6);
+this.rightBtn.setAlpha(0.6);
+this.jumpBtn.setAlpha(0.6);
+[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
+  btn.on('pointerdown', () => btn.setAlpha(0.9));
+  btn.on('pointerup', () => btn.setAlpha(0.6));
+  btn.on('pointerout', () => btn.setAlpha(0.6));
+});
+
 
     // Variables pour savoir si le bouton est pressé
     this.movingLeft = false;
@@ -1460,6 +1549,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
