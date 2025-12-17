@@ -214,7 +214,48 @@ function createMobileControls(scene) {
   // 🔁 Auto-resize écran / rotation
   scene.scale.on('resize', createButtons);
 }
+/* =========================================================
+                    LOADING SCENE
+========================================================= */
+class LoadingScene extends Phaser.Scene {
+    constructor() {
+        super("LoadingScene");
+    }
 
+    preload() {
+        // Affichage texte de chargement
+        const { width, height } = this.scale;
+        const loadingText = this.add.text(width / 2, height / 2, "Chargement...", {
+            fontSize: "32px",
+            fill: "#ffffff"
+        }).setOrigin(0.5);
+
+        // Barre de progression
+        const progressBar = this.add.graphics();
+        const progressBox = this.add.graphics();
+        progressBox.fillStyle(0x222222, 0.8);
+        progressBox.fillRect(width / 2 - 160, height / 2 + 30, 320, 30);
+
+        this.load.on('progress', (value) => {
+            progressBar.clear();
+            progressBar.fillStyle(0xffffff, 1);
+            progressBar.fillRect(width / 2 - 150, height / 2 + 40, 300 * value, 10);
+        });
+
+        this.load.on('complete', () => {
+            progressBar.destroy();
+            progressBox.destroy();
+            loadingText.setText("Prêt !");
+        });
+    }
+
+    create() {
+        // Après le chargement, démarrer la scène principale
+        this.time.delayedCall(500, () => {
+            this.scene.start("MenuScene");
+        });
+    }
+}
 
 /* =========================================================
                         MENU SCENE
@@ -1439,34 +1480,10 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
    },
-  scene: [MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, Level6, World1]
+  scene: [LoadingScene, MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, Level6, World1]
 };
 
 const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
