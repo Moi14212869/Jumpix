@@ -130,6 +130,46 @@ function createRedTriangle(scene, x, y, orientation = 'up') {
     return triangle;
 }
 
+function createMobileControls(scene) {
+
+  // ❌ PC = pas de boutons
+  if (!scene.sys.game.device.input.touch) return;
+
+  const btnStyle = {
+    fontSize: "48px",
+    color: "#ffffff",
+    backgroundColor: "#00BFFF",
+    padding: { x: 25, y: 20 },
+    borderRadius: 15
+  };
+
+  scene.leftBtn  = scene.add.text(70, 500, "◀", btnStyle).setInteractive();
+  scene.rightBtn = scene.add.text(190, 500, "▶", btnStyle).setInteractive();
+  scene.jumpBtn  = scene.add.text(680, 500, "⬆", btnStyle).setInteractive();
+
+  // Transparence
+  [scene.leftBtn, scene.rightBtn, scene.jumpBtn].forEach(btn => {
+    btn.setAlpha(0.6);
+    btn.setScrollFactor(0); // reste fixe à l’écran
+  });
+
+  // États
+  scene.movingLeft = false;
+  scene.movingRight = false;
+
+  // Gauche
+  scene.leftBtn.on('pointerdown', () => scene.movingLeft = true);
+  scene.leftBtn.on('pointerup', () => scene.movingLeft = false);
+  scene.leftBtn.on('pointerout', () => scene.movingLeft = false);
+
+  // Droite
+  scene.rightBtn.on('pointerdown', () => scene.movingRight = true);
+  scene.rightBtn.on('pointerup', () => scene.movingRight = false);
+  scene.rightBtn.on('pointerout', () => scene.movingRight = false);
+
+  // Saut
+  scene.jumpBtn.on('pointerdown', () => scene.jumpPlayer());
+}
 
 /* =========================================================
                         MENU SCENE
@@ -255,43 +295,9 @@ class Level1 extends Phaser.Scene {
     });
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-const btnStyle = { 
-  fontSize: "48px",              // texte plus gros
-  color: "#ffffff",
-  backgroundColor: "#00BFFF",
-  padding: { x: 25, y: 20 },     // boutons plus larges
-  borderRadius: 15
-};
+createMobileControls(this);
 
-this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
-this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
-this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
-
-// transparence
-this.leftBtn.setAlpha(0.6);
-this.rightBtn.setAlpha(0.6);
-this.jumpBtn.setAlpha(0.6);
-
-[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
-  btn.on('pointerdown', () => btn.setAlpha(0.9));
-  btn.on('pointerup', () => btn.setAlpha(0.6));
-  btn.on('pointerout', () => btn.setAlpha(0.6));
-});
-
-    // Variables pour savoir si le bouton est pressé
-    this.movingLeft = false;
-    this.movingRight = false;
-
-    // Événements tactiles
-    this.leftBtn.on('pointerdown', () => this.movingLeft = true);
-    this.leftBtn.on('pointerup', () => this.movingLeft = false);
-    this.rightBtn.on('pointerdown', () => this.movingRight = true);
-    this.rightBtn.on('pointerup', () => this.movingRight = false);
-    this.jumpBtn.on('pointerdown', () => this.jumpPlayer());
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.jumpCount = 0;
-    }
-
+}
 update() {
     const p = this.player;
 
@@ -423,44 +429,9 @@ class Level2 extends Phaser.Scene {
     });
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-  const btnStyle = { 
-  fontSize: "48px",              // texte plus gros
-  color: "#ffffff",
-  backgroundColor: "#00BFFF",
-  padding: { x: 25, y: 20 },     // boutons plus larges
-  borderRadius: 15
-};
+ createMobileControls(this);
 
-this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
-this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
-this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
-
-// transparence
-this.leftBtn.setAlpha(0.6);
-this.rightBtn.setAlpha(0.6);
-this.jumpBtn.setAlpha(0.6);
-[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
-  btn.on('pointerdown', () => btn.setAlpha(0.9));
-  btn.on('pointerup', () => btn.setAlpha(0.6));
-  btn.on('pointerout', () => btn.setAlpha(0.6));
-});
-
-
-    // Variables pour savoir si le bouton est pressé
-    this.movingLeft = false;
-    this.movingRight = false;
-
-    // Événements tactiles
-    this.leftBtn.on('pointerdown', () => this.movingLeft = true);
-    this.leftBtn.on('pointerup', () => this.movingLeft = false);
-    this.rightBtn.on('pointerdown', () => this.movingRight = true);
-    this.rightBtn.on('pointerup', () => this.movingRight = false);
-    this.jumpBtn.on('pointerdown', () => this.jumpPlayer());
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.jumpCount = 0;
-    }
-
-
+}
 update() {
     const p = this.player;
 
@@ -697,41 +668,9 @@ class Level3 extends Phaser.Scene {
     });
   }, null, this);
 	   // --- BOUTONS DANS LE CANVAS ---
-   const btnStyle = { 
-  fontSize: "48px",              // texte plus gros
-  color: "#ffffff",
-  backgroundColor: "#00BFFF",
-  padding: { x: 25, y: 20 },     // boutons plus larges
-  borderRadius: 15
-};
+  createMobileControls(this);
 
-this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
-this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
-this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
-
-// transparence
-this.leftBtn.setAlpha(0.6);
-this.rightBtn.setAlpha(0.6);
-this.jumpBtn.setAlpha(0.6);
-[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
-  btn.on('pointerdown', () => btn.setAlpha(0.9));
-  btn.on('pointerup', () => btn.setAlpha(0.6));
-  btn.on('pointerout', () => btn.setAlpha(0.6));
-});
-
-    // Variables pour savoir si le bouton est pressé
-    this.movingLeft = false;
-    this.movingRight = false;
-
-    // Événements tactiles
-    this.leftBtn.on('pointerdown', () => this.movingLeft = true);
-    this.leftBtn.on('pointerup', () => this.movingLeft = false);
-    this.rightBtn.on('pointerdown', () => this.movingRight = true);
-    this.rightBtn.on('pointerup', () => this.movingRight = false);
-    this.jumpBtn.on('pointerdown', () => this.jumpPlayer());
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.jumpCount = 0;
-    }
+}
 
 
 update() {
@@ -875,41 +814,8 @@ class Level4 extends Phaser.Scene {
     });
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-   const btnStyle = { 
-  fontSize: "48px",              // texte plus gros
-  color: "#ffffff",
-  backgroundColor: "#00BFFF",
-  padding: { x: 25, y: 20 },     // boutons plus larges
-  borderRadius: 15
-};
+createMobileControls(this);
 
-this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
-this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
-this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
-
-// transparence
-this.leftBtn.setAlpha(0.6);
-this.rightBtn.setAlpha(0.6);
-this.jumpBtn.setAlpha(0.6);
-
-[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
-  btn.on('pointerdown', () => btn.setAlpha(0.9));
-  btn.on('pointerup', () => btn.setAlpha(0.6));
-  btn.on('pointerout', () => btn.setAlpha(0.6));
-});
-
-    // Variables pour savoir si le bouton est pressé
-    this.movingLeft = false;
-    this.movingRight = false;
-
-    // Événements tactiles
-    this.leftBtn.on('pointerdown', () => this.movingLeft = true);
-    this.leftBtn.on('pointerup', () => this.movingLeft = false);
-    this.rightBtn.on('pointerdown', () => this.movingRight = true);
-    this.rightBtn.on('pointerup', () => this.movingRight = false);
-    this.jumpBtn.on('pointerdown', () => this.jumpPlayer());
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.jumpCount = 0;
     }
 
 
@@ -1059,41 +965,8 @@ this.player.setCollideWorldBounds(true);
     });
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-  const btnStyle = { 
-  fontSize: "48px",              // texte plus gros
-  color: "#ffffff",
-  backgroundColor: "#00BFFF",
-  padding: { x: 25, y: 20 },     // boutons plus larges
-  borderRadius: 15
-};
+createMobileControls(this);
 
-this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
-this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
-this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
-
-// transparence
-this.leftBtn.setAlpha(0.6);
-this.rightBtn.setAlpha(0.6);
-this.jumpBtn.setAlpha(0.6);
-[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
-  btn.on('pointerdown', () => btn.setAlpha(0.9));
-  btn.on('pointerup', () => btn.setAlpha(0.6));
-  btn.on('pointerout', () => btn.setAlpha(0.6));
-});
-
-
-    // Variables pour savoir si le bouton est pressé
-    this.movingLeft = false;
-    this.movingRight = false;
-
-    // Événements tactiles
-    this.leftBtn.on('pointerdown', () => this.movingLeft = true);
-    this.leftBtn.on('pointerup', () => this.movingLeft = false);
-    this.rightBtn.on('pointerdown', () => this.movingRight = true);
-    this.rightBtn.on('pointerup', () => this.movingRight = false);
-    this.jumpBtn.on('pointerdown', () => this.jumpPlayer());
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.jumpCount = 0;
     }
 
 
@@ -1395,41 +1268,8 @@ this.redCircles.add(createRedCircle(this, 580, 70, 60));
   }
   }, null, this);
  // --- BOUTONS DANS LE CANVAS ---
-const btnStyle = { 
-  fontSize: "48px",              // texte plus gros
-  color: "#ffffff",
-  backgroundColor: "#00BFFF",
-  padding: { x: 25, y: 20 },     // boutons plus larges
-  borderRadius: 15
-};
+createMobileControls(this);
 
-this.leftBtn  = this.add.text(70, 500, "◀", btnStyle).setInteractive();
-this.rightBtn = this.add.text(190, 500, "▶", btnStyle).setInteractive();
-this.jumpBtn  = this.add.text(680, 500, "⬆", btnStyle).setInteractive();
-
-// transparence
-this.leftBtn.setAlpha(0.6);
-this.rightBtn.setAlpha(0.6);
-this.jumpBtn.setAlpha(0.6);
-[this.leftBtn, this.rightBtn, this.jumpBtn].forEach(btn => {
-  btn.on('pointerdown', () => btn.setAlpha(0.9));
-  btn.on('pointerup', () => btn.setAlpha(0.6));
-  btn.on('pointerout', () => btn.setAlpha(0.6));
-});
-
-
-    // Variables pour savoir si le bouton est pressé
-    this.movingLeft = false;
-    this.movingRight = false;
-
-    // Événements tactiles
-    this.leftBtn.on('pointerdown', () => this.movingLeft = true);
-    this.leftBtn.on('pointerup', () => this.movingLeft = false);
-    this.rightBtn.on('pointerdown', () => this.movingRight = true);
-    this.rightBtn.on('pointerup', () => this.movingRight = false);
-    this.jumpBtn.on('pointerdown', () => this.jumpPlayer());
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.jumpCount = 0;
     }
 
 
@@ -1549,6 +1389,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
