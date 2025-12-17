@@ -1722,12 +1722,12 @@ this.player.setCollideWorldBounds(true);
   createRedTriangle(this, 580, 240, 'down');
   createRedTriangle(this, 540, 240, 'down');
     // Boules rouges
-  this.redCircles.add(createRedCircle(260, 100, this, 0));
-  this.redCircles.add(createRedCircle(340, 460, this, 0));
-  this.redCircles.add(createRedCircle(300, 280, this, 0));
-  this.redCircles.add(createRedCircle(460, 450, this, -100));
-  this.redCircles.add(createRedCircle(500, 450, this, -100));
-  this.redCircles.add(createRedCircle(540, 550, this, 100));
+  this.redCircles.add(createRedCircle(this, 260, 100, 0));
+  this.redCircles.add(createRedCircle(this, 340, 460, 0));
+  this.redCircles.add(createRedCircle(this, 300, 280, 0));
+  this.redCircles.add(createRedCircle(this, 460, 450, -100));
+  this.redCircles.add(createRedCircle(this, 500, 450, -100));
+  this.redCircles.add(createRedCircle(this, 540, 550, 100));
 
 
 //carrés rouges
@@ -1853,3 +1853,4 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
