@@ -258,6 +258,7 @@ class LoadingScene extends Phaser.Scene {
 		this.load.audio('victory', 'asset/level-up-enhancement-8-bit-retro-sound-effect-153002.mp3');
 		this.load.audio('menu', 'asset/menu.mp3');
 		this.load.audio('select', 'asset/select.mp3');
+		this.load.audio('kill', 'asset/kill.mp3');
         // Quand le chargement est complet
         this.load.on('complete', () => {
             progressBar.destroy();
@@ -1520,6 +1521,7 @@ this.redCircles.add(createRedCircle(this, 580, 70, 60));
   // Si le joueur touche par le haut (avec une petite marge de tolérance)
   if (verticalDiff < 10 && player.body.velocity.y > 0) {
     // Le joueur a sauté sur le carré rouge
+	this.sound.play('kill', { volume: 0.5 })
     player.setVelocityY(-200);
     this.tweens.add({
       targets: square,
@@ -1662,6 +1664,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
