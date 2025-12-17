@@ -222,7 +222,7 @@ class LoadingScene extends Phaser.Scene {
         super("LoadingScene");
     }
 
-    create() {
+    preload() {
         const { width, height } = this.scale;
 
         // Texte "Chargement..."
@@ -261,6 +261,7 @@ class LoadingScene extends Phaser.Scene {
             loadingText.setText("Prêt !");
             percentText.destroy();
         });
+		 create() {
         // Lancement du menu après un petit délai
 		this.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
         this.time.delayedCall(500, () => {
@@ -268,6 +269,7 @@ class LoadingScene extends Phaser.Scene {
             this.scene.start("MenuScene");
         });
     }
+}
 }
 
 
@@ -1501,6 +1503,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
