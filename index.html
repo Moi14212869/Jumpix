@@ -254,6 +254,7 @@ class LoadingScene extends Phaser.Scene {
         });
 		this.load.audio('bgm', 'asset/8bit-music-for-game-68698.mp3');
 		this.load.audio('jump', 'asset/jump_c_02-102843.mp3');
+		this.load.audio('dead', 'asset/game-over-arcade-6435.mp3');
         // Quand le chargement est complet
         this.load.on('complete', () => {
             progressBar.destroy();
@@ -370,8 +371,10 @@ this.jumpCount = 0;
 
         // collisions
         this.physics.add.collider(this.player, this.platforms);
-        this.physics.add.collider(this.player, this.spikes, () => this.scene.restart());
-
+        this.physics.add.collider(this.player, this.spikes, () => {
+			this.sound.play('dead', { volume: 0.5 })
+			this.scene.restart());
+		}
         // sortie vers niveau 2
   this.physics.add.overlap(this.player, this.blueCircle, () => {
     if (this.transitioning) return;
@@ -1504,6 +1507,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
