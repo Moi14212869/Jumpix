@@ -269,6 +269,8 @@ class Level1 extends Phaser.Scene {
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
 		this.input.addPointer(2);
+		this.cursors = this.input.keyboard.createCursorKeys();
+this.jumpCount = 0;
 
 				//bouton
 		const backButton = this.add.text(5, 5, "←", {
@@ -388,6 +390,8 @@ class Level2 extends Phaser.Scene {
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
 		this.input.addPointer(2);
+this.cursors = this.input.keyboard.createCursorKeys();
+this.jumpCount = 0;
 
         createPlatform(this, 0, 560, 800);
         createPlatform(this, 200, 480, 600, 80);
@@ -599,6 +603,8 @@ class Level3 extends Phaser.Scene {
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
 	this.input.addPointer(2);
+this.cursors = this.input.keyboard.createCursorKeys();
+this.jumpCount = 0;
 
     // Plateformes Level 3
     createPlatform(this, 0, 560, 800);
@@ -760,6 +766,8 @@ class Level4 extends Phaser.Scene {
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
 	this.input.addPointer(2);
+this.cursors = this.input.keyboard.createCursorKeys();
+this.jumpCount = 0;
 
     // Plateformes
     createPlatform(this, 0, 480, 120, 120);
@@ -908,6 +916,8 @@ class Level5 extends Phaser.Scene {
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
 	this.input.addPointer(2);
+this.cursors = this.input.keyboard.createCursorKeys();
+this.jumpCount = 0;
 
 		//bouton
 		const backButton = this.add.text(5, 5, "←", {
@@ -1163,6 +1173,8 @@ class Level6 extends Phaser.Scene {
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
 	this.input.addPointer(2);
+this.cursors = this.input.keyboard.createCursorKeys();
+this.jumpCount = 0;
 
 		//bouton
 		const backButton = this.add.text(5, 5, "←", {
@@ -1434,6 +1446,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
