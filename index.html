@@ -37,11 +37,11 @@ function showInterstitial() {
         PokiSDK.ads.showAd();
     }
 }
-function startLevelTimer(scene, levelKey) {
+function initLevelTimer(scene, levelKey) {
     scene.levelKey = levelKey;
-    scene.startTime = scene.time.now;
+    scene.startTime = null;
+    scene.timerStarted = false;
 
-    // Texte chrono
     scene.timerText = scene.add.text(scene.scale.width - 10, 10, "⏱ 0.00s", {
         fontSize: "20px",
         color: "#ffffff",
@@ -51,9 +51,10 @@ function startLevelTimer(scene, levelKey) {
     .setOrigin(1, 0)
     .setScrollFactor(0);
 
-    // Meilleur temps
     const best = localStorage.getItem("bestTime_" + levelKey);
-    scene.bestTimeText = scene.add.text(scene.scale.width - 10, 40,
+    scene.bestTimeText = scene.add.text(
+        scene.scale.width - 10,
+        40,
         best ? `🏆 ${parseFloat(best).toFixed(2)}s` : "🏆 --",
         {
             fontSize: "16px",
@@ -65,6 +66,13 @@ function startLevelTimer(scene, levelKey) {
     .setOrigin(1, 0)
     .setScrollFactor(0);
 }
+function startTimerIfNeeded(scene) {
+    if (scene.timerStarted) return;
+
+    scene.timerStarted = true;
+    scene.startTime = scene.time.now;
+}
+
 
 function updateLevelTimer(scene) {
     if (!scene.startTime || !scene.timerText) return;
@@ -391,6 +399,7 @@ class Level1 extends Phaser.Scene {
     }
 
     create() {
+		initLevelTimer(this, "Level1");
 		this.transitioning = false;
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
@@ -476,6 +485,16 @@ createMobileControls(this);
 
 }
 update() {
+	if (
+    Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.right) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.up)
+) {
+    startTimerIfNeeded(this);
+}
+
+updateLevelTimer(this);
+
     const p = this.player;
 
     // Déplacement horizontal
@@ -516,6 +535,7 @@ class Level2 extends Phaser.Scene {
     }
 
     create() {
+		initLevelTimer(this, "Level2");
 		this.transitioning = false;
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
@@ -617,6 +637,16 @@ this.jumpCount = 0;
 
 }
 update() {
+	if (
+    Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.right) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.up)
+) {
+    startTimerIfNeeded(this);
+}
+
+updateLevelTimer(this);
+
     const p = this.player;
 
     // Déplacement horizontal
@@ -734,6 +764,7 @@ class Level3 extends Phaser.Scene {
   constructor() { super("Level3"); }
 
   create() {
+	  initLevelTimer(this, "Level3");
 	this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
@@ -866,6 +897,16 @@ this.jumpCount = 0;
 
 
 update() {
+	if (
+    Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.right) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.up)
+) {
+    startTimerIfNeeded(this);
+}
+
+updateLevelTimer(this);
+
     const p = this.player;
 
     // Déplacement horizontal
@@ -902,6 +943,7 @@ class Level4 extends Phaser.Scene {
   constructor() { super("Level4"); }
 
   create() {
+	initLevelTimer(this, "Level4");
 	this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
@@ -1020,6 +1062,16 @@ createMobileControls(this);
 
 
 update() {
+	if (
+    Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.right) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.up)
+) {
+    startTimerIfNeeded(this);
+}
+
+updateLevelTimer(this);
+
     const p = this.player;
 
     // Déplacement horizontal
@@ -1057,6 +1109,7 @@ class Level5 extends Phaser.Scene {
   constructor() { super("Level5"); }
 
   create() {
+	initLevelTimer(this, "Level5");
 	this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
@@ -1178,6 +1231,16 @@ createMobileControls(this);
 
 
 update() {
+	if (
+    Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.right) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.up)
+) {
+    startTimerIfNeeded(this);
+}
+
+updateLevelTimer(this);
+
     const p = this.player;
 
     // Déplacement horizontal
@@ -1444,6 +1507,7 @@ class Level6 extends Phaser.Scene {
   constructor() { super("Level6"); }
 
   create() {
+	initLevelTimer(this, "Level6");
 	this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
@@ -1615,6 +1679,16 @@ createMobileControls(this);
 
 
 update() {
+	if (
+    Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.right) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.up)
+) {
+    startTimerIfNeeded(this);
+}
+
+updateLevelTimer(this);
+
     const p = this.player;
 
     // Déplacement horizontal
@@ -1723,6 +1797,7 @@ class Level7 extends Phaser.Scene {
   constructor() { super("Level7"); }
 
   create() {
+	initLevelTimer(this, "Level7");
 	this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
     this.spikes = this.physics.add.staticGroup();
@@ -1873,6 +1948,16 @@ createMobileControls(this);
 
 
 update() {
+	if (
+    Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.right) ||
+    Phaser.Input.Keyboard.JustDown(this.cursors.up)
+) {
+    startTimerIfNeeded(this);
+}
+
+updateLevelTimer(this);
+
     const p = this.player;
 
     // Déplacement horizontal
@@ -1983,6 +2068,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
