@@ -37,6 +37,50 @@ function showInterstitial() {
         PokiSDK.ads.showAd();
     }
 }
+function startLevelTimer(scene, levelKey) {
+    scene.levelKey = levelKey;
+    scene.startTime = scene.time.now;
+
+    // Texte chrono
+    scene.timerText = scene.add.text(scene.scale.width - 10, 10, "⏱ 0.00s", {
+        fontSize: "20px",
+        color: "#ffffff",
+        backgroundColor: "#000000aa",
+        padding: { x: 8, y: 4 }
+    })
+    .setOrigin(1, 0)
+    .setScrollFactor(0);
+
+    // Meilleur temps
+    const best = localStorage.getItem("bestTime_" + levelKey);
+    scene.bestTimeText = scene.add.text(scene.scale.width - 10, 40,
+        best ? `🏆 ${parseFloat(best).toFixed(2)}s` : "🏆 --",
+        {
+            fontSize: "16px",
+            color: "#ffff00",
+            backgroundColor: "#000000aa",
+            padding: { x: 8, y: 4 }
+        }
+    )
+    .setOrigin(1, 0)
+    .setScrollFactor(0);
+}
+
+function updateLevelTimer(scene) {
+    if (!scene.startTime || !scene.timerText) return;
+    const elapsed = (scene.time.now - scene.startTime) / 1000;
+    scene.timerText.setText(`⏱ ${elapsed.toFixed(2)}s`);
+}
+
+function stopAndSaveTimer(scene) {
+    const elapsed = (scene.time.now - scene.startTime) / 1000;
+    const key = "bestTime_" + scene.levelKey;
+    const best = parseFloat(localStorage.getItem(key));
+
+    if (isNaN(best) || elapsed < best) {
+        localStorage.setItem(key, elapsed);
+    }
+}
 
 
 
@@ -1939,6 +1983,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
