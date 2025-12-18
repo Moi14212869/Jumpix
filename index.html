@@ -24,6 +24,8 @@
 		/* =========================================================
                     FONCTIONS COMMUNES
 ========================================================= */
+let gameVolume = parseFloat(localStorage.getItem("gameVolume"));
+if (isNaN(gameVolume)) gameVolume = 0.5;
 let playerCoins = parseInt(localStorage.getItem("playerCoins")) || 0;
 let pokiReady = false;
 let colorPlayer = parseInt(localStorage.getItem("colorPlayer")) || 0xAA66CC;
@@ -270,7 +272,7 @@ class LoadingScene extends Phaser.Scene {
 	}
 		 create() {
         // Lancement du menu après un petit délai
-		this.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
+		this.bgm = this.sound.add('bgm', { loop: true, volume: gameVolume });
         this.time.delayedCall(500, () => {
 			if (!this.bgm.isPlaying) this.bgm.play();
             this.scene.start("MenuScene");
@@ -299,6 +301,16 @@ class MenuScene extends Phaser.Scene {
     		fontSize: "28px",
     		color: "#ffff00"
 		}).setOrigin(1, 0); // aligné à droite
+		const settingsBtn = this.add.text(400, 360, "⚙ Paramètres", {
+    fontSize: "30px",
+    color: "#ffffff"
+	}).setOrigin(0.5).setInteractive();
+
+settingsBtn.on("pointerdown", () => {
+    this.sound.play('select', { volume: gameVolume });
+    this.scene.start("SettingsScene");
+});
+
         const niveaux = [
             { nom: "Shop 🛒", scene: "ShopScene" },
             { nom: "➡ Play !!", scene: "World1" },
@@ -1838,6 +1850,67 @@ jumpPlayer() {
     }
 }
 }
+/*======================================================
+                   Setting
+=======================================================*/
+class SettingsScene extends Phaser.Scene {
+    constructor() {
+        super("SettingsScene");
+    }
+
+    create() {
+        this.add.text(400, 80, "PARAMÈTRES", {
+            fontSize: "40px",
+            color: "#ffffff"
+        }).setOrigin(0.5);
+
+        this.add.text(400, 160, "Volume", {
+            fontSize: "28px",
+            color: "#ffffff"
+        }).setOrigin(0.5);
+
+        // Barre de fond
+        const barBg = this.add.rectangle(400, 220, 300, 10, 0x555555);
+
+        // Curseur
+        const knob = this.add.circle(
+            400 - 150 + gameVolume * 300,
+            220,
+            12,
+            0xffffff
+        ).setInteractive({ draggable: true });
+
+        this.input.setDraggable(knob);
+
+        this.input.on('drag', (pointer, obj, dragX) => {
+            const minX = 400 - 150;
+            const maxX = 400 + 150;
+
+            obj.x = Phaser.Math.Clamp(dragX, minX, maxX);
+
+            gameVolume = (obj.x - minX) / 300;
+            gameVolume = Phaser.Math.Clamp(gameVolume, 0, 1);
+
+            localStorage.setItem("gameVolume", gameVolume);
+
+            this.sound.volume = gameVolume;
+        });
+
+        // Bouton retour
+        const backBtn = this.add.text(400, 320, "← Retour", {
+            fontSize: "26px",
+            color: "#ffffff",
+            backgroundColor: "#00BFFF",
+            padding: { x: 12, y: 6 }
+        }).setOrigin(0.5).setInteractive();
+
+        backBtn.on("pointerdown", () => {
+            this.sound.play('menu', { volume: gameVolume });
+            this.scene.start("MenuScene");
+        });
+    }
+}
+
 /* =========================================================
                     CONFIG JEU
 ========================================================= */
@@ -1851,13 +1924,14 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
    },
-  scene: [LoadingScene, MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, ShopScene2, Level6, World1, Level7]
+  scene: [LoadingScene, MenuScene, Level1, Level2, Level3, Level4, Level5, ShopScene, ShopScene2, Level6, World1, Level7, SettingsScene]
 };
 
 const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
