@@ -454,6 +454,7 @@ this.jumpCount = 0;
 		})
         // sortie vers niveau 2
   this.physics.add.overlap(this.player, this.blueCircle, () => {
+	  stopAndSaveTimer(this);
 	this.sound.play('victory', { volume: gameVolume })
     if (this.transitioning) return;
     this.transitioning = true;
@@ -607,6 +608,7 @@ this.jumpCount = 0;
 			this.scene.restart();
 		})
 	this.physics.add.overlap(this.player, this.blueCircle, () => {
+		stopAndSaveTimer(this);
 	this.sound.play('victory', { volume: gameVolume })
     if (this.transitioning) return;
     this.transitioning = true;
@@ -865,6 +867,7 @@ this.jumpCount = 0;
 		this.scene.restart();
 	})
   this.physics.add.overlap(this.player, this.blueCircle, () => {
+	  stopAndSaveTimer(this);
 	this.sound.play('victory', { volume: gameVolume })
     if (this.transitioning) return;
     this.transitioning = true;
@@ -1029,6 +1032,7 @@ this.jumpCount = 0;
 		this.scene.restart();
 	})
  this.physics.add.overlap(this.player, this.blueCircle, () => {
+	 stopAndSaveTimer(this);
 	this.sound.play('victory', { volume: gameVolume })
     if (this.transitioning) return;
     this.transitioning = true;
@@ -1194,6 +1198,7 @@ this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => {
+		stopAndSaveTimer(this);
 		this.sound.play('dead', { volume: gameVolume })
 		this.scene.restart();
 	})
@@ -1615,6 +1620,7 @@ this.redCircles.add(createRedCircle(this, 580, 70, 60));
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.spikes, (p,s) => onPlayerHitSpike(p,s,this));
     this.physics.add.overlap(this.player, this.redCircles, () => {
+		stopAndSaveTimer(this);
 		this.sound.play('dead', { volume: gameVolume })
 		this.scene.restart();
 	})
@@ -2068,6 +2074,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
