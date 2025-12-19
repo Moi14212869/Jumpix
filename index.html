@@ -399,7 +399,6 @@ class Level1 extends Phaser.Scene {
     }
 
     create() {
-		initLevelTimer(this, "Level1");
 		this.transitioning = false;
         this.platforms = this.physics.add.staticGroup();
         this.spikes = this.physics.add.staticGroup();
@@ -454,7 +453,6 @@ this.jumpCount = 0;
 		})
         // sortie vers niveau 2
   this.physics.add.overlap(this.player, this.blueCircle, () => {
-	  stopAndSaveTimer(this);
 	this.sound.play('victory', { volume: gameVolume })
     if (this.transitioning) return;
     this.transitioning = true;
@@ -486,16 +484,6 @@ createMobileControls(this);
 
 }
 update() {
-	if (
-    Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
-    Phaser.Input.Keyboard.JustDown(this.cursors.right) ||
-    Phaser.Input.Keyboard.JustDown(this.cursors.up)
-) {
-    startTimerIfNeeded(this);
-}
-
-updateLevelTimer(this);
-
     const p = this.player;
 
     // Déplacement horizontal
@@ -2074,6 +2062,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
