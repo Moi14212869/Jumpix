@@ -1,6 +1,8 @@
 {
   "playerStart": { "x": 100, "y": 450 },
-
+  "blueCircle": { "x": 740, "y": 80 },
+    "reward": 8,
+  "nextScene": "World1",
   "platforms": [
     { "x": 0, "y": 560, "w": 800 },
     { "x": 0, "y": 360, "w": 720, "h": 80 },
@@ -38,9 +40,5 @@
     { "x": 280, "y": 550 },
     { "x": 480, "y": 350 },
     { "x": 400, "y": 250, "direction": "down" }
-  ],
-
-  "blueCircle": { "x": 740, "y": 80 },
-    "reward": 8,
-  "nextScene": "World1"
+  ]
 }
