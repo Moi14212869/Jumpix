@@ -980,7 +980,7 @@ class CreditsScene extends Phaser.Scene {
         const { width, height } = this.scale;
 
         // Titre
-        this.add.text(width / 2, 80, "Credits", {
+        this.add.text(width / 2, 50, "Credits", {
             fontSize: "50px",
             color: "#ffffff"
         }).setOrigin(0.5);
@@ -988,42 +988,58 @@ class CreditsScene extends Phaser.Scene {
         // Contenu des crédits
         const credits = [
             "A game by",
-			"MOI14212869",
+            "MOI14212869",
             "",
-            "Producter & Lead Programmer",
-			"Eliott MORBIDELLI",
-			"",
+            "Producer & Lead Programmer",
+            "Eliott MORBIDELLI",
+            "",
             "Visual Design",
-			"L. MORBIDELLI",
-			"",
+            "L. MORBIDELLI",
+            "",
             "Lead Level Design",
-			"Eliott MORBIDELLI",
-			"",
-			"Level Design",
-			"A. MORBIDELLI",
-			"",
+            "Eliott MORBIDELLI",
+            "",
+            "Level Design",
+            "A. MORBIDELLI",
+            "",
             "QA Testers",
             "Maxence ROSS",
             "",
-            "Thanks for playing!",
-            "",
-            "Click anywhere to return to the Menu"
+            "Thanks for playing!"
         ];
 
-        let startY = 160;
+        // Créer un conteneur pour tous les textes
+        this.creditContainer = this.add.container(width / 2, height + 50);
+
+        let offsetY = 0;
         credits.forEach(line => {
-            this.add.text(width / 2, startY, line, {
+            const text = this.add.text(0, offsetY, line, {
                 fontSize: "28px",
                 color: "#ffffff"
             }).setOrigin(0.5);
-            startY += 50;
+            this.creditContainer.add(text);
+            offsetY += 50; // espacement entre les lignes
         });
+
+        // Vitesse de défilement (pixels par seconde)
+        this.scrollSpeed = 50;
 
         // Événement clic partout sur la scène
         this.input.once('pointerdown', () => {
             this.sound.play('menu', { volume: gameVolume });
             this.scene.start("MenuScene");
         });
+    }
+
+    update(time, delta) {
+        // Faire défiler les crédits vers le haut
+        this.creditContainer.y -= this.scrollSpeed * (delta / 1000);
+
+        // Si le dernier texte est passé au-dessus de l'écran, revenir au menu automatiquement
+        const lastText = this.creditContainer.list[this.creditContainer.list.length - 1];
+        if (lastText.y + this.creditContainer.y < -50) {
+            this.scene.start("MenuScene");
+        }
     }
 }
 
@@ -1047,6 +1063,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
