@@ -803,7 +803,7 @@ class World1 extends Phaser.Scene {
 
             btn.on("pointerdown", () => {
 				this.sound.play('select', { volume: gameVolume })
-				this.scene.start(" LevelScene", {
+				this.scene.start("LevelScene", {
   					levelKey: niv.scene
 				});
 			})
@@ -824,7 +824,7 @@ class World1 extends Phaser.Scene {
 
             btn.on("pointerdown", () => {
 				this.sound.play('select', { volume: gameVolume })
-				this.scene.start(" LevelScene", {
+				this.scene.start("LevelScene", {
   					levelKey: niv.scene
 				});
 			})
@@ -915,3 +915,4 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
