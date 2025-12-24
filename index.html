@@ -987,14 +987,27 @@ class CreditsScene extends Phaser.Scene {
 
         // Contenu des crédits
         const credits = [
-            "A game by MOI14212869",
+            "A game by",
+			"MOI14212869",
             "",
-            "Development: [Ton Nom / Pseudo]",
-            "Visual Design: [Nom de ta sœur]",
-            "Level Design: [Nom de ta cousine], [Nom de ton pote]",
-            "QA / Testing: [Nom de ton pote]",
+            "Producter & Lead Programmer",
+			"Eliott MORBIDELLI",
+			"",
+            "Visual Design",
+			"L. MORBIDELLI",
+			"",
+            "Lead Level Design",
+			"Eliott MORBIDELLI",
+			"",
+			"Level Design",
+			"A. MORBIDELLI",
+			"",
+            "QA Testers",
+            "Maxence ROSS",
             "",
-            "Thanks for playing!"
+            "Thanks for playing!",
+            "",
+            "Click anywhere to return to the Menu"
         ];
 
         let startY = 160;
@@ -1006,16 +1019,8 @@ class CreditsScene extends Phaser.Scene {
             startY += 50;
         });
 
-        // Bouton retour
-        const backButton = this.add.text(5, 5, "← Back", {
-            fontSize: "24px",
-            color: "#ffffff",
-            backgroundColor: "#00BFFF",
-            padding: { x: 7, y: 4 },
-            borderRadius: 5
-        }).setInteractive();
-
-        backButton.on("pointerdown", () => {
+        // Événement clic partout sur la scène
+        this.input.once('pointerdown', () => {
             this.sound.play('menu', { volume: gameVolume });
             this.scene.start("MenuScene");
         });
@@ -1042,6 +1047,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
