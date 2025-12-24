@@ -32,7 +32,7 @@
     { "x": 500, "y": 560 },
     { "x": 60, "y": 440, "orientation": "down" },
     { "x": 620, "y": 560 },
-    { "x": 780, "y": 280, "orientation": "down" },
+    { "x": 780, "y": 280, "orientation": "down" }
   ],
 
   "redCircles": [
