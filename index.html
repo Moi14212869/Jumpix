@@ -481,6 +481,23 @@ const level = this.cache.json.get(this.levelKey);
       level.blueCircle.x,
       level.blueCircle.y
     );
+	// --- Bouton "Retour" ---
+const backButton = this.add.text(5, 5, "←", {
+    fontSize: "24px",
+    color: "#ffffff",
+    backgroundColor: "#00BFFF",
+    padding: { x: 7, y: 4 },
+    borderRadius: 5
+}).setInteractive();
+
+// Événement au clic sur le bouton
+backButton.on("pointerdown", () => {
+    // Jouer le son du menu
+    this.sound.play('menu', { volume: gameVolume });
+
+    // Retour à la scène "World1"
+    this.scene.start(level.nextScene);
+});
 
     // --- COLLISIONS ---
     this.physics.add.collider(this.player, this.platforms);
@@ -970,6 +987,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
