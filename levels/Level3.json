@@ -58,7 +58,7 @@
     { "x": 400, "y": 250, "direction": "down" },
     { "x": 320, "y": 350 },
     { "x": 480, "y": 110, "rise": 60 },
-    { "x": 40, "y": 50, "rise": 60, "direction": "down" },
+    { "x": 400, "y": 50, "rise": 60, "direction": "down" },
     { "x": 320, "y": 110, "rise": 60 }
   ]
 }
