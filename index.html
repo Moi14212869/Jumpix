@@ -54,14 +54,15 @@ function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = 0xA0522
 }
 function createSnow(scene) {
     // Texture flocon
-    const gfx = scene.add.graphics();
-    gfx.fillStyle(0xffffff, 1);
-    gfx.fillCircle(2, 2, 2);
-    gfx.generateTexture("snowflake", 4, 4);
-    gfx.destroy();
+    if (!scene.textures.exists("snowflake")) {
+        const gfx = scene.add.graphics();
+        gfx.fillStyle(0xffffff, 1);
+        gfx.fillCircle(2, 2, 2);
+        gfx.generateTexture("snowflake", 4, 4);
+        gfx.destroy();
+    }
 
-    let particles;
-    let emitterConfig = {
+    const particles = scene.add.particles(0, 0, "snowflake", {
         x: { min: 0, max: scene.scale.width },
         y: -10,
         lifespan: 6000,
@@ -71,25 +72,11 @@ function createSnow(scene) {
         quantity: 4,
         frequency: 100,
         blendMode: "NORMAL"
-    };
+    });
 
-    // 🔍 Phaser ancien (3.0 → 3.55)
-    particles = scene.add.particles("snowflake");
-    particles.setDepth(-10);
-    particles.setScrollFactor(0);
-
-    if (particles.createEmitter) {
-        particles.createEmitter(emitterConfig);
-    }
-    // 🔍 Phaser récent (3.60+)
-    else if (particles.addEmitter) {
-        particles.addEmitter(emitterConfig);
-    }
-    else {
-        console.error("API particules Phaser inconnue");
-    }
+    particles.setDepth(-10);      // arrière-plan
+    particles.setScrollFactor(0); // fixe à l'écran
 }
-
 function createBlueCircle(scene, x, y) {
     const radius = 20;
     const gfx = scene.add.graphics();
@@ -1289,6 +1276,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
