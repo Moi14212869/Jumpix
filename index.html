@@ -586,9 +586,9 @@ backButton.on("pointerdown", () => {
 
     // --- COLLISIONS ---
     this.physics.add.collider(this.player, this.platforms);
-	this.physics.add.collider(this.player, this.icePlatforms, () => {
-    	this.onIce = true;
-	});
+	this.physics.add.collider(this.player, this.icePlatforms, (player, ice) => {
+   		this.onIce = true; // joueur est sur glace
+	}, null, this);
 	this.physics.add.collider(this.redSquares, this.platforms);
     this.physics.add.collider(this.player, this.spikes, () => this.die());
     this.physics.add.overlap(this.player, this.redCircles, () => this.die());
@@ -671,41 +671,31 @@ backButton.on("pointerdown", () => {
 
 update() {
    const p = this.player;
-	this.onIce = false;
 
-// Détection glace
-const onIce = p.body.touching.down && this.onIce;
-
-// --- GLISSADE ---
-if (onIce) {
+if (p.body.touching.down && this.onIce) {
+    // si on commence à glisser
     if (!this.sliding) {
         this.sliding = true;
-
-        // Direction prise à l’entrée sur la glace
-        if (p.body.velocity.x === 0) {
-            this.slideDir = this.cursors.left.isDown ? -1 : 1;
-        } else {
-            this.slideDir = p.body.velocity.x > 0 ? 1 : -1;
-        }
+        // déterminer direction initiale
+        this.slideDir = p.body.velocity.x !== 0 ? Math.sign(p.body.velocity.x) : (this.cursors.right.isDown ? 1 : -1);
     }
 
-    // Vitesse constante (aucun contrôle)
+    // appliquer vitesse constante
     p.setVelocityX(220 * this.slideDir);
-}
-else {
+
+} else {
+    // si on quitte la glace
     this.sliding = false;
 
-    // --- Contrôles normaux ---
-    if (this.cursors.left.isDown || this.movingLeft) {
-        p.setVelocityX(-160);
-    }
-    else if (this.cursors.right.isDown || this.movingRight) {
-        p.setVelocityX(160);
-    }
-    else {
-        p.setVelocityX(0);
-    }
+    // contrôles normaux
+    if (this.cursors.left.isDown || this.movingLeft) p.setVelocityX(-160);
+    else if (this.cursors.right.isDown || this.movingRight) p.setVelocityX(160);
+    else p.setVelocityX(0);
 }
+
+// reset flag glace à la fin du frame
+this.onIce = false;
+
     // --- Reset compteur de saut si le joueur touche le sol ---
     if (p.body.touching.down) {
         this.jumpCount = 0;
@@ -1358,6 +1348,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
