@@ -706,20 +706,6 @@ else {
         p.setVelocityX(0);
     }
 }
-
-    // --- Contrôles normaux ---
-    if (this.cursors.left.isDown || this.movingLeft) {
-        p.setVelocityX(-160);
-    }
-    else if (this.cursors.right.isDown || this.movingRight) {
-        p.setVelocityX(160);
-    }
-    else {
-        p.setVelocityX(0);
-    }
-}
-
-
     // --- Reset compteur de saut si le joueur touche le sol ---
     if (p.body.touching.down) {
         this.jumpCount = 0;
@@ -1372,6 +1358,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
