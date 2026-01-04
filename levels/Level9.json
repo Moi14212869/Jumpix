@@ -17,5 +17,9 @@
     { "x": 380, "y": 560, "orientation": "up" },
     { "x": 420, "y": 560, "orientation": "up" },
     { "x": 280, "y": 250, "orientation": "up" }
+  ],
+  
+  "icePlatforms": [
+    { "x": 200, "y": 400, "w": 240, "h": 40 }
   ]
 }
