@@ -80,7 +80,7 @@
     { "x": 560, "y": 550 },
     { "x": 600, "y": 550 },
     { "x": 640, "y": 450, "direction": "down", "distance": 100 },
-    { "x": 540, "y": 330, "direction": "down", "distance": 40 },
-    { "x": 470, "y": 390, "distance": 40 }
+    { "x": 540, "y": 330, "direction": "down", "distance": 60 },
+    { "x": 470, "y": 390, "distance": 60 }
   ]
 }
