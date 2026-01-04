@@ -29,7 +29,7 @@ if (isNaN(gameVolume)) gameVolume = 0.5;
 let playerCoins = parseInt(localStorage.getItem("playerCoins")) || 0;
 let dead = parseInt(localStorage.getItem("dead")) || 0;
 let kill = parseInt(localStorage.getItem("kill")) || 0;
-let game = parseInt(localStorage.getItem("game")) || 0;
+let party = parseInt(localStorage.getItem("party")) || 0;
 let colorPlayer = parseInt(localStorage.getItem("colorPlayer")) || 0xAA66CC;
 function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = 0xA0522D) {
     const tileSize = 40;
@@ -546,8 +546,8 @@ backButton.on("pointerdown", () => {
 	this.physics.add.overlap(this.player, this.blueCircle, () => {
     // Jouer le son de victoire
     this.sound.play('victory', { volume: gameVolume });
-	game++;
-	localStorage.setItem("game", game);
+	party++;
+	localStorage.setItem("party", party);
     // Vérifier si une transition est déjà en cours
     if (this.transitioning) return;
     this.transitioning = true;
@@ -1119,4 +1119,5 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
