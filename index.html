@@ -510,6 +510,32 @@ backButton.on("pointerdown", () => {
 	this.physics.add.collider(this.redSquares, this.platforms);
     this.physics.add.collider(this.player, this.spikes, () => this.die());
     this.physics.add.overlap(this.player, this.redCircles, () => this.die());
+	this.physics.add.overlap(player, this.redSquares, (player, square) => {
+  const playerBottom = player.y + player.displayHeight / 2;
+  const squareTop = square.y - square.displayHeight / 2;
+
+  const verticalDiff = playerBottom - squareTop;
+
+  // Si le joueur touche par le haut (avec une petite marge de tolérance)
+  if (verticalDiff < 10 && player.body.velocity.y > 0) {
+    // Le joueur a sauté sur le carré rouge
+    player.setVelocityY(-200);
+    this.tweens.add({
+      targets: square,
+      scaleX: 0,
+      scaleY: 0,
+      duration: 300,
+      ease: 'Cubic.easeIn',
+      onComplete: () => {
+        square.destroy();
+      }
+    });
+    } else {
+    // Collision par côté ou par dessous : mort
+    this.scene.restart();
+  }
+  }, null, this);
+
 	this.physics.add.overlap(this.player, this.blueCircle, () => {
     // Jouer le son de victoire
     this.sound.play('victory', { volume: gameVolume });
@@ -1090,6 +1116,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
