@@ -488,7 +488,7 @@ const level = this.cache.json.get(this.levelKey);
 if (level.nextScene === "World2") {
     createSnow(this);
 }
-
+	this.onIce = false;
 	this.isWorld2 = (level.nextScene === "World2");
     this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
@@ -586,7 +586,9 @@ backButton.on("pointerdown", () => {
 
     // --- COLLISIONS ---
     this.physics.add.collider(this.player, this.platforms);
-	this.physics.add.collider(this.player, this.icePlatforms);
+	this.physics.add.collider(this.player, this.icePlatforms, () => {
+    	this.onIce = true;
+	});
 	this.physics.add.collider(this.redSquares, this.platforms);
     this.physics.add.collider(this.player, this.spikes, () => this.die());
     this.physics.add.overlap(this.player, this.redCircles, () => this.die());
@@ -669,26 +671,42 @@ backButton.on("pointerdown", () => {
 
 update() {
    const p = this.player;
+	this.onIce = false;
 
 // Détection glace
-const onIce = p.body.touching.down &&
-              this.physics.overlap(p, this.icePlatforms);
+const onIce = p.body.touching.down && 
+	const onIce = this.onIce && p.body.touching.down;
 
 // --- GLISSADE ---
 if (onIce) {
     if (!this.sliding) {
         this.sliding = true;
 
-        // Direction prise au moment d’entrer sur la glace
-        this.slideDir = p.body.velocity.x >= 0 ? 1 : -1;
-        if (this.slideDir === 0) this.slideDir = 1;
+        // Direction prise à l’entrée sur la glace
+        if (p.body.velocity.x === 0) {
+            this.slideDir = this.cursors.left.isDown ? -1 : 1;
+        } else {
+            this.slideDir = p.body.velocity.x > 0 ? 1 : -1;
+        }
     }
 
-    // Vitesse constante de glisse
-    p.setVelocityX(200 * this.slideDir);
+    // Vitesse constante (aucun contrôle)
+    p.setVelocityX(220 * this.slideDir);
 }
 else {
     this.sliding = false;
+
+    // --- Contrôles normaux ---
+    if (this.cursors.left.isDown || this.movingLeft) {
+        p.setVelocityX(-160);
+    }
+    else if (this.cursors.right.isDown || this.movingRight) {
+        p.setVelocityX(160);
+    }
+    else {
+        p.setVelocityX(0);
+    }
+}
 
     // --- Contrôles normaux ---
     if (this.cursors.left.isDown || this.movingLeft) {
@@ -1355,6 +1373,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
