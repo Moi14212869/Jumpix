@@ -1,8 +1,9 @@
 {
   "playerStart": { "x": 60, "y": 370 },
   "blueCircle": { "x": 100, "y": 100 },
-    "reward": 10,
+  "reward": 10,
   "nextScene": "World1",
+
   "platforms": [
     { "x": 0, "y": 480, "w": 120, "h": 120 },
     { "x": 240, "y": 440, "w": 40, "h": 40 },
@@ -39,22 +40,50 @@
     { "x": 700, "y": 600 },
     { "x": 740, "y": 600 },
     { "x": 780, "y": 600 },
+
     { "x": 800, "y": 460, "orientation": "left" },
     { "x": 800, "y": 420, "orientation": "left" },
+
     { "x": 440, "y": 260, "orientation": "left" },
     { "x": 440, "y": 300, "orientation": "left" },
+    { "x": 440, "y": 340, "orientation": "left" },
+    { "x": 440, "y": 220, "orientation": "left" },
+
     { "x": 720, "y": 380, "orientation": "left" },
+
+    { "x": 680, "y": 260, "orientation": "left" },
     { "x": 680, "y": 220, "orientation": "left" },
     { "x": 680, "y": 180, "orientation": "left" },
-    { "x": 740, "y": 60, "orientation": "down" },
-    { "x": 780, "y": 20, "orientation": "down" },
+
+    { "x": 740, "y": 80, "orientation": "down" },
+    { "x": 780, "y": 80, "orientation": "down" },
+
+    { "x": 720, "y": 60, "orientation": "left" },
     { "x": 720, "y": 20, "orientation": "left" },
-    { "x": 720, "y": 60, "orientation": "left" }
+
+    { "x": 520, "y": 180, "orientation": "right" },
+    { "x": 520, "y": 20, "orientation": "right" },
+
+    { "x": 220, "y": 0, "orientation": "down" },
+    { "x": 180, "y": 0, "orientation": "down" },
+    { "x": 140, "y": 0, "orientation": "down" },
+    { "x": 100, "y": 0, "orientation": "down" },
+    { "x": 60, "y": 0, "orientation": "down" },
+
+    { "x": 220, "y": 200 },
+    { "x": 180, "y": 200 },
+    { "x": 140, "y": 200 },
+    { "x": 100, "y": 200 },
+    { "x": 60, "y": 200 },
+
+    { "x": 0, "y": 60, "orientation": "right" },
+    { "x": 0, "y": 100, "orientation": "right" },
+    { "x": 0, "y": 140, "orientation": "right" }
   ],
 
   "redCircles": [
     { "x": 460, "y": 150 },
-    { "x": 380, "y": 50, "direction": "down" },
+    { "x": 380, "y": 50, "direction": "down", "distance": 100 },
     { "x": 300, "y": 150 }
   ]
 }
