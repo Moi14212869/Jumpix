@@ -452,7 +452,18 @@ const level = this.cache.json.get(this.levelKey);
         ))
       );
     }
-
+    // --- CARRES ---
+	if (level.redSquares) {
+      level.redSquares.forEach(r =>
+        this.redSquares.add(createRedSquare(
+          r.x,
+          r.y,
+		  this,
+          r.rise,
+          r.direction
+        ))
+      );
+    }
     // --- JOUEUR ---
     const size = 40;
     const gfx = this.add.graphics();
@@ -1077,6 +1088,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
