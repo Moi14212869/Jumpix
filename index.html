@@ -29,6 +29,7 @@ if (isNaN(gameVolume)) gameVolume = 0.5;
 let playerCoins = parseInt(localStorage.getItem("playerCoins")) || 0;
 let dead = parseInt(localStorage.getItem("dead")) || 0;
 let kill = parseInt(localStorage.getItem("kill")) || 0;
+let game = parseInt(localStorage.getItem("game")) || 0;
 let colorPlayer = parseInt(localStorage.getItem("colorPlayer")) || 0xAA66CC;
 function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = 0xA0522D) {
     const tileSize = 40;
@@ -358,6 +359,8 @@ function createRedCircle(scene, x, y, riseAmount = 100, direction = 'up') {
   return circle;
 }
 function onPlayerHitSpike(player, spike, scene) {
+	dead++;
+	localStorage.setItem("dead", dead);
 	scene.sound.play('dead', { volume: gameVolume })
   scene.scene.restart();
 }
@@ -521,6 +524,8 @@ backButton.on("pointerdown", () => {
   // Si le joueur touche par le haut (avec une petite marge de tolérance)
   if (verticalDiff < 10 && player.body.velocity.y > 0) {
     // Le joueur a sauté sur le carré rouge
+	kill++;
+	localStorage.setItem("kill", kill);
     player.setVelocityY(-200);
     this.tweens.add({
       targets: square,
@@ -541,7 +546,8 @@ backButton.on("pointerdown", () => {
 	this.physics.add.overlap(this.player, this.blueCircle, () => {
     // Jouer le son de victoire
     this.sound.play('victory', { volume: gameVolume });
-
+	game++;
+	localStorage.setItem("game", game);
     // Vérifier si une transition est déjà en cours
     if (this.transitioning) return;
     this.transitioning = true;
@@ -1113,3 +1119,4 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
