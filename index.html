@@ -696,15 +696,15 @@ update() {
         // --- Contrôles normaux ---
         if (this.cursors.left.isDown || this.movingLeft) {
             p.setVelocityX(-160);
-            this.airDir = -1; // direction en l’air
+            if (!p.body.touching.down) this.airDir = -1; // seulement en l’air
         } else if (this.cursors.right.isDown || this.movingRight) {
             p.setVelocityX(160);
-            this.airDir = 1;
+            if (!p.body.touching.down) this.airDir = 1;
         } else {
-            // Si en l’air, garder la direction précédente
-            if (!p.body.touching.down) {
+            // Si en l’air et précédemment sur glace, conserver la vitesse
+            if (!p.body.touching.down && this.airOnIce) {
                 p.setVelocityX(160 * (this.airDir || 1));
-            } else {
+            } else if (p.body.touching.down) {
                 p.setVelocityX(0);
             }
         }
@@ -713,6 +713,7 @@ update() {
     // --- Reset compteur de saut si le joueur touche le sol ---
     if (p.body.touching.down) {
         this.jumpCount = 0;
+        this.airOnIce = false; // reset quand on touche le sol
     }
 
     // --- Saut via clavier ---
@@ -726,9 +727,10 @@ jumpPlayer() {
     if (this.jumpCount < 2) {
         const p = this.player;
 
-        // Conserver la vitesse horizontale si on est sur la glace
+        // Seule condition : on saute depuis la glace
         if (this.onIce && p.body.touching.down) {
             this.airDir = p.body.velocity.x > 0 ? 1 : -1;
+            this.airOnIce = true; // indique qu'on est en l’air après un saut sur glace
         }
 
         p.setVelocityY(-330);
@@ -748,6 +750,7 @@ jumpPlayer() {
         this.jumpCount++;
     }
 }
+
 
 }
 /* =====================================================
@@ -1365,6 +1368,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
