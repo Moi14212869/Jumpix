@@ -115,6 +115,39 @@ function createBlueCircle(scene, x, y) {
 
     return circle;
 }
+function createIcePlatform(scene, x, y, widthInPx, heightInPx = 40) {
+    const tileSize = 40;
+    const blocksPerRow = Math.floor(widthInPx / tileSize);
+    const blocksPerCol = Math.floor(heightInPx / tileSize);
+
+    for (let row = 0; row < blocksPerCol; row++) {
+        for (let col = 0; col < blocksPerRow; col++) {
+
+            const gfx = scene.add.graphics();
+
+            // Couleur glace
+            gfx.fillStyle(0x9EE7FF, 1);
+            gfx.fillRect(0, 0, tileSize, tileSize);
+
+            // Reflet glacé
+            gfx.fillStyle(0xFFFFFF, 0.5);
+            gfx.fillRect(0, 0, tileSize, 6);
+
+            const key = `ice-${x}-${y}-${row}-${col}`;
+            gfx.generateTexture(key, tileSize, tileSize);
+            gfx.destroy();
+
+            const block = scene.icePlatforms.create(
+                x + col * tileSize,
+                y + row * tileSize,
+                key
+            );
+
+            block.setOrigin(0, 0);
+            block.refreshBody();
+        }
+    }
+}
 
 function createRedTriangle(scene, x, y, orientation = 'up') {
     const size = 40;
@@ -462,6 +495,7 @@ if (level.nextScene === "World2") {
     this.spikes = this.physics.add.staticGroup();
     this.redCircles = this.physics.add.group();
 	this.redSquares = this.physics.add.group();
+	this.icePlatforms = this.physics.add.staticGroup();
 
     this.input.addPointer(2);
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -517,6 +551,14 @@ if (level.nextScene === "World2") {
     );
 
     this.player.setBounce(0.2).setCollideWorldBounds(true);
+
+	// --- PLATEFORMES DE GLACE ---
+if (level.icePlatforms) {
+    level.icePlatforms.forEach(p => {
+        createIcePlatform(this, p.x, p.y, p.w, p.h || 40);
+    });
+}
+
 
     // --- SORTIE ---
     this.blueCircle = createBlueCircle(
@@ -625,16 +667,40 @@ backButton.on("pointerdown", () => {
   }
 
 update() {
-    const p = this.player;
+   const p = this.player;
 
-    // --- Déplacement horizontal ---
+// Détection glace
+const onIce = p.body.touching.down &&
+              this.physics.overlap(p, this.icePlatforms);
+
+// --- GLISSADE ---
+if (onIce) {
+    if (!this.sliding) {
+        this.sliding = true;
+
+        // Direction prise au moment d’entrer sur la glace
+        this.slideDir = p.body.velocity.x >= 0 ? 1 : -1;
+        if (this.slideDir === 0) this.slideDir = 1;
+    }
+
+    // Vitesse constante de glisse
+    p.setVelocityX(200 * this.slideDir);
+}
+else {
+    this.sliding = false;
+
+    // --- Contrôles normaux ---
     if (this.cursors.left.isDown || this.movingLeft) {
         p.setVelocityX(-160);
-    } else if (this.cursors.right.isDown || this.movingRight) {
+    }
+    else if (this.cursors.right.isDown || this.movingRight) {
         p.setVelocityX(160);
-    } else {
+    }
+    else {
         p.setVelocityX(0);
     }
+}
+
 
     // --- Reset compteur de saut si le joueur touche le sol ---
     if (p.body.touching.down) {
@@ -1288,6 +1354,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
