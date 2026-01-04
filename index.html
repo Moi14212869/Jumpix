@@ -587,7 +587,7 @@ backButton.on("pointerdown", () => {
     // --- COLLISIONS ---
     this.physics.add.collider(this.player, this.platforms);
 	this.physics.add.collider(this.player, this.icePlatforms, (player, ice) => {
-   		this.onIce = true; // joueur est sur glace
+    	this.onIce = true;
 	}, null, this);
 	this.physics.add.collider(this.redSquares, this.platforms);
     this.physics.add.collider(this.player, this.spikes, () => this.die());
@@ -670,50 +670,35 @@ backButton.on("pointerdown", () => {
   }
 
 update() {
-    const p = this.player;
+const p = this.player;
 
-    // Détection glace
-    const onIce = p.body.touching.down && this.onIce;
-
-    // --- GLISSADE / déplacement ---
-    if (onIce) {
-        if (!this.sliding) {
-            this.sliding = true;
-
-            // Si le joueur ne bouge pas, prendre la direction actuelle
-            if (p.body.velocity.x === 0) {
-                this.slideDir = this.cursors.left.isDown ? -1 : 1;
-            } else {
-                this.slideDir = p.body.velocity.x > 0 ? 1 : -1;
-            }
-        }
-
-        // Appliquer la vitesse horizontale
-        p.setVelocityX(220 * this.slideDir);
-    } else {
-        this.sliding = false;
-
-        // --- Contrôles normaux ---
-        if (this.cursors.left.isDown || this.movingLeft) {
-            p.setVelocityX(-160);
-            if (!p.body.touching.down) this.airDir = -1; // seulement en l’air
-        } else if (this.cursors.right.isDown || this.movingRight) {
-            p.setVelocityX(160);
-            if (!p.body.touching.down) this.airDir = 1;
-        } else {
-            // Si en l’air et précédemment sur glace, conserver la vitesse
-            if (!p.body.touching.down && this.airOnIce) {
-                p.setVelocityX(160 * (this.airDir || 1));
-            } else if (p.body.touching.down) {
-                p.setVelocityX(0);
-            }
-        }
+if (p.body.touching.down && this.onIce) {
+    // si on commence à glisser
+    if (!this.sliding) {
+        this.sliding = true;
+        // déterminer direction initiale
+        this.slideDir = p.body.velocity.x !== 0 ? Math.sign(p.body.velocity.x) : (this.cursors.right.isDown ? 1 : -1);
     }
+
+    // appliquer vitesse constante
+    p.setVelocityX(220 * this.slideDir);
+
+} else {
+    // si on quitte la glace
+    this.sliding = false;
+
+    // contrôles normaux
+    if (this.cursors.left.isDown || this.movingLeft) p.setVelocityX(-160);
+    else if (this.cursors.right.isDown || this.movingRight) p.setVelocityX(160);
+    else p.setVelocityX(0);
+}
+
+// reset flag glace à la fin du frame
+this.onIce = false;
 
     // --- Reset compteur de saut si le joueur touche le sol ---
     if (p.body.touching.down) {
         this.jumpCount = 0;
-        this.airOnIce = false; // reset quand on touche le sol
     }
 
     // --- Saut via clavier ---
@@ -725,33 +710,28 @@ update() {
 // --- Fonction saut + double saut ---
 jumpPlayer() {
     if (this.jumpCount < 2) {
-        const p = this.player;
+        // Appliquer la vélocité verticale pour le saut
+        this.player.setVelocityY(-330);
 
-        // Seule condition : on saute depuis la glace
-        if (this.onIce && p.body.touching.down) {
-            this.airDir = p.body.velocity.x > 0 ? 1 : -1;
-            this.airOnIce = true; // indique qu'on est en l’air après un saut sur glace
-        }
-
-        p.setVelocityY(-330);
-
-        // Si c'est le deuxième saut, rotation
+        // Si c'est le deuxième saut, ajouter une rotation
         if (this.jumpCount === 1) {
-            const dir = this.cursors.left.isDown ? -1 : (this.cursors.right.isDown ? 1 : (this.airDir || 1));
+            const dir = this.cursors.left.isDown ? -1 : (this.cursors.right.isDown ? 1 : 1);
+
             this.tweens.add({
-                targets: p,
-                angle: p.angle + 180 * dir,
+                targets: this.player,
+                angle: this.player.angle + 180 * dir,
                 duration: 500,
                 ease: "Cubic.easeOut"
             });
         }
 
+        // Jouer le son du saut
         this.sound.play('jump', { volume: gameVolume });
+
+        // Incrémenter le compteur de saut
         this.jumpCount++;
     }
 }
-
-
 }
 /* =====================================================
                     Shop
@@ -1276,7 +1256,7 @@ class World2 extends Phaser.Scene {
 
     create() {
 		
-        const title = this.add.text(400, 80, "World 2", {
+        const title = this.add.text(400, 80, "World 1", {
             fontSize: "50px",
             color: "#ffffffff"
         }).setOrigin(0.5);
@@ -1306,7 +1286,7 @@ class World2 extends Phaser.Scene {
         prec.setInteractive();
         prec.on("pointerdown", () => {
 			this.sound.play('menu', { volume: gameVolume })
-            this.scene.start("World1");
+            this.scene.start("ShopScene");
         });
         const niveaux3 = [
             { nom: "➡ Level 9", scene: "Level9" }
@@ -1368,28 +1348,3 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
