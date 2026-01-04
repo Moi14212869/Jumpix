@@ -510,7 +510,7 @@ backButton.on("pointerdown", () => {
 	this.physics.add.collider(this.redSquares, this.platforms);
     this.physics.add.collider(this.player, this.spikes, () => this.die());
     this.physics.add.overlap(this.player, this.redCircles, () => this.die());
-	this.physics.add.overlap(player, this.redSquares, (player, square) => {
+	this.physics.add.overlap(this.player, this.redSquares, (player, square) => {
   const playerBottom = player.y + player.displayHeight / 2;
   const squareTop = square.y - square.displayHeight / 2;
 
@@ -1116,6 +1116,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
