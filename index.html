@@ -1176,7 +1176,18 @@ class World2 extends Phaser.Scene {
 			this.sound.play('menu', { volume: gameVolume })
             this.scene.start("MenuScene");
         });
-		
+				const prec = this.add.text(10, 280, "◀", {
+           fontSize: "24px",
+            color: "#ffffff",
+            backgroundColor: "#00BFFF",
+            padding: { x: 7, y: 4 },
+            borderRadius: 5
+        });
+        prec.setInteractive();
+        prec.on("pointerdown", () => {
+			this.sound.play('menu', { volume: gameVolume })
+            this.scene.start("ShopScene");
+        });
         const niveaux3 = [
             { nom: "➡ Level 9", scene: "Level9" }
         ];
@@ -1217,20 +1228,6 @@ class World2 extends Phaser.Scene {
         });
     }
 }
-		const prec = this.add.text(10, 280, "◀", {
-           fontSize: "24px",
-            color: "#ffffff",
-            backgroundColor: "#00BFFF",
-            padding: { x: 7, y: 4 },
-            borderRadius: 5
-        });
-        prec.setInteractive();
-        prec.on("pointerdown", () => {
-			this.sound.play('menu', { volume: gameVolume })
-            this.scene.start("ShopScene");
-        });
-    }
-}
 /* =========================================================
                     CONFIG JEU
 ========================================================= */
@@ -1251,6 +1248,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
