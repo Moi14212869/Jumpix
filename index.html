@@ -1342,7 +1342,7 @@ class World2 extends Phaser.Scene {
         prec.setInteractive();
         prec.on("pointerdown", () => {
 			this.sound.play('menu', { volume: gameVolume })
-            this.scene.start("Word1");
+            this.scene.start("World1");
         });
         const niveaux3 = [
             { nom: "➡ Level 9", scene: "Level9" }
@@ -1404,6 +1404,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
