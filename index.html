@@ -63,6 +63,61 @@ function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = 0xA0522
         }
     }
 }
+function showNotEnoughCoinsPopup(scene) {
+    const { width, height } = scene.scale;
+
+    // Fond sombre
+    const overlay = scene.add.rectangle(
+        width / 2,
+        height / 2,
+        width,
+        height,
+        0x000000,
+        0.6
+    ).setScrollFactor(0);
+
+    // Boîte
+    const box = scene.add.rectangle(
+        width / 2,
+        height / 2,
+        360,
+        160,
+        0x222222
+    ).setStrokeStyle(3, 0xffffff);
+
+    // Texte
+    const text = scene.add.text(
+        width / 2,
+        height / 2 - 20,
+        "💸 Pas assez de coins !",
+        {
+            fontSize: "26px",
+            color: "#ffffff"
+        }
+    ).setOrigin(0.5);
+
+    // Bouton OK
+    const okBtn = scene.add.text(
+        width / 2,
+        height / 2 + 40,
+        "OK",
+        {
+            fontSize: "22px",
+            color: "#ffffff",
+            backgroundColor: "#00BFFF",
+            padding: { x: 20, y: 10 },
+            borderRadius: 10
+        }
+    ).setOrigin(0.5).setInteractive();
+
+    okBtn.on("pointerdown", () => {
+        scene.sound.play('menu', { volume: gameVolume });
+        overlay.destroy();
+        box.destroy();
+        text.destroy();
+        okBtn.destroy();
+    });
+}
 
 function createSnow(scene) {
     // Texture flocon
@@ -838,7 +893,7 @@ class ShopScene extends Phaser.Scene {
 
     buySkin(colorKey, price) {
         if (playerCoins < price) {
-            alert("Pas assez de coins !");
+            showNotEnoughCoinsPopup(this);
             return;
         }
 
@@ -877,7 +932,8 @@ class ShopScene2 extends Phaser.Scene {
         const ITEMS = [
             { key: "7A0000", label: "Maroon", price: 250 },
 			{ key: "0B228A", label: "Dark Blue", price: 300 },
-			{ key: "226546", label: "Dark Green", price: 350 }
+			{ key: "226546", label: "Dark Green", price: 350 },
+			{ key: "9B4DFF", label: "Electric Purple", price: 400 }
         ];
 
         let startY = 150;
@@ -945,7 +1001,7 @@ class ShopScene2 extends Phaser.Scene {
 
     buySkin(colorKey, price) {
         if (playerCoins < price) {
-            alert("Pas assez de coins !");
+            showNotEnoughCoinsPopup(this);
             return;
         }
 
@@ -1348,4 +1404,5 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
