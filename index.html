@@ -1472,16 +1472,23 @@ const objectives = [
             const skinBox = this.add.rectangle(600, y + 20, 40, 40, obj.color);
 
             if (unlocked) {
-                const select = this.add.text(660, y + 10, "Select", {
-                    fontSize: "18px",
-                    backgroundColor: "#00BFFF",
-                    padding: { x: 10, y: 5 }
-                }).setInteractive();
+      const isSelected = colorPlayer === obj.color;
+        const select = this.add.text(660, y + 10, isSelected ? "Selected" : "Select", {
+            fontSize: "18px",
+            color: isSelected ? "#00FF66" : "#ffffff",
+            backgroundColor: "#00BFFF",
+            padding: { x: 10, y: 5 },
+            borderRadius: 5
+        }).setInteractive();
 
-                select.on("pointerdown", () => {
-                    localStorage.setItem("colorPlayer", obj.color);
-                    colorPlayer = obj.color;
-                });
+        select.on("pointerdown", () => {
+            this.sound.play('select', { volume: gameVolume });
+            localStorage.setItem("colorPlayer", obj.color);
+            colorPlayer = obj.color;
+            // Mettre à jour le texte du bouton pour refléter la sélection
+            select.setText("Selected");
+            select.setColor("#00FF66");
+        });
             } else {
                 this.add.text(660, y + 10, "🔒", { fontSize: "22px" });
             }
@@ -1523,6 +1530,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
