@@ -418,51 +418,117 @@ class MenuScene extends Phaser.Scene {
     }
 
     create() {
-		
-        const title = this.add.text(400, 120, "Jumpix", {
-            fontSize: "50px",
-            color: "#ffffffff"
-        }).setOrigin(0.5);
-		this.coinText = this.add.text(780, 20, `💰 ${playerCoins}`, {
-    		fontSize: "28px",
-    		color: "#ffff00"
-		}).setOrigin(1, 0); // aligné à droite
-		
-const setting = this.add.text(5, 5, "⚙", {
-            fontSize: "24px",
-            color: "#ffffff",
-            backgroundColor: "#00BFFF",
-            padding: { x: 7, y: 4 },
-            borderRadius: 5
-        }).setInteractive();
+        const { width, height } = this.scale;
 
-        setting.on("pointerdown", () => {
-			this.sound.play('menu', { volume: gameVolume })
+        // --- TITRE ---
+        const title = this.add.text(width / 2, 120, "Jumpix", {
+            fontSize: "50px",
+            color: "#ffffff",
+            fontStyle: "bold"
+        }).setOrigin(0.5);
+
+        // Animation pulsation titre
+        this.tweens.add({
+            targets: title,
+            scale: { from: 1, to: 1.05 },
+            duration: 1000,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut"
+        });
+
+        // --- COINS ---
+        this.coinText = this.add.text(width - 20, 20, `💰 ${playerCoins}`, {
+            fontSize: "28px",
+            color: "#ffff00",
+            fontStyle: "bold"
+        }).setOrigin(1, 0);
+
+        // Cercle derrière l’icône coins
+        const coinCircle = this.add.circle(width - 40, 40, 30, 0x222222, 0.6);
+        coinCircle.setDepth(-1); // derrière le texte
+
+        // --- BOUTON SETTINGS ---
+        this.createMenuButton(30, 30, "⚙", () => {
+            this.sound.play('menu', { volume: gameVolume });
             this.scene.start("SettingsScene");
         });
-        const niveaux = [
-            { nom: "Shop 🛒", scene: "ShopScene" },
-			{ nom: "🏆 Objectives", scene: "ObjectivesScene" },
-			{ nom: "Statistics", scene: "Stats" },
-			{ nom: "➡ Play !!", scene: "World1" },
-			{ nom: "Credits", scene: "CreditsScene" }
+
+        // --- BOUTONS PRINCIPAUX ---
+        const menuItems = [
+            { label: "➡ Play !!", scene: "World1" },
+            { label: "Shop 🛒", scene: "ShopScene" },
+            { label: "🏆 Objectives", scene: "ObjectivesScene" },
+            { label: "Statistics", scene: "Stats" },
+            { label: "Credits", scene: "CreditsScene" }
         ];
 
-        let yPos = 260;
-        niveaux.forEach(niv => {
-            const btn = this.add.text(400, yPos, niv.nom, {
-                fontSize: "34px",
-                color: "#ffffffff"
+        let startY = 260;
+        menuItems.forEach((item, index) => {
+            // Création bouton avec rectangle de fond
+            const bg = this.add.rectangle(width / 2, startY, 300, 50, 0x00BFFF, 0.4).setOrigin(0.5).setInteractive();
+            const btnText = this.add.text(width / 2, startY, item.label, {
+                fontSize: "28px",
+                color: "#ffffff"
             }).setOrigin(0.5).setInteractive();
 
-            btn.on("pointerdown", () => {
-				this.sound.play('select', { volume: gameVolume })
-				this.scene.start(niv.scene);
-			})
-            yPos += 60; // écart vertical entre boutons
+            // Tween d’apparition
+            this.tweens.add({
+                targets: [bg, btnText],
+                y: startY,
+                alpha: { from: 0, to: 1 },
+                duration: 600,
+                delay: index * 100,
+                ease: 'Back.easeOut'
+            });
+
+            // Interactions
+            [bg, btnText].forEach(obj => {
+                obj.on("pointerover", () => {
+                    bg.setFillStyle(0x00BFFF, 0.8);
+                    btnText.setStyle({ color: "#00FFFF" });
+                    obj.setScale(1.05);
+                });
+                obj.on("pointerout", () => {
+                    bg.setFillStyle(0x00BFFF, 0.4);
+                    btnText.setStyle({ color: "#ffffff" });
+                    obj.setScale(1);
+                });
+                obj.on("pointerdown", () => {
+                    this.sound.play('select', { volume: gameVolume });
+                    this.scene.start(item.scene);
+                });
+            });
+
+            startY += 70;
+        });
+    }
+
+    // Fonction utilitaire pour créer un petit bouton circulaire
+    createMenuButton(x, y, label, callback) {
+        const circle = this.add.circle(x, y, 25, 0x222222, 0.6).setInteractive();
+        const text = this.add.text(x, y, label, {
+            fontSize: "24px",
+            color: "#ffffff"
+        }).setOrigin(0.5).setInteractive();
+
+        // Hover effect
+        [circle, text].forEach(obj => {
+            obj.on("pointerover", () => {
+                circle.setFillStyle(0x222222, 0.9);
+                text.setStyle({ color: "#00FFFF" });
+                obj.setScale(1.1);
+            });
+            obj.on("pointerout", () => {
+                circle.setFillStyle(0x222222, 0.6);
+                text.setStyle({ color: "#ffffff" });
+                obj.setScale(1);
+            });
+            obj.on("pointerdown", callback);
         });
     }
 }
+
 function createRedCircle(scene, x, y, riseAmount = 100, direction = 'up') {
   const radius = 10;
 
@@ -1531,6 +1597,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
