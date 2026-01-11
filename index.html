@@ -422,9 +422,6 @@ function createButton(scene, x, y, width, height, label, callback, index = 0) {
         fontStyle: "bold"
     }).setOrigin(0.5);
 
-    // Shadow pour le texte
-    text.setShadow(2, 2, "#000000", 4);
-
     // 🔹 Tween d’apparition
     scene.tweens.add({
         targets: [bg, text],
@@ -462,7 +459,7 @@ function createButton(scene, x, y, width, height, label, callback, index = 0) {
 }
 
 /* =======================================================
-                 MENU SCENE
+                     MENU SCENE
 ======================================================= */
 class MenuScene extends Phaser.Scene {
     constructor() {
@@ -478,7 +475,6 @@ class MenuScene extends Phaser.Scene {
             color: "#ffffff",
             fontStyle: "bold"
         }).setOrigin(0.5);
-        title.setShadow(3, 3, "#000000", 8);
 
         // --- Coins ---
         this.coinText = this.add.text(width - 20, 20, `💰 ${playerCoins}`, {
@@ -1582,6 +1578,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
