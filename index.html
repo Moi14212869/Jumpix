@@ -408,10 +408,62 @@ class LoadingScene extends Phaser.Scene {
 
 
 
-/* =========================================================
-                        MENU SCENE
-========================================================= */
+function createButton(scene, x, y, width, height, label, callback, index = 0) {
+    // 🔹 Arrière-plan avec bordure
+    const bg = scene.add.rectangle(x, y + 50, width, height, 0x00BFFF, 0.5)
+        .setOrigin(0.5)
+        .setStrokeStyle(2, 0xffffff)
+        .setInteractive();
 
+    // 🔹 Texte
+    const text = scene.add.text(x, y + 50, label, {
+        fontSize: "28px",
+        color: "#ffffff",
+        fontStyle: "bold"
+    }).setOrigin(0.5);
+
+    // Shadow pour le texte
+    text.setShadow(2, 2, "#000000", 4);
+
+    // 🔹 Tween d’apparition
+    scene.tweens.add({
+        targets: [bg, text],
+        y: y,
+        alpha: { from: 0, to: 1 },
+        duration: 700,
+        delay: index * 100,
+        ease: "Back.easeOut"
+    });
+
+    // 🔹 Effet hover
+    [bg, text].forEach(obj => {
+        obj.on("pointerover", () => {
+            bg.setFillStyle(0x00BFFF, 0.9);
+            text.setStyle({ color: "#00FFFF" });
+            scene.tweens.add({ targets: [bg, text], scale: 1.05, duration: 150 });
+        });
+        obj.on("pointerout", () => {
+            bg.setFillStyle(0x00BFFF, 0.5);
+            text.setStyle({ color: "#ffffff" });
+            scene.tweens.add({ targets: [bg, text], scale: 1, duration: 150 });
+        });
+        obj.on("pointerdown", () => {
+            callback();
+            scene.tweens.add({
+                targets: [bg, text],
+                scale: 0.95,
+                duration: 50,
+                yoyo: true
+            });
+        });
+    });
+
+    return { bg, text };
+}
+
+/* =======================================================
+                 MENU SCENE
+======================================================= */
 class MenuScene extends Phaser.Scene {
     constructor() {
         super("MenuScene");
@@ -420,134 +472,43 @@ class MenuScene extends Phaser.Scene {
     create() {
         const { width, height } = this.scale;
 
-        // --- TITRE ---
+        // --- Titre ---
         const title = this.add.text(width / 2, 120, "Jumpix", {
-            fontSize: "60px",
+            fontSize: "50px",
             color: "#ffffff",
-            fontStyle: "bold",
-            stroke: "#000000",
-            strokeThickness: 6
+            fontStyle: "bold"
         }).setOrigin(0.5);
+        title.setShadow(3, 3, "#000000", 8);
 
-        // Animation pulsation titre
-        this.tweens.add({
-            targets: title,
-            scale: { from: 1, to: 1.08 },
-            duration: 1200,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.easeInOut"
-        });
-
-        // --- COINS ---
-        this.coinText = this.add.text(width - 30, 20, `💰 ${playerCoins}`, {
+        // --- Coins ---
+        this.coinText = this.add.text(width - 20, 20, `💰 ${playerCoins}`, {
             fontSize: "28px",
             color: "#ffff00",
-            fontStyle: "bold",
-            stroke: "#000000",
-            strokeThickness: 4
+            fontStyle: "bold"
         }).setOrigin(1, 0);
 
-        // Cercle derrière coins
-        this.add.circle(width - 50, 40, 30, 0x222222, 0.6).setDepth(-1);
-
-        // --- SETTINGS ---
-        this.createCircleButton(50, 50, "⚙", () => {
-            this.sound.play('menu', { volume: gameVolume });
-            this.scene.start("SettingsScene");
-        });
-
-        // --- BOUTONS PRINCIPAUX ---
-        const menuItems = [
+        // --- Boutons du menu ---
+        const buttons = [
             { label: "➡ Play !!", scene: "World1" },
-            { label: "🛒 Shop", scene: "ShopScene" },
+            { label: "Shop 🛒", scene: "ShopScene" },
             { label: "🏆 Objectives", scene: "ObjectivesScene" },
-            { label: "📊 Statistics", scene: "Stats" },
-            { label: "🎬 Credits", scene: "CreditsScene" }
+            { label: "Statistics", scene: "Stats" },
+            { label: "Credits", scene: "CreditsScene" }
         ];
 
         let startY = 260;
-        menuItems.forEach((item, index) => {
-            this.createMenuButton(width / 2, startY, item.label, () => {
+        buttons.forEach((btn, i) => {
+            createButton(this, width / 2, startY, 320, 60, btn.label, () => {
                 this.sound.play('select', { volume: gameVolume });
-                this.scene.start(item.scene);
-            }, index);
+                this.scene.start(btn.scene);
+            }, i);
             startY += 80;
         });
 
-        // --- PARTICULES DE NEIGE ---
-        createSnow(this);
-    }
-
-    // Bouton rectangulaire principal
-    createMenuButton(x, y, label, callback, index = 0) {
-        const bg = this.add.rectangle(x, y + 50, 320, 60, 0x00BFFF, 0.5).setOrigin(0.5).setInteractive();
-        bg.setStrokeStyle(2, 0xffffff);
-        bg.setShadow(5, 5, "#000000", 4, true, true);
-
-        const text = this.add.text(x, y + 50, label, {
-            fontSize: "28px",
-            color: "#ffffff",
-            fontStyle: "bold"
-        }).setOrigin(0.5);
-
-        // Tween d'apparition avec slide + fade
-        this.tweens.add({
-            targets: [bg, text],
-            y: y,
-            alpha: { from: 0, to: 1 },
-            duration: 700,
-            delay: index * 100,
-            ease: "Back.easeOut"
-        });
-
-        // Hover effect
-        [bg, text].forEach(obj => {
-            obj.on("pointerover", () => {
-                bg.setFillStyle(0x00BFFF, 0.9);
-                text.setStyle({ color: "#00FFFF" });
-                this.tweens.add({
-                    targets: [bg, text],
-                    scale: 1.05,
-                    duration: 150,
-                    ease: "Power1"
-                });
-            });
-            obj.on("pointerout", () => {
-                bg.setFillStyle(0x00BFFF, 0.5);
-                text.setStyle({ color: "#ffffff" });
-                this.tweens.add({
-                    targets: [bg, text],
-                    scale: 1,
-                    duration: 150,
-                    ease: "Power1"
-                });
-            });
-            obj.on("pointerdown", callback);
-        });
-    }
-
-    // Bouton circulaire type Settings / retour
-    createCircleButton(x, y, label, callback) {
-        const circle = this.add.circle(x, y, 30, 0x222222, 0.7).setInteractive();
-        const text = this.add.text(x, y, label, {
-            fontSize: "28px",
-            color: "#ffffff",
-            fontStyle: "bold"
-        }).setOrigin(0.5);
-
-        [circle, text].forEach(obj => {
-            obj.on("pointerover", () => {
-                circle.setFillStyle(0x222222, 0.95);
-                text.setStyle({ color: "#00FFFF" });
-                this.tweens.add({ targets: [circle, text], scale: 1.1, duration: 120 });
-            });
-            obj.on("pointerout", () => {
-                circle.setFillStyle(0x222222, 0.7);
-                text.setStyle({ color: "#ffffff" });
-                this.tweens.add({ targets: [circle, text], scale: 1, duration: 120 });
-            });
-            obj.on("pointerdown", callback);
+        // --- Bouton Settings ⚙ ---
+        createButton(this, 60, 60, 60, 50, "⚙", () => {
+            this.sound.play('menu', { volume: gameVolume });
+            this.scene.start("SettingsScene");
         });
     }
 }
@@ -1621,6 +1582,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
