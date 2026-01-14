@@ -32,6 +32,12 @@ let kill = parseInt(localStorage.getItem("kill")) || 0;
 let party = parseInt(localStorage.getItem("party")) || 0;
 let colorPlayer = parseInt(localStorage.getItem("colorPlayer")) || 0xAA66CC;
 const DEV_PASSWORD_HASH = "9651d08ab7a975b70a93f3c918842c44cda8f335ecbbaae88d5610d3a1790b4b";
+function devSetCoins(amount) {
+    amount = parseInt(amount);
+    if (isNaN(amount) || amount < 0) amount = 0;
+    playerCoins = amount;
+    localStorage.setItem("playerCoins", playerCoins);
+}
 
 function checkObjectives() {
     // Déblocage des skins existants
@@ -90,11 +96,43 @@ function openDevMenu() {
         coinInput.setText("Coins: " + (coinValue || 0));
     });
 
-    setCoins.on("pointerdown", () => {
-        playerCoins = parseInt(coinValue) || 0;
-        localStorage.setItem("playerCoins", playerCoins);
-        this.scene.restart();
-    });
+// ===== INPUT COINS =====
+let coinInputValue = "";
+
+const coinLabel = this.add.text(400, 210, "SET COINS", {
+    fontSize: "18px",
+    color: "#cccccc"
+}).setOrigin(0.5);
+
+const coinInputBox = this.add.rectangle(400, 245, 200, 40, 0x000000)
+    .setStrokeStyle(2, 0x00ffff);
+
+const coinInputText = this.add.text(400, 245, "0", {
+    fontSize: "22px",
+    color: "#00ffcc"
+}).setOrigin(0.5);
+
+// ===== CLAVIER =====
+this.input.keyboard.on("keydown", (e) => {
+
+    // chiffres uniquement
+    if (e.key >= "0" && e.key <= "9") {
+        coinInputValue += e.key;
+    }
+
+    // effacer
+    if (e.key === "Backspace") {
+        coinInputValue = coinInputValue.slice(0, -1);
+    }
+
+    // limite longueur (optionnelle)
+    if (coinInputValue.length > 9) {
+        coinInputValue = coinInputValue.slice(0, 9);
+    }
+
+    coinInputText.setText(coinInputValue || "0");
+});
+
 
     unlock.on("pointerdown", () => {
         Object.keys(localStorage)
@@ -1791,6 +1829,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
