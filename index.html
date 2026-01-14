@@ -55,7 +55,7 @@ function openDevMenu() {
         fontSize: "26px",
         color: "#00ffff"
     }).setOrigin(0.5);
-	
+	let coinInputValue = "";
 this.input.keyboard.on("keydown", (e) => {
     if (e.key >= "0" && e.key <= "9") {
         coinInputValue += e.key;
@@ -92,8 +92,6 @@ setCoins.on("pointerdown", () => {
     }).setOrigin(0.5).setInteractive();
 
 // ===== INPUT COINS =====
-let coinInputValue = "";
-
 const coinLabel = this.add.text(400, 210, "SET COINS", {
     fontSize: "18px",
     color: "#cccccc"
@@ -1837,6 +1835,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
