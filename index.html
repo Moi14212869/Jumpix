@@ -1438,6 +1438,18 @@ devBtn.on("pointerdown", () => {
         fontSize: "18px",
         color: "#ff5555"
     }).setOrigin(0.5);
+	const closeBtn = this.add.text(400, 365, "CANCEL", {
+    fontSize: "18px",
+    backgroundColor: "#aa0000",
+    color: "#ffffff",
+    padding: { x: 20, y: 6 }
+})
+.setOrigin(0.5)
+.setInteractive();
+closeBtn.on("pointerdown", () => {
+    this.sound.play('menu', { volume: gameVolume });
+    destroyPasswordPopup();
+});
 
     const destroyPasswordPopup = () => {
         overlay.destroy();
@@ -1445,6 +1457,7 @@ devBtn.on("pointerdown", () => {
         title.destroy();
         input.destroy();
         info.destroy();
+		closeBtn.destroy();
         this.input.keyboard.removeAllListeners();
     };
 
@@ -1829,6 +1842,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
