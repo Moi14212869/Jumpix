@@ -502,7 +502,7 @@ class MenuScene extends Phaser.Scene {
         });
 
         // --- Bouton Settings ⚙ ---
-        createButton(this, 60, 60, 60, 50, "⚙", () => {
+        createButton(this, 40, 40, 60, 50, "⚙", () => {
             this.sound.play('menu', { volume: gameVolume });
             this.scene.start("SettingsScene");
         });
@@ -1578,6 +1578,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
