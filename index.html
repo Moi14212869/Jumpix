@@ -1227,7 +1227,7 @@ class World1 extends Phaser.Scene {
 			this.sound.play('menu', { volume: gameVolume })
             this.scene.start("MenuScene");
         });
-		const next = this.add.text(700, 280, "▶", {
+		/*const next = this.add.text(700, 280, "▶", {
            fontSize: "24px",
             color: "#ffffff",
             backgroundColor: "#00BFFF",
@@ -1238,7 +1238,7 @@ class World1 extends Phaser.Scene {
         next.on("pointerdown", () => {
 			this.sound.play('menu', { volume: gameVolume })
             this.scene.start("World2");
-        });
+        });*/
 		
         const niveaux1 = [
             { nom: "➡ Level 1", scene: "Level1" },
@@ -1832,4 +1832,5 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
