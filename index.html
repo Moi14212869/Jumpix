@@ -732,8 +732,9 @@ if (level.nextScene === "World2") {
     createSnow(this);
 }
 	this.onIce = false;
-	this.sliding = false;       // indique si on est en train de glisser
-	this.slideDir = 0;       // direction du glissement, null tant que le joueur n’a pas bougé
+	this.sliding = false;
+	this.slideDir = 0;
+	this.inheritedSlideDir = 0;
 	this.isWorld2 = (level.nextScene === "World2");
     this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
@@ -941,30 +942,35 @@ const up    = this.cursors.up.isDown    || this.keys.up.isDown;
 const down  = this.cursors.down.isDown  || this.keys.down.isDown;
 const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
 const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
-
+	
 if (this.player.body.touching.down && this.onIce) {
 
     // Si on commence à glisser
-    if (!this.sliding && (left || right)) {
-        this.sliding = true;
-        this.slideDir = left ? -1 : 1;
+    if (!this.sliding) {
+        if (left || right) {
+            this.sliding = true;
+            this.slideDir = left ? -1 : 1;
+        } else if (this.inheritedSlideDir !== 0) {
+            this.sliding = true;
+            this.slideDir = this.inheritedSlideDir; // héritage de la direction
+        }
     }
 
-    // Si déjà en sliding, appliquer vitesse constante
+    // Appliquer la vitesse
     if (this.sliding) {
         this.player.setVelocityX(220 * this.slideDir);
     }
 
 } else {
-    // Si on quitte la glace ou tombe, désactiver sliding
     this.sliding = false;
     this.slideDir = 0;
-
-    // Contrôles normaux
-    if (left) this.player.setVelocityX(-160);
+	if (left) this.player.setVelocityX(-160);
     else if (right) this.player.setVelocityX(160);
     else this.player.setVelocityX(0);
 }
+
+// Reset la direction héritée seulement après avoir touché la glace
+if (this.sliding) this.inheritedSlideDir = 0;
 
     // --- Reset compteur de saut si le joueur touche le sol ---
     if (p.body.touching.down) {
@@ -984,13 +990,11 @@ if (
 // --- Fonction saut + double saut ---
 jumpPlayer() {
     if (this.jumpCount < 2) {
-        // Appliquer la vélocité verticale pour le saut
         this.player.setVelocityY(-330);
 
-        // Si c'est le deuxième saut, ajouter une rotation
+        // Rotation pour le double saut
         if (this.jumpCount === 1) {
             const dir = this.cursors.left.isDown ? -1 : (this.cursors.right.isDown ? 1 : 1);
-
             this.tweens.add({
                 targets: this.player,
                 angle: this.player.angle + 180 * dir,
@@ -999,12 +1003,23 @@ jumpPlayer() {
             });
         }
 
-        // Jouer le son du saut
+        // Jouer le son
         this.sound.play('jump', { volume: gameVolume });
 
-        // Incrémenter le compteur de saut
+        // Si on saute depuis la glace, stocker la direction
+        if (this.onIce) {
+            const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
+            const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
+
+            if (left) this.inheritedSlideDir = -1;
+            else if (right) this.inheritedSlideDir = 1;
+            else this.inheritedSlideDir = this.slideDir; // si aucune touche, conserver l’ancienne
+        }
+
         this.jumpCount++;
     }
+}
+
 }
 }
 /* =====================================================
@@ -1840,6 +1855,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
