@@ -1016,15 +1016,9 @@ init(data) {
     }).setOrigin(1, 0);
 
     const ITEMS = SHOP_PAGES[this.page];
-
-    let startY = 120;
-	this.add.text(width / 2, 70, `Page ${this.page + 1} / ${SHOP_PAGES.length}`, {
-  	fontSize: "20px",
-  	color: "#cccccc"
-	}).setOrigin(0.5);
-
-  let startY = 170;         // ⬇️ on descend les skins (plus loin du titre)
-const skinX = 140;       // ➡️ on décale à droite
+	  
+  let startY = 170;
+const skinX = 140;
 const labelX = 210;
 const actionX = 420;
 
@@ -1781,6 +1775,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
