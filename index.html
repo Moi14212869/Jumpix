@@ -732,6 +732,8 @@ if (level.nextScene === "World2") {
     createSnow(this);
 }
 	this.onIce = false;
+	this.sliding = false;       // indique si on est en train de glisser
+	this.slideDir = null;       // direction du glissement, null tant que le joueur n’a pas bougé
 	this.isWorld2 = (level.nextScene === "World2");
     this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
@@ -941,32 +943,36 @@ const up    = this.cursors.up.isDown    || this.keys.up.isDown;
 const down  = this.cursors.down.isDown  || this.keys.down.isDown;
 	
 if (p.body.touching.down && this.onIce) {
-    // si on commence à glisser
+
+    // Si on commence à glisser
     if (!this.sliding) {
-        this.sliding = true;
-        // déterminer direction initiale
-        this.slideDir = p.body.velocity.x !== 0 ? Math.sign(p.body.velocity.x) : (this.cursors.right.isDown ? 1 : -1);
+
+        // Ne glisser que si le joueur appuie sur gauche ou droite
+        if (left || right) {
+            this.sliding = true;
+            this.slideDir = left ? -1 : 1;  // on prend la direction de la touche appuyée
+        }
     }
 
-    // appliquer vitesse constante
-    p.setVelocityX(220 * this.slideDir);
+    // Appliquer vitesse constante seulement si on est en sliding
+    if (this.sliding) {
+        p.setVelocityX(220 * this.slideDir);
+    }
 
 } else {
-    // si on quitte la glace
+    // Si on quitte la glace
     this.sliding = false;
+    this.slideDir = null;
 
-    // contrôles normaux
-const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
-const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
-
-if (left) p.setVelocityX(-160);
-else if (right) p.setVelocityX(160);
-else p.setVelocityX(0);
-
+    // Contrôle normal
+    if (left) p.setVelocityX(-160);
+    else if (right) p.setVelocityX(160);
+    else p.setVelocityX(0);
 }
 
 // reset flag glace à la fin du frame
 this.onIce = false;
+
 
     // --- Reset compteur de saut si le joueur touche le sol ---
     if (p.body.touching.down) {
@@ -1842,6 +1848,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
