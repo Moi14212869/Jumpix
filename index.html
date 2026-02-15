@@ -25,6 +25,7 @@
                     FONCTIONS COMMUNES
 ========================================================= */
 let gameVolume = parseFloat(localStorage.getItem("gameVolume"));
+let keyboardLayout = localStorage.getItem("keyboardLayout") || "zqsd";
 if (isNaN(gameVolume)) gameVolume = 0.5;
 let playerCoins = parseInt(localStorage.getItem("playerCoins")) || 0;
 let dead = parseInt(localStorage.getItem("dead")) || 0;
@@ -741,6 +742,23 @@ if (level.nextScene === "World2") {
 
     this.input.addPointer(2);
     this.cursors = this.input.keyboard.createCursorKeys();
+
+if (keyboardLayout === "zqsd") {
+  this.keys = this.input.keyboard.addKeys({
+    up: Phaser.Input.Keyboard.KeyCodes.Z,
+    left: Phaser.Input.Keyboard.KeyCodes.Q,
+    down: Phaser.Input.Keyboard.KeyCodes.S,
+    right: Phaser.Input.Keyboard.KeyCodes.D
+  });
+} else {
+  this.keys = this.input.keyboard.addKeys({
+    up: Phaser.Input.Keyboard.KeyCodes.W,
+    left: Phaser.Input.Keyboard.KeyCodes.A,
+    down: Phaser.Input.Keyboard.KeyCodes.S,
+    right: Phaser.Input.Keyboard.KeyCodes.D
+  });
+}
+
     this.jumpCount = 0;
 
     // --- PLATEFORMES ---
@@ -917,7 +935,11 @@ backButton.on("pointerdown", () => {
 
 update() {
 const p = this.player;
-
+const left  = this.cursors.left.isDown  || this.keys.left.isDown;
+const right = this.cursors.right.isDown || this.keys.right.isDown;
+const up    = this.cursors.up.isDown    || this.keys.up.isDown;
+const down  = this.cursors.down.isDown  || this.keys.down.isDown;
+	
 if (p.body.touching.down && this.onIce) {
     // si on commence à glisser
     if (!this.sliding) {
@@ -1275,6 +1297,28 @@ class SettingsScene extends Phaser.Scene {
 
             this.sound.volume = gameVolume;
         });
+		const layoutText = this.add.text(50, 200, "", {
+  fontSize: "24px",
+  fill: "#ffffff"
+});
+
+const updateLayoutText = () => {
+  layoutText.setText(
+    `Clavier : ${keyboardLayout.toUpperCase()}`
+  );
+};
+
+updateLayoutText();
+
+layoutText.setInteractive();
+
+layoutText.on("pointerdown", () => {
+  keyboardLayout = keyboardLayout === "zqsd" ? "wasd" : "zqsd";
+  localStorage.setItem("keyboardLayout", keyboardLayout);
+  this.sound.play("menu", { volume: gameVolume });
+  updateLayoutText();
+});
+
 		// ===== Bouton RESET COMPTE =====
 const resetBtn = this.add.text(400, 320, "RESET ACCOUNT", {
     fontSize: "24px",
@@ -1775,6 +1819,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
