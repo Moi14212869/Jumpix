@@ -1309,24 +1309,7 @@ class SettingsScene extends Phaser.Scene {
   fontSize: "24px",
   fill: "#ffffff"
 });
-
-const updateLayoutText = () => {
-  layoutText.setText(
-    `Clavier : ${keyboardLayout.toUpperCase()}`
-  );
-};
-
-updateLayoutText();
-
-layoutText.setInteractive();
-
-layoutText.on("pointerdown", () => {
-  keyboardLayout = keyboardLayout === "zqsd" ? "wasd" : "zqsd";
-  localStorage.setItem("keyboardLayout", keyboardLayout);
-  this.sound.play("menu", { volume: gameVolume });
-  updateLayoutText();
-});
-
+		
 		// ===== Bouton RESET COMPTE =====
 const resetBtn = this.add.text(400, 320, "RESET ACCOUNT", {
     fontSize: "24px",
@@ -1480,6 +1463,38 @@ closeBtn.on("pointerdown", () => {
 			this.sound.play('menu', { volume: gameVolume })
             this.scene.start("MenuScene");
     })
+		
+// ===== Bouton Clavier (ZQSD / WASD) =====
+const keyboardBtn = this.add.text(400, 440, "", {
+    fontSize: "22px",
+    color: "#ffffff",
+    backgroundColor: "#00BFFF",
+    padding: { x: 20, y: 10 },
+    borderRadius: 10
+}).setOrigin(0.5).setInteractive();
+
+const updateKeyboardBtn = () => {
+    keyboardBtn.setText(`Clavier : ${keyboardLayout.toUpperCase()}`);
+};
+updateKeyboardBtn();
+
+// Hover effect ✨
+keyboardBtn.on("pointerover", () => {
+    keyboardBtn.setStyle({ backgroundColor: "#00FFFF", color: "#000000" });
+    this.tweens.add({ targets: keyboardBtn, scale: 1.05, duration: 120 });
+});
+keyboardBtn.on("pointerout", () => {
+    keyboardBtn.setStyle({ backgroundColor: "#00BFFF", color: "#ffffff" });
+    this.tweens.add({ targets: keyboardBtn, scale: 1, duration: 120 });
+});
+
+// Click toggle
+keyboardBtn.on("pointerdown", () => {
+    keyboardLayout = keyboardLayout === "zqsd" ? "wasd" : "zqsd";
+    localStorage.setItem("keyboardLayout", keyboardLayout);
+    this.sound.play("menu", { volume: gameVolume });
+    updateKeyboardBtn();
+});
 }
 }
 /* =========================================================
@@ -1827,6 +1842,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
