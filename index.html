@@ -956,9 +956,13 @@ if (p.body.touching.down && this.onIce) {
     this.sliding = false;
 
     // contrôles normaux
-    if (this.cursors.left.isDown || this.movingLeft) p.setVelocityX(-160);
-    else if (this.cursors.right.isDown || this.movingRight) p.setVelocityX(160);
-    else p.setVelocityX(0);
+const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
+const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
+
+if (left) p.setVelocityX(-160);
+else if (right) p.setVelocityX(160);
+else p.setVelocityX(0);
+
 }
 
 // reset flag glace à la fin du frame
@@ -970,9 +974,13 @@ this.onIce = false;
     }
 
     // --- Saut via clavier ---
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
-        this.jumpPlayer();
-    }
+if (
+  Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
+  Phaser.Input.Keyboard.JustDown(this.keys.up)
+) {
+  this.jumpPlayer();
+}
+
 }
 
 // --- Fonction saut + double saut ---
@@ -1819,6 +1827,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
