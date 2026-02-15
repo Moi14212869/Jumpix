@@ -733,7 +733,7 @@ if (level.nextScene === "World2") {
 }
 	this.onIce = false;
 	this.sliding = false;       // indique si on est en train de glisser
-	this.slideDir = null;       // direction du glissement, null tant que le joueur n’a pas bougé
+	this.slideDir = 0;       // direction du glissement, null tant que le joueur n’a pas bougé
 	this.isWorld2 = (level.nextScene === "World2");
     this.transitioning = false;
     this.platforms = this.physics.add.staticGroup();
@@ -937,42 +937,34 @@ backButton.on("pointerdown", () => {
 
 update() {
 const p = this.player;
-const left  = this.cursors.left.isDown  || this.keys.left.isDown;
-const right = this.cursors.right.isDown || this.keys.right.isDown;
 const up    = this.cursors.up.isDown    || this.keys.up.isDown;
 const down  = this.cursors.down.isDown  || this.keys.down.isDown;
-	
-if (p.body.touching.down && this.onIce) {
+const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
+const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
+
+if (this.player.body.touching.down && this.onIce) {
 
     // Si on commence à glisser
-    if (!this.sliding) {
-
-        // Ne glisser que si le joueur appuie sur gauche ou droite
-        if (left || right) {
-            this.sliding = true;
-            this.slideDir = left ? -1 : 1;  // on prend la direction de la touche appuyée
-        }
+    if (!this.sliding && (left || right)) {
+        this.sliding = true;
+        this.slideDir = left ? -1 : 1;
     }
 
-    // Appliquer vitesse constante seulement si on est en sliding
+    // Si déjà en sliding, appliquer vitesse constante
     if (this.sliding) {
-        p.setVelocityX(220 * this.slideDir);
+        this.player.setVelocityX(220 * this.slideDir);
     }
 
 } else {
-    // Si on quitte la glace
+    // Si on quitte la glace ou tombe, désactiver sliding
     this.sliding = false;
-    this.slideDir = null;
+    this.slideDir = 0;
 
-    // Contrôle normal
-    if (left) p.setVelocityX(-160);
-    else if (right) p.setVelocityX(160);
-    else p.setVelocityX(0);
+    // Contrôles normaux
+    if (left) this.player.setVelocityX(-160);
+    else if (right) this.player.setVelocityX(160);
+    else this.player.setVelocityX(0);
 }
-
-// reset flag glace à la fin du frame
-this.onIce = false;
-
 
     // --- Reset compteur de saut si le joueur touche le sol ---
     if (p.body.touching.down) {
@@ -1848,6 +1840,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
