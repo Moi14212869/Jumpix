@@ -1001,9 +1001,10 @@ class ShopScene extends Phaser.Scene {
     super("ShopScene");
   }
 
-  init(data) {
-    this.page = data.page || 0;
-  }
+init(data) {
+  this.page = (data && data.page !== undefined) ? data.page : 0;
+}
+
 
   create() {
     const { width } = this.scale;
@@ -1017,41 +1018,66 @@ class ShopScene extends Phaser.Scene {
     const ITEMS = SHOP_PAGES[this.page];
 
     let startY = 120;
+	this.add.text(width / 2, 70, `Page ${this.page + 1} / ${SHOP_PAGES.length}`, {
+  	fontSize: "20px",
+  	color: "#cccccc"
+	}).setOrigin(0.5);
 
-    ITEMS.forEach(item => {
-      const hexKey = normalizeKeyToHex(item.key);
-      const bought = localStorage.getItem("skin_" + hexKey) === "1";
-      const isSelected = parseInt(localStorage.getItem("colorPlayer")) === parseInt("0x" + hexKey);
+  let startY = 170;         // ⬇️ on descend les skins (plus loin du titre)
+const skinX = 140;       // ➡️ on décale à droite
+const labelX = 210;
+const actionX = 420;
 
-      this.add.rectangle(80, startY, 50, 50, parseInt("0x" + hexKey));
-      this.add.text(140, startY - 20, item.label, { fontSize: "24px", fill: "#ffffff" });
+this.add.text(width / 2, 70, `Page ${this.page + 1} / ${SHOP_PAGES.length}`, {
+  fontSize: "20px",
+  color: "#cccccc"
+}).setOrigin(0.5);
 
-      if (!bought && item.price > 0) {
-        const buyText = this.add.text(350, startY - 20, `Buy ${item.price} ⬡`, {
-          fontSize: "22px",
-          fill: "#00FFFF"
-        }).setInteractive();
+ITEMS.forEach(item => {
+  const hexKey = normalizeKeyToHex(item.key);
+  const bought = localStorage.getItem("skin_" + hexKey) === "1";
+  const isSelected = parseInt(localStorage.getItem("colorPlayer")) === parseInt("0x" + hexKey);
 
-        buyText.on("pointerdown", () => {
-          this.sound.play('buy', { volume: gameVolume });
-          this.buySkin(hexKey, item.price);
-        });
-      }
+  this.add.rectangle(skinX, startY, 50, 50, parseInt("0x" + hexKey));
 
-      if (bought || item.price === 0) {
-        const selectText = this.add.text(350, startY - 20, isSelected ? "selected" : "select", {
-          fontSize: "22px",
-          fill: isSelected ? "#00FF66" : "#FFFFFF"
-        }).setInteractive();
+  if (isSelected) {
+    this.add.rectangle(skinX, startY, 60, 60)
+      .setStrokeStyle(3, 0x00FF66)
+      .setFillStyle();
+  }
 
-        selectText.on("pointerdown", () => {
-          this.sound.play('select', { volume: gameVolume });
-          this.selectSkin(hexKey);
-        });
-      }
+  this.add.text(labelX, startY - 20, item.label, {
+    fontSize: "24px",
+    fill: "#ffffff"
+  });
 
-      startY += 80;
+  if (!bought && item.price > 0) {
+    const buyText = this.add.text(actionX, startY - 20, `Buy ${item.price} ⬡`, {
+      fontSize: "22px",
+      fill: "#00FFFF"
+    }).setInteractive();
+
+    buyText.on("pointerdown", () => {
+      this.sound.play('buy', { volume: gameVolume });
+      this.buySkin(hexKey, item.price);
     });
+  }
+
+  if (bought || item.price === 0) {
+    const selectText = this.add.text(actionX, startY - 20, isSelected ? "selected" : "select", {
+      fontSize: "22px",
+      fill: isSelected ? "#00FF66" : "#FFFFFF"
+    }).setInteractive();
+
+    selectText.on("pointerdown", () => {
+      this.sound.play('select', { volume: gameVolume });
+      this.selectSkin(hexKey);
+    });
+  }
+
+  startY += 80;
+});
+
 
     // ⬅️ Retour menu
     const back = this.add.text(10, 10, "←", {
@@ -1755,6 +1781,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
