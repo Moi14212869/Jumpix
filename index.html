@@ -994,11 +994,26 @@ jumpPlayer() {
     if (this.jumpCount < 2) {
         this.player.setVelocityY(-330);
 
-        // Si on saute depuis la glace, mémoriser direction
+        // --- Direction avant le saut ---
+        let dir = 0;
+        if (this.player.body.velocity.x > 0) dir = 1;
+        else if (this.player.body.velocity.x < 0) dir = -1;
+
+        // --- DOUBLE SAUT = ROTATION ---
+        if (this.jumpCount === 1 && dir !== 0) {
+            this.tweens.add({
+                targets: this.player,
+                angle: this.player.angle + 360 * dir,
+                duration: 400,
+                ease: 'Cubic.easeOut'
+            });
+        }
+
+        // --- Saut depuis la glace : mémoriser la direction ---
         if (this.onIce) {
             if (this.cursors.left.isDown || this.keys.left.isDown || this.movingLeft) this.inheritedSlideDir = -1;
             else if (this.cursors.right.isDown || this.keys.right.isDown || this.movingRight) this.inheritedSlideDir = 1;
-            else this.inheritedSlideDir = this.slideDir; // aucune touche, conserver direction actuelle
+            else this.inheritedSlideDir = this.slideDir;
         }
 
         this.sound.play('jump', { volume: gameVolume });
@@ -1839,6 +1854,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
