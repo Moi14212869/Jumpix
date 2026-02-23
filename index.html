@@ -518,6 +518,7 @@ class LoadingScene extends Phaser.Scene {
 		this.load.audio('select', 'asset/select.mp3');
 		this.load.audio('kill', 'asset/kill.mp3');
 		this.load.audio('buy', 'asset/buy.mp3');
+		this.load.audio('slide', 'asset/slide.mp3');
         // Quand le chargement est complet
         this.load.on('complete', () => {
             progressBar.destroy();
@@ -742,10 +743,10 @@ if (level.nextScene === "World2") {
     this.redCircles = this.physics.add.group();
 	this.redSquares = this.physics.add.group();
 	this.icePlatforms = this.physics.add.staticGroup();
-
     this.input.addPointer(2);
     this.cursors = this.input.keyboard.createCursorKeys();
-
+	this.slideSound = this.sound.add('slide', { volume: gameVolume });
+	  
 if (keyboardLayout === "zqsd") {
   this.keys = this.input.keyboard.addKeys({
     up: Phaser.Input.Keyboard.KeyCodes.Z,
@@ -954,6 +955,9 @@ const right = this.cursors.right.isDown || this.keys.right.isDown || this.moving
                 this.sliding = true;
                 this.slideDir = this.inheritedSlideDir; // direction héritée
             }
+			        if (this.sliding) {
+            this.slideSound.play();
+        }
         }
 
         // Appliquer la vitesse constante
@@ -1864,6 +1868,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
