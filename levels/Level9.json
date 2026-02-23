@@ -6,15 +6,11 @@
   "nextScene": "World2",
 
   "platforms": [
-    { "x": 600, "y": 300, "w": 80 },
-    { "x": 200, "y": 250, "w": 160 },
-    { "x": 0, "y": 150, "w": 120 }
+    { "x": 760, "y": 520, "w": 40, "h": 80 }
   ],
 
   "spikes": [
-    { "x": 380, "y": 560, "orientation": "up" },
-    { "x": 420, "y": 560, "orientation": "up" },
-    { "x": 280, "y": 250, "orientation": "up" }
+    { "x": 380, "y": 560, "orientation": "up" }
   ],
   
   "icePlatforms": [
