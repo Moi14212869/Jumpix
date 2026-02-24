@@ -13,7 +13,9 @@
   "spikes": [
     { "x": 380, "y": 560, "orientation": "up" },
     { "x": 340, "y": 560, "orientation": "up" },
-    { "x": 420, "y": 560, "orientation": "up" }
+    { "x": 420, "y": 560, "orientation": "up" },
+    { "x": 460, "y": 400, "orientation": "up" },
+    { "x": 560, "y": 420, "orientation": "right" }
   ],
   
   "icePlatforms": [
