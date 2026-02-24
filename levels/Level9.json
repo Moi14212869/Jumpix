@@ -10,7 +10,9 @@
   ],
 
   "spikes": [
-    { "x": 380, "y": 560, "orientation": "up" }
+    { "x": 380, "y": 560, "orientation": "up" },
+    { "x": 340, "y": 560, "orientation": "up" },
+    { "x": 420, "y": 560, "orientation": "up" }
   ],
   
   "icePlatforms": [
