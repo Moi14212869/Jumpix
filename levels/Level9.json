@@ -23,6 +23,12 @@
     { "x": 20, "y": 560, "orientation": "up" }
   ],
   
+    "redCircles": [
+    { "x": 600, "y": 10, "rise": 60 },
+    { "x": 540, "y": 70, "rise": 60, "direction": "down" },
+    { "x": 480, "y": 10, "rise": 60 }
+  ]
+  
   "icePlatforms": [
     { "x": 0, "y": 560, "w": 760, "h": 40 }
   ]
