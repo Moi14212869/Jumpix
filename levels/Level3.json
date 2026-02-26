@@ -42,6 +42,7 @@
     { "x": 0, "y": 260, "orientation": "right" },
     { "x": 0, "y": 220, "orientation": "right" },
     { "x": 0, "y": 180, "orientation": "right" },
+    { "x": 0, "y": 140, "orientation": "right" },
     { "x": 60, "y": 80, "orientation": "down" },
     { "x": 100, "y": 40, "orientation": "down" },
     { "x": 140, "y": 40, "orientation": "down" },
