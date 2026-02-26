@@ -25,8 +25,8 @@
   
     "redCircles": [
     { "x": 600, "y": 70, "rise": 60 },
-    { "x": 540, "y": 10, "rise": 60, "direction": "down" },
-    { "x": 480, "y": 70, "rise": 60 }
+    { "x": 520, "y": 10, "rise": 60, "direction": "down" },
+    { "x": 440, "y": 70, "rise": 60 }
   ],
   
   "icePlatforms": [
