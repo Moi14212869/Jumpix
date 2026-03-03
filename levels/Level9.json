@@ -32,8 +32,8 @@
 
   
   "redSquares": [
-    { "x": 60, "y": 260, "direction": "right", "rise": 160 },
-    { "x": 220, "y": 260, "direction": "left", "rise": 160 }
+    { "x": 20, "y": 260, "direction": "right", "rise": 400 },
+    { "x": 420, "y": 260, "direction": "left", "rise": 400 }
   ],
   
   "icePlatforms": [
