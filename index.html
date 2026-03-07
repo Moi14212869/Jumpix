@@ -33,7 +33,7 @@ let kill = parseInt(localStorage.getItem("kill")) || 0;
 let party = parseInt(localStorage.getItem("party")) || 0;
 let colorPlayer = parseInt(localStorage.getItem("colorPlayer")) || 0xAA66CC;
 const DEV_PASSWORD_HASH = "9651d08ab7a975b70a93f3c918842c44cda8f335ecbbaae88d5610d3a1790b4b";
-			const SHOP_PAGES = [
+const SHOP_PAGES = [
   [
     { key: "AA66CC", label: "Purple", price: 0 },
     { key: "73BE73", label: "Green", price: 50 },
@@ -48,6 +48,9 @@ const DEV_PASSWORD_HASH = "9651d08ab7a975b70a93f3c918842c44cda8f335ecbbaae88d561
     { key: "E2FF00", label: "Yellow", price: 400 },
     { key: "FFEADD", label: "Inna Beige", price: 450 }
   ]
+],
+[
+	{ key: "77728D", label: "Gray", price: 500 }
 ];
 
 function devSetCoins(amount) {
@@ -1869,6 +1872,7 @@ const game = new Phaser.Game(config);
 		</script>
     </body>
 </html>
+
 
 
 
