@@ -28,7 +28,7 @@ const SHOP_PAGES = [
  [
     { key: "480437", label: "Eggplant", price: 500 },
     { key: "E9C4F4", label: "Mauve", price: 600 },
-    { key: "ADD8E6", label: "", price: 700 },
+    { key: "#0A45B", label: "Olive Green", price: 700 },
     { key: "ADD8E6", label: "", price: 800 },
     { key: "ADD8E6", label: "", price: 900 }
   ]
