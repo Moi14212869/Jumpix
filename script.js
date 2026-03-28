@@ -1538,7 +1538,7 @@ class CreditsScene extends Phaser.Scene {
 			"Alix MORBIDELLI",
             "",
             "QA Testers",
-            "Maxence ROSS",
+            "Maxence ROOS",
             "",
             "Thanks for playing!",
 			"",
