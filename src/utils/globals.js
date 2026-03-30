@@ -58,7 +58,6 @@ export function setColor(color) {
 
 // ===== RESET =====
 export function resetAll() {
-    localStorage.clear();
 
     gameVolume = 0.5;
     keyboardLayout = "zqsd";
