@@ -1,12 +1,14 @@
 // =========================================================
 //                      LEVEL SCENE
 // =========================================================
+
 import {
   gameVolume, keyboardLayout, colorPlayer, playerCoins,
   dead, kill, party,
   setDead, setKill, setParty, setPlayerCoins
 } from "../globals.js";
-import { checkObjectives } from "../utils/helpers.js";
+import { checkObjectives }   from "../utils/helpers.js";
+import { save }              from "../utils/db.js";
 import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
@@ -27,22 +29,22 @@ export class LevelScene extends Phaser.Scene {
 
     if (level.nextScene === "World2") createSnow(this);
 
-    this.onIce           = false;
-    this.sliding         = false;
-    this.slideDir        = 0;
+    this.onIce             = false;
+    this.sliding           = false;
+    this.slideDir          = 0;
     this.inheritedSlideDir = 0;
-    this.isWorld2        = (level.nextScene === "World2");
-    this.transitioning   = false;
+    this.isWorld2          = (level.nextScene === "World2");
+    this.transitioning     = false;
 
     // ── Groupes physiques ──
-    this.platforms   = this.physics.add.staticGroup();
-    this.spikes      = this.physics.add.staticGroup();
-    this.redCircles  = this.physics.add.group();
-    this.redSquares  = this.physics.add.group();
+    this.platforms    = this.physics.add.staticGroup();
+    this.spikes       = this.physics.add.staticGroup();
+    this.redCircles   = this.physics.add.group();
+    this.redSquares   = this.physics.add.group();
     this.icePlatforms = this.physics.add.staticGroup();
 
     this.input.addPointer(2);
-    this.cursors   = this.input.keyboard.createCursorKeys();
+    this.cursors    = this.input.keyboard.createCursorKeys();
     this.slideSound = this.sound.add("slide", { volume: gameVolume });
 
     this.keys = this.input.keyboard.addKeys(
@@ -102,7 +104,6 @@ export class LevelScene extends Phaser.Scene {
       fontSize: "24px", color: "#ffffff",
       backgroundColor: "#00BFFF", padding: { x: 7, y: 4 }
     }).setInteractive();
-
     backButton.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
       this.scene.start(level.nextScene);
@@ -121,10 +122,12 @@ export class LevelScene extends Phaser.Scene {
       const verticalDiff = (player.y + player.displayHeight / 2) - (square.y - square.displayHeight / 2);
 
       if (verticalDiff < 10 && player.body.velocity.y > 0) {
-        // Saut sur le carré
-        setKill(kill + 1);
-        localStorage.setItem("kill", kill);
-        checkObjectives();
+        // Saut sur le carré — enregistre un kill
+        const newKill = kill + 1;
+        setKill(newKill);
+        save.kill(newKill);
+        checkObjectives({ kill: newKill });
+
         this.sound.play("kill", { volume: gameVolume });
         player.setVelocityY(-200);
         this.tweens.add({
@@ -138,22 +141,27 @@ export class LevelScene extends Phaser.Scene {
     }, null, this);
 
     this.physics.add.overlap(this.player, this.blueCircle, () => {
-      this.sound.play("victory", { volume: gameVolume });
-      setParty(party + 1);
-      localStorage.setItem("party", party);
-      checkObjectives();
-
       if (this.transitioning) return;
       this.transitioning = true;
+
+      this.sound.play("victory", { volume: gameVolume });
+
+      const newParty = party + 1;
+      setParty(newParty);
+      save.party(newParty);
+      checkObjectives({ party: newParty });
+
       this.player.body.enable = false;
 
       this.tweens.add({
         targets: this.player,
         x: this.blueCircle.x, y: this.blueCircle.y,
         scale: 0.3, angle: 720, duration: 800, ease: "Cubic.easeInOut",
-        onComplete: () => {
-          setPlayerCoins(playerCoins + (level.reward || 0));
-          localStorage.setItem("playerCoins", playerCoins);
+        onComplete: async () => {
+          const reward    = level.reward || 0;
+          const newCoins  = playerCoins + reward;
+          setPlayerCoins(newCoins);
+          if (reward > 0) await save.coins(newCoins);
           this.scene.start(level.nextScene);
         }
       });
@@ -165,9 +173,10 @@ export class LevelScene extends Phaser.Scene {
   // ── Mort ──────────────────────────────────────────────
   die() {
     this.sound.play("dead", { volume: gameVolume });
-    setDead(dead + 1);
-    localStorage.setItem("dead", dead);
-    checkObjectives();
+    const newDead = dead + 1;
+    setDead(newDead);
+    save.dead(newDead);
+    checkObjectives({ dead: newDead });
     this.scene.restart({ levelKey: this.levelKey });
   }
 
@@ -216,7 +225,8 @@ export class LevelScene extends Phaser.Scene {
 
     this.player.setVelocityY(-330);
 
-    let dir = this.player.body.velocity.x > 0 ? 1 : this.player.body.velocity.x < 0 ? -1 : 1;
+    const dir = this.player.body.velocity.x > 0 ? 1
+              : this.player.body.velocity.x < 0 ? -1 : 1;
 
     if (this.jumpCount === 1) {
       this.tweens.add({
