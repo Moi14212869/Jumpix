@@ -1,27 +1,28 @@
 // =========================================================
 //                     GLOBALS & CONSTANTS
 // =========================================================
+// Les valeurs sont initialisées à leurs défauts, puis
+// écrasées par loadPlayerData() dans LoadingScene.
+// =========================================================
 
-export let gameVolume = parseFloat(localStorage.getItem("gameVolume"));
-export let keyboardLayout = localStorage.getItem("keyboardLayout") || "zqsd";
-if (isNaN(gameVolume)) gameVolume = 0.5;
-
-export let playerCoins = parseInt(localStorage.getItem("playerCoins")) || 0;
-export let dead        = parseInt(localStorage.getItem("dead"))         || 0;
-export let kill        = parseInt(localStorage.getItem("kill"))         || 0;
-export let party       = parseInt(localStorage.getItem("party"))        || 0;
-export let colorPlayer = parseInt(localStorage.getItem("colorPlayer"))  || 0xAA66CC;
+export let gameVolume    = 0.5;
+export let keyboardLayout = "zqsd";
+export let playerCoins   = 0;
+export let dead          = 0;
+export let kill          = 0;
+export let party         = 0;
+export let colorPlayer   = 0xAA66CC;
 
 export const DEV_PASSWORD_HASH =
   "9651d08ab7a975b70a93f3c918842c44cda8f335ecbbaae88d5610d3a1790b4b";
 
 export const SHOP_PAGES = [
   [
-    { key: "AA66CC", label: "Purple",    price: 0   },
-    { key: "73BE73", label: "Green",     price: 50  },
-    { key: "CC99A2", label: "Pink",      price: 100 },
-    { key: "40E0D0", label: "Turquoise", price: 150 },
-    { key: "FFA500", label: "Orange",    price: 200 }
+    { key: "AA66CC", label: "Purple",     price: 0   },
+    { key: "73BE73", label: "Green",      price: 50  },
+    { key: "CC99A2", label: "Pink",       price: 100 },
+    { key: "40E0D0", label: "Turquoise",  price: 150 },
+    { key: "FFA500", label: "Orange",     price: 200 }
   ],
   [
     { key: "7A0000", label: "Maroon",     price: 250 },
@@ -31,19 +32,30 @@ export const SHOP_PAGES = [
     { key: "FFEADD", label: "Inna Beige", price: 450 }
   ],
   [
-    { key: "480437", label: "Eggplant",   price: 500 },
-    { key: "E9C4F4", label: "Mauve",      price: 600 },
-    { key: "A0A45B", label: "Olive Green",price: 700 },
-    { key: "ADD8E6", label: "",           price: 800 },
-    { key: "ADD8E6", label: "",           price: 900 }
+    { key: "480437", label: "Eggplant",    price: 500 },
+    { key: "E9C4F4", label: "Mauve",       price: 600 },
+    { key: "A0A45B", label: "Olive Green", price: 700 },
+    { key: "ADD8E6", label: "",            price: 800 },
+    { key: "ADD8E6", label: "",            price: 900 }
   ]
 ];
 
-// ── Setters (pour modifier depuis l'extérieur) ────────────
-export function setGameVolume(v)    { gameVolume    = v; }
-export function setKeyboardLayout(v){ keyboardLayout = v; }
-export function setPlayerCoins(v)   { playerCoins   = v; }
-export function setDead(v)          { dead          = v; }
-export function setKill(v)          { kill          = v; }
-export function setParty(v)         { party         = v; }
-export function setColorPlayer(v)   { colorPlayer   = v; }
+// ── Setters ───────────────────────────────────────────────
+export function setGameVolume(v)     { gameVolume     = v; }
+export function setKeyboardLayout(v) { keyboardLayout = v; }
+export function setPlayerCoins(v)    { playerCoins    = v; }
+export function setDead(v)           { dead           = v; }
+export function setKill(v)           { kill           = v; }
+export function setParty(v)          { party          = v; }
+export function setColorPlayer(v)    { colorPlayer    = v; }
+
+// ── Charge toutes les variables depuis un objet playerData ─
+export function applyPlayerData(data) {
+  setGameVolume(data.gameVolume       ?? 0.5);
+  setKeyboardLayout(data.keyboardLayout ?? "zqsd");
+  setPlayerCoins(data.playerCoins     ?? 0);
+  setDead(data.dead                   ?? 0);
+  setKill(data.kill                   ?? 0);
+  setParty(data.party                 ?? 0);
+  setColorPlayer(data.colorPlayer     ?? 0xAA66CC);
+}
