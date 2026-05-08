@@ -1681,8 +1681,7 @@ class World2 extends Phaser.Scene {
             this.scene.start("World1");
         });
         const niveaux3 = [
-            { nom: "➡ Level 9", scene: "Level9" },
-			{ nom: "➡ Level 10", scene: "Level10" }
+            { nom: "➡ Level 9", scene: "Level9" }
         ];
 
         let yPos1 = 260;
