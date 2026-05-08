@@ -1,33 +1,38 @@
 // =========================================================
 //                     UTILS / HELPERS
 // =========================================================
-import { gameVolume, dead, kill, party, colorPlayer,
-         setDead, setKill, setParty, setColorPlayer,
-         setPlayerCoins, playerCoins } from "../globals.js";
+
+import {
+  gameVolume, dead, kill, party,
+  setDead, setKill, setParty, setPlayerCoins, playerCoins
+} from "../globals.js";
+import { save, skinOwned } from "./db.js";
 
 // ── Hash (mot de passe dev) ───────────────────────────────
 export async function hashText(text) {
   const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hashBuffer))
+  const data    = encoder.encode(text);
+  const buf     = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
 // ── Vérification des objectifs / déblocage de skins ──────
-export function checkObjectives() {
-  if (dead  >= 1000) localStorage.setItem("skin_000000", "1");
-  if (kill  >=  500) localStorage.setItem("skin_FF0000", "1");
-  if (party >= 1000) localStorage.setItem("skin_A0522D", "1");
+// playerData doit être passé car on n'a plus accès à localStorage
+export async function checkObjectives(playerData) {
+  const d = playerData || {};
+  if ((d.dead  ?? dead)  >= 1000) await save.skin("000000", true);
+  if ((d.kill  ?? kill)  >=  500) await save.skin("FF0000", true);
+  if ((d.party ?? party) >= 1000) await save.skin("A0522D", true);
 }
 
 // ── Coins (mode dev) ──────────────────────────────────────
-export function devSetCoins(amount) {
+export async function devSetCoins(amount) {
   amount = parseInt(amount);
   if (isNaN(amount) || amount < 0) amount = 0;
   setPlayerCoins(amount);
-  localStorage.setItem("playerCoins", amount);
+  await save.coins(amount);
 }
 
 // ── Normalise une clé couleur en hex string ───────────────
