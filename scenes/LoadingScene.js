@@ -1,7 +1,14 @@
 // =========================================================
 //                    LOADING SCENE
 // =========================================================
-import { gameVolume } from "../globals.js";
+// Charge les assets audio, attend que Firebase ait résolu
+// l'état d'authentification, puis charge la progression
+// si l'utilisateur est connecté.
+// =========================================================
+
+import { gameVolume, applyPlayerData } from "../globals.js";
+import { waitForAuthReady }            from "../utils/firebase.js";
+import { loadPlayerData }              from "../utils/db.js";
 
 export class LoadingScene extends Phaser.Scene {
   constructor() { super("LoadingScene"); }
@@ -17,12 +24,12 @@ export class LoadingScene extends Phaser.Scene {
     progressBox.fillStyle(0x222222, 0.8);
     progressBox.fillRect(width / 2 - 160, height / 2, 320, 30);
 
-    const progressBar  = this.add.graphics();
-    const percentText  = this.add.text(width / 2, height / 2 + 50, "0%", {
+    const progressBar = this.add.graphics();
+    const percentText = this.add.text(width / 2, height / 2 + 50, "0%", {
       fontSize: "20px", fill: "#ffffff"
     }).setOrigin(0.5);
 
-    this.load.on("progress", (value) => {
+    this.load.on("progress", value => {
       progressBar.clear();
       progressBar.fillStyle(0xffffff, 1);
       progressBar.fillRect(width / 2 - 150, height / 2 + 5, 300 * value, 20);
@@ -42,16 +49,25 @@ export class LoadingScene extends Phaser.Scene {
     this.load.on("complete", () => {
       progressBar.destroy();
       progressBox.destroy();
-      loadingText.setText("Prêt !");
       percentText.destroy();
+      loadingText.setText("Connexion...");
     });
   }
 
-  create() {
+  async create() {
     this.bgm = this.sound.add("bgm", { loop: true, volume: gameVolume });
-    this.time.delayedCall(500, () => {
-      if (!this.bgm.isPlaying) this.bgm.play();
-      this.scene.start("MenuScene");
-    });
+    if (!this.bgm.isPlaying) this.bgm.play();
+
+    try {
+      // Attend que Firebase sache si une session existe
+      await waitForAuthReady();
+      // Si connecté, charge la progression ; sinon retourne les défauts
+      const data = await loadPlayerData();
+      applyPlayerData(data);
+    } catch (err) {
+      console.warn("Firebase indisponible, démarrage en mode invité.", err);
+    }
+
+    this.scene.start("MenuScene");
   }
 }
