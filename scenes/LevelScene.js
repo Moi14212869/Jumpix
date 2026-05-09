@@ -5,7 +5,8 @@
 import {
   gameVolume, keyboardLayout, colorPlayer, playerCoins,
   dead, kill, party,
-  setDead, setKill, setParty, setPlayerCoins
+  setDead, setKill, setParty, setPlayerCoins,
+  markLevelCompleted
 } from "../globals.js";
 import { checkObjectives }   from "../utils/helpers.js";
 import { save }              from "../utils/db.js";
@@ -162,6 +163,11 @@ export class LevelScene extends Phaser.Scene {
           const newCoins  = playerCoins + reward;
           setPlayerCoins(newCoins);
           if (reward > 0) await save.coins(newCoins);
+
+          // Marquer ce niveau comme terminé
+          markLevelCompleted(this.levelKey);
+          await save.level(this.levelKey);
+
           this.scene.start(level.nextScene);
         }
       });
