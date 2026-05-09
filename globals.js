@@ -50,10 +50,18 @@ export function setDead(v)           { dead           = v; }
 export function setKill(v)           { kill           = v; }
 export function setParty(v)          { party          = v; }
 export function setColorPlayer(v)      { colorPlayer      = v; }
-export function setCompletedLevels(v)  { completedLevels  = v; }
-export function markLevelCompleted(key) { completedLevels = { ...completedLevels, [key]: true }; }
-export function setBestTimes(v)        { bestTimes        = v; }
-export function updateBestTime(key, ms) { bestTimes = { ...bestTimes, [key]: ms }; }
+export function setCompletedLevels(v) {
+  // Vider puis recopier pour garder la même référence objet
+  Object.keys(completedLevels).forEach(k => delete completedLevels[k]);
+  Object.assign(completedLevels, v);
+}
+export function markLevelCompleted(key) { completedLevels[key] = true; }
+
+export function setBestTimes(v) {
+  Object.keys(bestTimes).forEach(k => delete bestTimes[k]);
+  Object.assign(bestTimes, v);
+}
+export function updateBestTime(key, ms) { bestTimes[key] = ms; }
 
 // ── Charge toutes les variables depuis un objet playerData ─
 export function applyPlayerData(data) {
