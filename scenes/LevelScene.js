@@ -6,7 +6,7 @@ import {
   gameVolume, keyboardLayout, colorPlayer, playerCoins,
   dead, kill, party,
   setDead, setKill, setParty, setPlayerCoins,
-  markLevelCompleted
+  markLevelCompleted, bestTimes, updateBestTime
 } from "../globals.js";
 import { checkObjectives }   from "../utils/helpers.js";
 import { save }              from "../utils/db.js";
@@ -36,6 +36,7 @@ export class LevelScene extends Phaser.Scene {
     this.inheritedSlideDir = 0;
     this.isWorld2          = (level.nextScene === "World2");
     this.transitioning     = false;
+    this.startTime         = this.time.now; // ⏱ démarre le chrono
 
     // ── Groupes physiques ──
     this.platforms    = this.physics.add.staticGroup();
@@ -110,6 +111,12 @@ export class LevelScene extends Phaser.Scene {
       this.scene.start(level.nextScene);
     });
 
+    // ── Chrono affiché en haut à droite ──
+    this.chronoText = this.add.text(795, 5, "0.00s", {
+      fontSize: "22px", color: "#ffffff",
+      backgroundColor: "#00000066", padding: { x: 6, y: 3 }
+    }).setOrigin(1, 0).setScrollFactor(0).setDepth(10);
+
     // ── Collisions ──
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.icePlatforms,
@@ -168,6 +175,14 @@ export class LevelScene extends Phaser.Scene {
           markLevelCompleted(this.levelKey);
           await save.level(this.levelKey);
 
+          // ⏱ Meilleur temps
+          const elapsed = Math.floor(this.time.now - this.startTime);
+          const prev    = bestTimes[this.levelKey];
+          if (prev === undefined || elapsed < prev) {
+            updateBestTime(this.levelKey, elapsed);
+            await save.bestTime(this.levelKey, elapsed);
+          }
+
           this.scene.start(level.nextScene);
         }
       });
@@ -188,6 +203,12 @@ export class LevelScene extends Phaser.Scene {
 
   // ── Update ────────────────────────────────────────────
   update() {
+    // Mise à jour du chrono
+    if (!this.transitioning) {
+      const elapsed = (this.time.now - this.startTime) / 1000;
+      this.chronoText.setText(elapsed.toFixed(2) + "s");
+    }
+
     const p     = this.player;
     const up    = this.cursors.up.isDown    || this.keys.up.isDown;
     const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
