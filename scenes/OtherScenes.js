@@ -981,7 +981,7 @@ export class FriendsScene extends Phaser.Scene {
       backgroundColor: "#00BFFF", padding: { x: 7, y: 4 }
     }).setInteractive().on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
-      this.scene.start("SettingsScene");
+      this.scene.start("MenuScene");
     });
 
     if (!isLoggedIn()) {
