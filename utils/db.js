@@ -117,3 +117,22 @@ export async function loadLeaderboard(levelKey) {
   const snap       = await getDocs(q);
   return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
 }
+
+// ── Met à jour la couleur du joueur dans toutes ses entrées classement ──
+const ALL_LEVELS = [
+  "Level1","Level2","Level3","Level4","Level5",
+  "Level6","Level7","Level8","Level9"
+];
+
+export async function updateLeaderboardColor(colorPlayer) {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  await Promise.all(ALL_LEVELS.map(async levelKey => {
+    const entryRef = doc(db, "leaderboards", levelKey, "entries", user.uid);
+    const snap     = await getDoc(entryRef);
+    if (snap.exists()) {
+      await updateDoc(entryRef, { colorPlayer });
+    }
+  }));
+}
