@@ -8,7 +8,8 @@
 
 import { db, getCurrentUser } from "./firebase.js";
 import {
-  doc, getDoc, setDoc, updateDoc
+  doc, getDoc, setDoc, updateDoc,
+  collection, getDocs, query, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export const DEFAULTS = {
@@ -87,4 +88,32 @@ export async function resetAccount() {
   const ref = playerRef();
   if (!ref) return;
   await setDoc(ref, DEFAULTS);
+}
+
+// ── Classement ───────────────────────────────────────────
+// Structure Firestore : leaderboards/{levelKey}/entries/{uid}
+//   { pseudo, colorPlayer, timeMs }
+
+export async function saveLeaderboard(levelKey, timeMs) {
+  const user = getCurrentUser();
+  if (!user) return; // invité → pas de classement
+
+  const entryRef = doc(db, "leaderboards", levelKey, "entries", user.uid);
+  const snap     = await getDoc(entryRef);
+
+  // N'écrire que si c'est un nouveau record (ou première entrée)
+  if (!snap.exists() || snap.data().timeMs > timeMs) {
+    await setDoc(entryRef, {
+      pseudo:      user.displayName || "Anonyme",
+      colorPlayer: (await getDoc(playerRef()))?.data()?.colorPlayer ?? 0xAA66CC,
+      timeMs
+    });
+  }
+}
+
+export async function loadLeaderboard(levelKey) {
+  const entriesRef = collection(db, "leaderboards", levelKey, "entries");
+  const q          = query(entriesRef, orderBy("timeMs", "asc"), limit(100));
+  const snap       = await getDocs(q);
+  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
 }
