@@ -6,7 +6,8 @@ import {
   gameVolume, keyboardLayout, colorPlayer, playerCoins,
   dead, kill, party,
   setDead, setKill, setParty, setPlayerCoins,
-  markLevelCompleted, bestTimes, updateBestTime
+  markLevelCompleted, bestTimes, updateBestTime,
+  bestRanks, updateBestRank
 } from "../globals.js";
 import { checkObjectives }   from "../utils/helpers.js";
 import { save, saveLeaderboard } from "../utils/db.js";
@@ -190,7 +191,14 @@ export class LevelScene extends Phaser.Scene {
               isNewRecord = true;
               updateBestTime(this.levelKey, elapsed);
               await save.bestTime(this.levelKey, elapsed);
-              await saveLeaderboard(this.levelKey, elapsed);
+              const rank = await saveLeaderboard(this.levelKey, elapsed);
+              if (rank !== null) {
+                const prevRank = bestRanks[this.levelKey];
+                if (prevRank === undefined || rank < prevRank) {
+                  updateBestRank(this.levelKey, rank);
+                  await save.bestRank(this.levelKey, rank);
+                }
+              }
             }
           }
 
