@@ -107,16 +107,6 @@ export class SettingsScene extends Phaser.Scene {
     this._buildAccountBlock();
 
     // ── Boutons bas de page ─────────────────────────────────
-    const friendsBtn = this.add.text(400, 490, "👥 Amis", {
-      fontSize: "20px", color: "#ffffff",
-      backgroundColor: "#226688", padding: { x: 20, y: 10 }
-    }).setOrigin(0.5).setInteractive();
-    friendsBtn.on("pointerover", () => friendsBtn.setStyle({ backgroundColor: "#2288AA" }));
-    friendsBtn.on("pointerout",  () => friendsBtn.setStyle({ backgroundColor: "#226688" }));
-    friendsBtn.on("pointerdown", () => {
-      this.sound.play("menu", { volume: gameVolume });
-      this.scene.start("FriendsScene");
-    });
 
     // ── Toggle blocage demandes d'ami ───────────────────────
     if (isLoggedIn()) {
