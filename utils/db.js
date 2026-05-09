@@ -12,14 +12,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export const DEFAULTS = {
-  gameVolume:    0.5,
-  keyboardLayout: "zqsd",
-  playerCoins:   0,
-  dead:          0,
-  kill:          0,
-  party:         0,
-  colorPlayer:   0xAA66CC,
-  skins:         {}
+  gameVolume:      0.5,
+  keyboardLayout:  "zqsd",
+  playerCoins:     0,
+  dead:            0,
+  kill:            0,
+  party:           0,
+  colorPlayer:     0xAA66CC,
+  skins:           {},
+  completedLevels: {}
 };
 
 // ── Référence document du joueur connecté ────────────────
@@ -71,6 +72,7 @@ export const save = {
   party:         v      => saveFields({ party: v }),
   color:         v      => saveFields({ colorPlayer: v }),
   skin:   (key, v)      => saveFields({ [`skins.${key}`]: v }),
+  level:  (key)         => saveFields({ [`completedLevels.${key}`]: true }),
 };
 
 // ── Vérifier si un skin est débloqué ─────────────────────
