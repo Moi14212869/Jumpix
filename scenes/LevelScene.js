@@ -9,7 +9,7 @@ import {
   markLevelCompleted, bestTimes, updateBestTime
 } from "../globals.js";
 import { checkObjectives }   from "../utils/helpers.js";
-import { save }              from "../utils/db.js";
+import { save, saveLeaderboard } from "../utils/db.js";
 import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
@@ -188,6 +188,7 @@ export class LevelScene extends Phaser.Scene {
             if (prev === undefined || elapsed < prev) {
               updateBestTime(this.levelKey, elapsed);
               await save.bestTime(this.levelKey, elapsed);
+              await saveLeaderboard(this.levelKey, elapsed); // classement global
             }
           }
 
