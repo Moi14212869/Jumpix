@@ -120,16 +120,12 @@ export class SettingsScene extends Phaser.Scene {
 
     // ── Toggle blocage demandes d'ami ───────────────────────
     if (isLoggedIn()) {
-      let blockActive = false;
-      getBlockFriendRequests().then(val => {
-        blockActive = val;
-        updateBlockBtn();
-      });
-
-      const blockBtn = this.add.text(400, 455, "", {
+      const blockBtn = this.add.text(400, 455, "🔓 Demandes d'ami : autorisées", {
         fontSize: "15px", color: "#ffffff",
-        backgroundColor: "#555555", padding: { x: 14, y: 6 }
+        backgroundColor: "#226622", padding: { x: 14, y: 6 }
       }).setOrigin(0.5).setInteractive();
+
+      let blockActive = false;
 
       const updateBlockBtn = () => {
         blockBtn.setText(blockActive
@@ -137,6 +133,11 @@ export class SettingsScene extends Phaser.Scene {
           : "🔓 Demandes d'ami : autorisées");
         blockBtn.setStyle({ backgroundColor: blockActive ? "#882222" : "#226622" });
       };
+
+      getBlockFriendRequests().then(val => {
+        blockActive = val;
+        updateBlockBtn();
+      });
 
       blockBtn.on("pointerdown", async () => {
         blockActive = !blockActive;
@@ -628,8 +629,8 @@ export class Stats extends Phaser.Scene {
   async create() {
     const { width, height } = this.scale;
     this.add.rectangle(width / 2, height / 2, width, height, 0x3d2505);
-    this.add.text(width / 2, 60, "STATISTICS", {
-      fontSize: "40px", color: "#ffffff", fontStyle: "bold"
+    this.add.text(width / 2, 32, "STATISTICS", {
+      fontSize: "36px", color: "#ffffff", fontStyle: "bold"
     }).setOrigin(0.5);
 
     let pd;
@@ -639,6 +640,7 @@ export class Stats extends Phaser.Scene {
       pd = { playerCoins: 0, dead: 0, kill: 0, party: 0 };
     }
 
+    // ── Stats générales (2 colonnes) ────────────────────────
     const statsData = [
       { label: "Coins 💰",          value: pd.playerCoins ?? 0 },
       { label: "Deaths ☠️",         value: pd.dead        ?? 0 },
@@ -646,45 +648,47 @@ export class Stats extends Phaser.Scene {
       { label: "Parties Played 🎮", value: pd.party       ?? 0 }
     ];
 
-    let startY = 140;
-    statsData.forEach(stat => {
-      this.add.text(width / 2, startY, `${stat.label} : ${stat.value}`, {
-        fontSize: "26px", color: "#ffff00"
-      }).setOrigin(0.5);
-      startY += 52;
+    const col1X = width / 4, col2X = width * 3 / 4;
+    const statStartY = 90;
+    statsData.forEach((stat, i) => {
+      const x = i % 2 === 0 ? col1X : col2X;
+      const y = statStartY + Math.floor(i / 2) * 52;
+      this.add.text(x, y,      stat.label,        { fontSize: "18px", color: "#aaaaaa" }).setOrigin(0.5);
+      this.add.text(x, y + 22, String(stat.value), { fontSize: "22px", color: "#ffff00", fontStyle: "bold" }).setOrigin(0.5);
     });
 
-    // Badge compte
+    // ── Séparateur + badge compte ────────────────────────────
+    this.add.rectangle(width / 2, 202, width - 40, 1, 0x555555);
     const badge = isLoggedIn()
       ? `🌐 Connecté : ${getPseudo()}`
       : "👤 Mode invité — progression non sauvegardée";
-    this.add.text(width / 2, startY + 8, badge, {
-      fontSize: "15px", color: isLoggedIn() ? "#88ff88" : "#ffaa44"
+    this.add.text(width / 2, 214, badge, {
+      fontSize: "14px", color: isLoggedIn() ? "#88ff88" : "#ffaa44"
     }).setOrigin(0.5);
 
     // ── Meilleurs rangs atteints ─────────────────────────────
-    this.add.text(width / 2, startY + 38, "🏆 Meilleurs rangs atteints", {
-      fontSize: "20px", color: "#FFD700", fontStyle: "bold"
+    this.add.text(width / 2, 238, "🏆 Meilleurs rangs atteints", {
+      fontSize: "18px", color: "#FFD700", fontStyle: "bold"
     }).setOrigin(0.5);
 
     if (!isLoggedIn()) {
-      this.add.text(width / 2, startY + 72, "Connectez-vous pour enregistrer vos rangs.", {
+      this.add.text(width / 2, 268, "Connectez-vous pour enregistrer vos rangs.", {
         fontSize: "14px", color: "#888888"
       }).setOrigin(0.5);
     } else {
-      const ranks     = pd.bestRanks ?? {};
-      const colCount  = 3;
-      const colW      = Math.floor((width - 40) / colCount);
-      const rowH      = 38;
-      const gridStartY = startY + 62;
+      const ranks      = pd.bestRanks ?? {};
+      const colCount   = 3;
+      const colW       = Math.floor((width - 40) / colCount);
+      const rowH       = 42;
+      const gridStartY = 262;
 
       STATS_ALL_LEVELS.forEach((lvl, i) => {
-        const col  = i % colCount;
-        const row  = Math.floor(i / colCount);
-        const cx   = 20 + col * colW + colW / 2;
-        const cy   = gridStartY + row * rowH;
+        const col = i % colCount;
+        const row = Math.floor(i / colCount);
+        const cx  = 20 + col * colW + colW / 2;
+        const cy  = gridStartY + row * rowH;
 
-        const rank = ranks[lvl];
+        const rank      = ranks[lvl];
         const rankStr   = rank === undefined ? "–"
                         : rank === 1 ? "🥇 #1"
                         : rank === 2 ? "🥈 #2"
@@ -695,12 +699,8 @@ export class Stats extends Phaser.Scene {
                         : rank <= 10 ? "#00FF99"
                         : "#ffffff";
 
-        this.add.text(cx, cy, lvl.replace("Level", "Lvl "), {
-          fontSize: "13px", color: "#888888"
-        }).setOrigin(0.5);
-        this.add.text(cx, cy + 16, rankStr, {
-          fontSize: "15px", color: rankColor, fontStyle: "bold"
-        }).setOrigin(0.5);
+        this.add.text(cx, cy,      lvl.replace("Level", "Lvl "), { fontSize: "13px", color: "#666666" }).setOrigin(0.5);
+        this.add.text(cx, cy + 16, rankStr, { fontSize: "15px", color: rankColor, fontStyle: "bold" }).setOrigin(0.5);
       });
     }
 
