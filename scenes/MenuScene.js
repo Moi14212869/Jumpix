@@ -39,5 +39,10 @@ export class MenuScene extends Phaser.Scene {
       this.sound.play("menu", { volume: gameVolume });
       this.scene.start("SettingsScene");
     });
+
+    createButton(this, 110, 40, 60, 50, "🏆", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this.scene.start("LeaderboardScene");
+    });
   }
 }
