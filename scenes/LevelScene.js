@@ -49,7 +49,6 @@ export class LevelScene extends Phaser.Scene {
 
     this.input.addPointer(2);
     this.cursors    = this.input.keyboard.createCursorKeys();
-    this.input.keyboard.on("keydown-C", () => this.die());
     this.slideSound = this.sound.add("slide", { volume: gameVolume });
 
     this.keys = this.input.keyboard.addKeys(
