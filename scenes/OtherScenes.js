@@ -16,6 +16,38 @@ import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage, getCurrentUser
 } from "../utils/firebase.js";
 
+// =========================================================
+//  FILTRE PSEUDO INAPPROPRIÉ
+// =========================================================
+const BAD_WORDS = [
+  // FR
+  "putain","merde","connard","connasse","salope","pute","batard","bâtard",
+  "enculé","enculer","encule","nique","niquer","con","conne","couille",
+  "bite","pine","chier","chieur","chieuse","baiser","couilles","couillon",
+  "fdp","ntm","tg","va te faire","vtff","fils de pute","pd","tapette",
+  "pédé","negro","negre","nègre","nigg","gros porc","sale gosse",
+  // EN
+  "fuck","shit","bitch","asshole","bastard","cunt","dick","cock","pussy",
+  "faggot","fag","nigger","nigga","whore","slut","retard","moron","idiot",
+  "stupid","dumb","kill","kys","rape","nazi","hitler","sex","porn",
+  // Common bypasses / leet
+  "f4ck","sh1t","b1tch","@ss","a55","d1ck","n1gg","fuk","phuck",
+];
+
+function isBadPseudo(pseudo) {
+  const normalized = pseudo
+    .toLowerCase()
+    .replace(/[àáâ]/g, "a").replace(/[èéêë]/g, "e")
+    .replace(/[ìíî]/g, "i").replace(/[òóô]/g, "o")
+    .replace(/[ùúû]/g, "u").replace(/ç/g, "c")
+    .replace(/[^a-z0-9]/g, ""); // retirer ponctuation/espaces pour détecter les contournements
+
+  return BAD_WORDS.some(w => {
+    const wNorm = w.toLowerCase().replace(/[^a-z0-9]/g, "");
+    return normalized.includes(wNorm);
+  });
+}
+
 export class SettingsScene extends Phaser.Scene {
   constructor() { super("SettingsScene"); }
 
@@ -391,6 +423,11 @@ export class SettingsScene extends Phaser.Scene {
 
       if (pseudo.length < 2) {
         errorMsg.setText("Le pseudo doit faire au moins 2 caractères.").setColor("#ff5555");
+        return;
+      }
+
+      if (isBadPseudo(pseudo)) {
+        errorMsg.setText("Ce pseudo n'est pas autorisé.").setColor("#ff5555");
         return;
       }
 
