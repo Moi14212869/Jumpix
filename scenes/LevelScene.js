@@ -183,21 +183,90 @@ export class LevelScene extends Phaser.Scene {
 
           // ⏱ Meilleur temps
           const elapsed = this.finalTime;
+          let isNewRecord = false;
           if (elapsed !== null) {
             const prev = bestTimes[this.levelKey];
             if (prev === undefined || elapsed < prev) {
+              isNewRecord = true;
               updateBestTime(this.levelKey, elapsed);
               await save.bestTime(this.levelKey, elapsed);
-              await saveLeaderboard(this.levelKey, elapsed); // classement global
+              await saveLeaderboard(this.levelKey, elapsed);
             }
           }
 
-          this.scene.start(level.nextScene);
+          this._showVictoryScreen(level, elapsed, isNewRecord);
         }
       });
     }, null, this);
 
     createMobileControls(this);
+  }
+
+  // ── Écran de victoire ─────────────────────────────────
+  _showVictoryScreen(level, elapsed, isNewRecord) {
+    const { width, height } = this.scale;
+    const cx = width / 2, cy = height / 2;
+
+    // Fond semi-transparent
+    this.add.rectangle(cx, cy, width, height, 0x000000, 0.65).setScrollFactor(0).setDepth(20);
+
+    // Titre
+    this.add.text(cx, cy - 110, "✅ NIVEAU TERMINÉ !", {
+      fontSize: "36px", color: "#FFD700", fontStyle: "bold"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+
+    // Temps
+    if (elapsed !== null) {
+      const timeStr = (elapsed / 1000).toFixed(2) + "s";
+      const recordStr = isNewRecord ? "  🏆 Nouveau record !" : "";
+      this.add.text(cx, cy - 55, `⏱ ${timeStr}${recordStr}`, {
+        fontSize: "24px", color: isNewRecord ? "#00FF99" : "#ffffff"
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+    }
+
+    // Hint "appuie sur une touche"
+    const hint = this.add.text(cx, cy - 10, "Appuie sur n'importe quelle touche pour rejouer", {
+      fontSize: "16px", color: "#aaaaaa"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+
+    // Clignotement du hint
+    this.tweens.add({
+      targets: hint, alpha: 0, duration: 600,
+      yoyo: true, repeat: -1, ease: "Sine.easeInOut"
+    });
+
+    // Bouton Rejouer
+    const replayBtn = this.add.text(cx - 90, cy + 55, "🔄 Rejouer", {
+      fontSize: "26px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 18, y: 10 }
+    }).setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(21);
+
+    replayBtn.on("pointerover", () => replayBtn.setStyle({ backgroundColor: "#00DFFF" }));
+    replayBtn.on("pointerout",  () => replayBtn.setStyle({ backgroundColor: "#00BFFF" }));
+    replayBtn.on("pointerdown", () => {
+      this.sound.play("select", { volume: gameVolume });
+      this._doReplay();
+    });
+
+    // Bouton Quitter
+    const quitBtn = this.add.text(cx + 90, cy + 55, "🚪 Quitter", {
+      fontSize: "26px", color: "#ffffff",
+      backgroundColor: "#444444", padding: { x: 18, y: 10 }
+    }).setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(21);
+
+    quitBtn.on("pointerover", () => quitBtn.setStyle({ backgroundColor: "#666666" }));
+    quitBtn.on("pointerout",  () => quitBtn.setStyle({ backgroundColor: "#444444" }));
+    quitBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this.scene.start(level.nextScene);
+    });
+
+    // N'importe quelle touche → rejouer
+    this.input.keyboard.once("keydown", () => this._doReplay());
+  }
+
+  _doReplay() {
+    this.scene.restart({ levelKey: this.levelKey });
   }
 
   // ── Mort ──────────────────────────────────────────────
