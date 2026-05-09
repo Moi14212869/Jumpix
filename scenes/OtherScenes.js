@@ -13,7 +13,7 @@ import { openDevMenu } from "../utils/devMenu.js";
 import { DEV_PASSWORD_HASH } from "../globals.js";
 import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS } from "../utils/db.js";
 import {
-  registerWithEmail, loginWithEmail, logout, firebaseErrorMessage
+  registerWithEmail, loginWithEmail, logout, firebaseErrorMessage, getCurrentUser
 } from "../utils/firebase.js";
 
 export class SettingsScene extends Phaser.Scene {
@@ -656,5 +656,183 @@ export class ObjectivesScene extends Phaser.Scene {
       this.sound.play("menu", { volume: gameVolume });
       this.scene.start("MenuScene");
     });
+  }
+}
+
+// =========================================================
+//                   LEADERBOARD SCENE
+// =========================================================
+import { loadLeaderboard } from "../utils/db.js";
+
+const ALL_LEVELS = [
+  "Level1","Level2","Level3","Level4","Level5",
+  "Level6","Level7","Level8","Level9"
+];
+
+export class LeaderboardScene extends Phaser.Scene {
+  constructor() { super("LeaderboardScene"); }
+
+  init() {
+    this.currentTab = 0;   // index dans ALL_LEVELS
+    this.entries    = [];  // données chargées pour l'onglet actif
+    this.loading    = true;
+  }
+
+  create() {
+    const { width, height } = this.scale;
+
+    // ── Fond ──
+    this.add.rectangle(width / 2, height / 2, width, height, 0x0a0a1a);
+
+    // ── Titre ──
+    this.add.text(width / 2, 28, "🏆 LEADERBOARD", {
+      fontSize: "34px", color: "#FFD700", fontStyle: "bold"
+    }).setOrigin(0.5);
+
+    // ── Retour ──
+    this.add.text(10, 10, "←", {
+      fontSize: "24px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 7, y: 4 }
+    }).setInteractive().on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this.scene.start("MenuScene");
+    });
+
+    // ── Onglets ──
+    this.tabObjects = [];
+    this._buildTabs();
+
+    // ── Zone liste (conteneur scrollable) ──
+    this.listContainer = this.add.container(0, 0);
+
+    // ── Charger le premier onglet ──
+    this._loadTab(0);
+  }
+
+  // ── Construction des onglets niveaux ──────────────────────
+  _buildTabs() {
+    const { width } = this.scale;
+    const tabW  = Math.floor((width - 20) / ALL_LEVELS.length);
+    const tabY  = 65;
+
+    this.tabObjects.forEach(o => o.destroy());
+    this.tabObjects = [];
+
+    ALL_LEVELS.forEach((lvl, i) => {
+      const x      = 10 + i * tabW + tabW / 2;
+      const active = i === this.currentTab;
+
+      const bg = this.add.rectangle(x, tabY, tabW - 4, 28,
+        active ? 0x00BFFF : 0x223344
+      ).setInteractive();
+
+      const label = this.add.text(x, tabY, lvl.replace("Level", "Lvl "), {
+        fontSize: "13px", color: active ? "#000000" : "#aaaaaa", fontStyle: active ? "bold" : "normal"
+      }).setOrigin(0.5);
+
+      bg.on("pointerdown", () => {
+        if (i !== this.currentTab) {
+          this.currentTab = i;
+          this._buildTabs();
+          this._loadTab(i);
+        }
+      });
+      bg.on("pointerover",  () => { if (i !== this.currentTab) bg.setFillStyle(0x335566); });
+      bg.on("pointerout",   () => { if (i !== this.currentTab) bg.setFillStyle(0x223344); });
+
+      this.tabObjects.push(bg, label);
+    });
+  }
+
+  // ── Chargement + affichage d'un onglet ────────────────────
+  async _loadTab(index) {
+    const { width } = this.scale;
+
+    // Vider la liste
+    this.listContainer.removeAll(true);
+
+    // Indicateur de chargement
+    const loadTxt = this.add.text(width / 2, 300, "Chargement...", {
+      fontSize: "22px", color: "#888888"
+    }).setOrigin(0.5);
+    this.listContainer.add(loadTxt);
+
+    try {
+      const entries = await loadLeaderboard(ALL_LEVELS[index]);
+      this.listContainer.removeAll(true);
+
+      if (entries.length === 0) {
+        this.listContainer.add(
+          this.add.text(width / 2, 300, "Aucun temps enregistré", {
+            fontSize: "20px", color: "#666666"
+          }).setOrigin(0.5)
+        );
+        return;
+      }
+
+      // En-tête colonnes
+      const headerY = 105;
+      this.listContainer.add([
+        this.add.text(55,        headerY, "#",      { fontSize: "14px", color: "#888888" }).setOrigin(0.5),
+        this.add.text(110,       headerY, "Skin",   { fontSize: "14px", color: "#888888" }).setOrigin(0.5),
+        this.add.text(310,       headerY, "Joueur", { fontSize: "14px", color: "#888888" }).setOrigin(0, 0.5),
+        this.add.text(width - 20, headerY, "Temps", { fontSize: "14px", color: "#888888" }).setOrigin(1, 0.5),
+      ]);
+      this.add.rectangle(width / 2, headerY + 16, width - 20, 1, 0x333333);
+
+      const rowH   = 44;
+      const startY = 135;
+      const myUid  = getCurrentUser()?.uid ?? null;
+
+      entries.forEach((entry, i) => {
+        const y      = startY + i * rowH;
+        const isMe   = entry.uid === myUid;
+        const rowCol = isMe ? "#FFD700" : (i % 2 === 0 ? "#ffffff" : "#cccccc");
+        const bgCol  = isMe ? 0x2a2000 : (i % 2 === 0 ? 0x111122 : 0x0d0d1a);
+
+        // Fond de ligne
+        const rowBg = this.add.rectangle(width / 2, y + rowH / 2, width, rowH, bgCol);
+        this.listContainer.add(rowBg);
+
+        // Rang
+        const rankStr  = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+        const rankSize = i < 3 ? "20px" : "16px";
+        this.listContainer.add(
+          this.add.text(55, y + rowH / 2, rankStr, { fontSize: rankSize, color: rowCol }).setOrigin(0.5)
+        );
+
+        // Skin (petit carré coloré)
+        const skinColor = typeof entry.colorPlayer === "number"
+          ? entry.colorPlayer : parseInt(entry.colorPlayer) || 0xAA66CC;
+        this.listContainer.add(
+          this.add.rectangle(110, y + rowH / 2, 28, 28, skinColor)
+        );
+
+        // Pseudo
+        const pseudo = entry.pseudo || "Anonyme";
+        this.listContainer.add(
+          this.add.text(140, y + rowH / 2, pseudo, {
+            fontSize: "18px", color: isMe ? "#FFD700" : rowCol, fontStyle: isMe ? "bold" : "normal"
+          }).setOrigin(0, 0.5)
+        );
+
+        // Temps
+        const secs = (entry.timeMs / 1000).toFixed(2) + "s";
+        this.listContainer.add(
+          this.add.text(width - 20, y + rowH / 2, secs, {
+            fontSize: "18px", color: i === 0 ? "#FFD700" : rowCol
+          }).setOrigin(1, 0.5)
+        );
+      });
+
+    } catch (err) {
+      this.listContainer.removeAll(true);
+      this.listContainer.add(
+        this.add.text(width / 2, 300, "Erreur de chargement", {
+          fontSize: "20px", color: "#ff4444"
+        }).setOrigin(0.5)
+      );
+      console.error("Leaderboard error:", err);
+    }
   }
 }
