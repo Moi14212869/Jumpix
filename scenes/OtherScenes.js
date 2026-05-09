@@ -11,7 +11,10 @@ import {
 import { hashText }    from "../utils/helpers.js";
 import { openDevMenu } from "../utils/devMenu.js";
 import { DEV_PASSWORD_HASH } from "../globals.js";
-import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard } from "../utils/db.js";
+import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard,
+  sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend,
+  loadFriendProfile, setBlockFriendRequests, getBlockFriendRequests, findPlayerByPseudo
+} from "../utils/db.js";
 import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage, getCurrentUser
 } from "../utils/firebase.js";
@@ -104,6 +107,44 @@ export class SettingsScene extends Phaser.Scene {
     this._buildAccountBlock();
 
     // ── Boutons bas de page ─────────────────────────────────
+    const friendsBtn = this.add.text(400, 490, "👥 Amis", {
+      fontSize: "20px", color: "#ffffff",
+      backgroundColor: "#226688", padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setInteractive();
+    friendsBtn.on("pointerover", () => friendsBtn.setStyle({ backgroundColor: "#2288AA" }));
+    friendsBtn.on("pointerout",  () => friendsBtn.setStyle({ backgroundColor: "#226688" }));
+    friendsBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this.scene.start("FriendsScene");
+    });
+
+    // ── Toggle blocage demandes d'ami ───────────────────────
+    if (isLoggedIn()) {
+      let blockActive = false;
+      getBlockFriendRequests().then(val => {
+        blockActive = val;
+        updateBlockBtn();
+      });
+
+      const blockBtn = this.add.text(400, 455, "", {
+        fontSize: "15px", color: "#ffffff",
+        backgroundColor: "#555555", padding: { x: 14, y: 6 }
+      }).setOrigin(0.5).setInteractive();
+
+      const updateBlockBtn = () => {
+        blockBtn.setText(blockActive
+          ? "🔒 Demandes d'ami : bloquées"
+          : "🔓 Demandes d'ami : autorisées");
+        blockBtn.setStyle({ backgroundColor: blockActive ? "#882222" : "#226622" });
+      };
+
+      blockBtn.on("pointerdown", async () => {
+        blockActive = !blockActive;
+        updateBlockBtn();
+        await setBlockFriendRequests(blockActive);
+      });
+    }
+
     const resetBtn = this.add.text(220, 530, "RESET ACCOUNT", {
       fontSize: "18px", color: "#ffffff",
       backgroundColor: "#FF4444", padding: { x: 14, y: 8 }
@@ -947,5 +988,346 @@ export class LeaderboardScene extends Phaser.Scene {
       );
       console.error("Leaderboard error:", err);
     }
+  }
+}
+
+// =========================================================
+//                     FRIENDS SCENE
+// =========================================================
+const FRIENDS_LEVELS = [
+  "Level1","Level2","Level3","Level4","Level5",
+  "Level6","Level7","Level8","Level9"
+];
+
+export class FriendsScene extends Phaser.Scene {
+  constructor() { super("FriendsScene"); }
+
+  async create() {
+    const { width, height } = this.scale;
+
+    // ── Fond ────────────────────────────────────────────────
+    this.add.rectangle(width / 2, height / 2, width, height, 0x0d1b2a);
+
+    // ── Titre ───────────────────────────────────────────────
+    this.add.text(width / 2, 30, "👥 Amis", {
+      fontSize: "36px", color: "#ffffff", fontStyle: "bold"
+    }).setOrigin(0.5);
+
+    // ── Retour ──────────────────────────────────────────────
+    this.add.text(8, 8, "←", {
+      fontSize: "24px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 7, y: 4 }
+    }).setInteractive().on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this.scene.start("SettingsScene");
+    });
+
+    if (!isLoggedIn()) {
+      this.add.text(width / 2, height / 2, "Connectez-vous pour utiliser les amis.", {
+        fontSize: "20px", color: "#ffaa44"
+      }).setOrigin(0.5);
+      return;
+    }
+
+    // ── Champ recherche d'ami ────────────────────────────────
+    this.add.text(width / 2, 75, "Ajouter un ami par pseudo :", {
+      fontSize: "17px", color: "#aaaaaa"
+    }).setOrigin(0.5);
+
+    const inputBox  = this.add.rectangle(width / 2 - 60, 105, 260, 36, 0x111111)
+      .setStrokeStyle(1, 0x555555).setOrigin(0.5);
+    this._inputText = this.add.text(width / 2 - 185, 91, "", {
+      fontSize: "18px", color: "#ffffff"
+    });
+    this._inputValue = "";
+
+    inputBox.setInteractive();
+    this._inputFocused = false;
+    inputBox.on("pointerdown", () => {
+      this._inputFocused = true;
+      inputBox.setStrokeStyle(2, 0x00BFFF);
+    });
+
+    this.input.keyboard.on("keydown", e => {
+      if (!this._inputFocused) return;
+      if (e.key === "Backspace") this._inputValue = this._inputValue.slice(0, -1);
+      else if (e.key.length === 1 && this._inputValue.length < 24) this._inputValue += e.key;
+      else if (e.key === "Enter") sendBtn.emit("pointerdown");
+      this._inputText.setText(this._inputValue);
+    });
+
+    // ── Feedback message ────────────────────────────────────
+    this._feedbackText = this.add.text(width / 2, 148, "", {
+      fontSize: "14px", color: "#aaaaaa"
+    }).setOrigin(0.5);
+
+    const sendBtn = this.add.text(width / 2 + 100, 105, "Envoyer ➤", {
+      fontSize: "16px", color: "#ffffff",
+      backgroundColor: "#226688", padding: { x: 12, y: 8 }
+    }).setOrigin(0.5).setInteractive();
+
+    sendBtn.on("pointerover", () => sendBtn.setStyle({ backgroundColor: "#2288AA" }));
+    sendBtn.on("pointerout",  () => sendBtn.setStyle({ backgroundColor: "#226688" }));
+    sendBtn.on("pointerdown", async () => {
+      this._inputFocused = false;
+      inputBox.setStrokeStyle(1, 0x555555);
+      const pseudo = this._inputValue.trim();
+      if (!pseudo) return;
+
+      this._setFeedback("Recherche…", "#aaaaaa");
+      const result = await findPlayerByPseudo(pseudo);
+      if (!result) {
+        this._setFeedback("❌ Joueur introuvable.", "#ff5555");
+        return;
+      }
+
+      const res = await sendFriendRequest(result.uid, result.pseudo);
+      if (res.ok)                     this._setFeedback("✅ Demande envoyée !", "#00FF99");
+      else if (res.error === "self")           this._setFeedback("❌ C'est vous !", "#ff5555");
+      else if (res.error === "already_friends") this._setFeedback("✅ Déjà ami avec ce joueur.", "#00FF99");
+      else if (res.error === "already_sent")    this._setFeedback("⏳ Demande déjà envoyée.", "#ffaa44");
+      else if (res.error === "blocked")         this._setFeedback("🔒 Ce joueur n'accepte pas les demandes.", "#ffaa44");
+      else                                       this._setFeedback("❌ Erreur lors de l'envoi.", "#ff5555");
+    });
+
+    // ── Séparateur ──────────────────────────────────────────
+    this.add.rectangle(width / 2, 163, width - 40, 1, 0x333333);
+
+    // ── Charger données ─────────────────────────────────────
+    this._mainContainer = this.add.container(0, 0);
+    this._setFeedback("Chargement…", "#888888");
+
+    let pd;
+    try { pd = await loadPlayerData(); }
+    catch { pd = {}; }
+
+    this._setFeedback("", "#aaaaaa");
+    this._buildLists(pd, width, height);
+  }
+
+  _setFeedback(msg, color) {
+    this._feedbackText.setText(msg).setColor(color);
+  }
+
+  _buildLists(pd, width, height) {
+    this._mainContainer.removeAll(true);
+
+    const requests = pd.friendRequests ? Object.entries(pd.friendRequests) : [];
+    const friends  = pd.friends        ? Object.entries(pd.friends)        : [];
+
+    let y = 178;
+
+    // ── DEMANDES REÇUES ────────────────────────────────────
+    if (requests.length > 0) {
+      this._mainContainer.add(
+        this.add.text(20, y, `📩 Demandes reçues (${requests.length})`, {
+          fontSize: "17px", color: "#FFD700", fontStyle: "bold"
+        })
+      );
+      y += 28;
+
+      requests.forEach(([fromUid, req]) => {
+        if (req.status !== "pending") return;
+
+        // Skin
+        const skinColor = typeof req.colorPlayer === "number"
+          ? req.colorPlayer : parseInt(req.colorPlayer) || 0xAA66CC;
+        this._mainContainer.add(this.add.rectangle(34, y + 14, 24, 24, skinColor));
+
+        // Pseudo
+        this._mainContainer.add(
+          this.add.text(52, y + 4, req.pseudo || "Anonyme", {
+            fontSize: "17px", color: "#ffffff"
+          })
+        );
+
+        // Bouton Accepter
+        const acceptBtn = this.add.text(500, y + 2, "✅ Accepter", {
+          fontSize: "15px", color: "#ffffff",
+          backgroundColor: "#226622", padding: { x: 8, y: 4 }
+        }).setInteractive();
+        acceptBtn.on("pointerdown", async () => {
+          this.sound.play("select", { volume: gameVolume });
+          await acceptFriendRequest(fromUid, req.pseudo, req.colorPlayer);
+          const newPd = await loadPlayerData();
+          this._buildLists(newPd, width, height);
+        });
+        this._mainContainer.add(acceptBtn);
+
+        // Bouton Refuser
+        const declineBtn = this.add.text(620, y + 2, "❌ Refuser", {
+          fontSize: "15px", color: "#ffffff",
+          backgroundColor: "#662222", padding: { x: 8, y: 4 }
+        }).setInteractive();
+        declineBtn.on("pointerdown", async () => {
+          this.sound.play("menu", { volume: gameVolume });
+          await declineFriendRequest(fromUid);
+          const newPd = await loadPlayerData();
+          this._buildLists(newPd, width, height);
+        });
+        this._mainContainer.add(declineBtn);
+
+        y += 36;
+      });
+
+      // Séparateur
+      this._mainContainer.add(this.add.rectangle(width / 2, y + 4, width - 40, 1, 0x333333));
+      y += 14;
+    }
+
+    // ── LISTE DES AMIS ─────────────────────────────────────
+    this._mainContainer.add(
+      this.add.text(20, y, friends.length > 0
+        ? `👥 Mes amis (${friends.length})`
+        : "👥 Aucun ami pour l'instant", {
+        fontSize: "17px", color: "#aaaaaa", fontStyle: "bold"
+      })
+    );
+    y += 28;
+
+    friends.forEach(([friendUid, info]) => {
+      const skinColor = typeof info.colorPlayer === "number"
+        ? info.colorPlayer : parseInt(info.colorPlayer) || 0xAA66CC;
+
+      // Fond de ligne interactif
+      const rowBg = this.add.rectangle(width / 2, y + 16, width - 20, 34, 0x111122)
+        .setInteractive();
+
+      // Skin
+      const skinRect = this.add.rectangle(34, y + 16, 24, 24, skinColor);
+
+      // Pseudo
+      const pseudoTxt = this.add.text(52, y + 6, info.pseudo || "Anonyme", {
+        fontSize: "17px", color: "#ffffff"
+      });
+
+      // Bouton supprimer
+      const removeBtn = this.add.text(width - 20, y + 6, "✖", {
+        fontSize: "15px", color: "#ff6666",
+        backgroundColor: "#330000", padding: { x: 6, y: 3 }
+      }).setOrigin(1, 0).setInteractive();
+      removeBtn.on("pointerdown", async () => {
+        this.sound.play("menu", { volume: gameVolume });
+        await removeFriend(friendUid);
+        const newPd = await loadPlayerData();
+        this._buildLists(newPd, width, height);
+      });
+
+      // Clic sur la ligne → popup stats
+      rowBg.on("pointerover",  () => rowBg.setFillStyle(0x1a2244));
+      rowBg.on("pointerout",   () => rowBg.setFillStyle(0x111122));
+      rowBg.on("pointerdown",  () => {
+        this.sound.play("select", { volume: gameVolume });
+        this._showFriendProfile(friendUid, info.pseudo || "Anonyme", skinColor, width, height);
+      });
+      pseudoTxt.setInteractive();
+      pseudoTxt.on("pointerdown", () => {
+        this.sound.play("select", { volume: gameVolume });
+        this._showFriendProfile(friendUid, info.pseudo || "Anonyme", skinColor, width, height);
+      });
+
+      this._mainContainer.add([rowBg, skinRect, pseudoTxt, removeBtn]);
+      y += 36;
+    });
+  }
+
+  // ── Popup profil d'un ami ────────────────────────────────
+  async _showFriendProfile(uid, pseudo, skinColor, width, height) {
+    const cx = width / 2, cy = height / 2;
+
+    const overlay = this.add.rectangle(cx, cy, width, height, 0x000000, 0.75).setDepth(50);
+    const box     = this.add.rectangle(cx, cy, 560, 420, 0x0d1b2a)
+      .setStrokeStyle(2, 0x00BFFF).setDepth(51);
+
+    const loadTxt = this.add.text(cx, cy, "Chargement…", {
+      fontSize: "18px", color: "#888888"
+    }).setOrigin(0.5).setDepth(52);
+
+    let profile;
+    try { profile = await loadFriendProfile(uid); }
+    catch { profile = null; }
+
+    loadTxt.destroy();
+
+    if (!profile) {
+      this.add.text(cx, cy, "Profil indisponible.", {
+        fontSize: "18px", color: "#ff5555"
+      }).setOrigin(0.5).setDepth(52);
+
+      const closeBtn = this.add.text(cx, cy + 60, "Fermer", {
+        fontSize: "18px", color: "#ffffff",
+        backgroundColor: "#444444", padding: { x: 18, y: 8 }
+      }).setOrigin(0.5).setInteractive().setDepth(52);
+      closeBtn.on("pointerdown", () => [overlay, box, closeBtn].forEach(o => o.destroy()));
+      return;
+    }
+
+    const all = [overlay, box];
+    const d = (obj) => { all.push(obj); return obj; };
+
+    // En-tête : skin + pseudo
+    d(this.add.rectangle(cx - 200, cy - 155, 36, 36, skinColor).setDepth(52));
+    d(this.add.text(cx - 178, cy - 168, pseudo, {
+      fontSize: "26px", color: "#ffffff", fontStyle: "bold"
+    }).setDepth(52));
+
+    // Séparateur
+    d(this.add.rectangle(cx, cy - 127, 500, 1, 0x333333).setDepth(52));
+
+    // Stats générales
+    const statsRows = [
+      { label: "Coins 💰",          value: profile.playerCoins },
+      { label: "Deaths ☠️",         value: profile.dead        },
+      { label: "Kills 🔪",          value: profile.kill        },
+      { label: "Parties Played 🎮", value: profile.party       }
+    ];
+    let sy = cy - 108;
+    statsRows.forEach(row => {
+      d(this.add.text(cx - 220, sy, row.label, { fontSize: "17px", color: "#aaaaaa" }).setDepth(52));
+      d(this.add.text(cx + 220, sy, String(row.value), {
+        fontSize: "17px", color: "#ffff00"
+      }).setOrigin(1, 0).setDepth(52));
+      sy += 32;
+    });
+
+    // Séparateur
+    d(this.add.rectangle(cx, sy + 2, 500, 1, 0x333333).setDepth(52));
+    sy += 14;
+
+    // Meilleurs temps (grille 3 col)
+    d(this.add.text(cx, sy, "⏱ Meilleurs temps", {
+      fontSize: "15px", color: "#FFD700", fontStyle: "bold"
+    }).setOrigin(0.5).setDepth(52));
+    sy += 22;
+
+    const colCount = 3;
+    const colW = Math.floor(500 / colCount);
+    FRIENDS_LEVELS.forEach((lvl, i) => {
+      const col  = i % colCount;
+      const row  = Math.floor(i / colCount);
+      const lx   = cx - 240 + col * colW + colW / 2;
+      const ly   = sy + row * 34;
+      const ms   = profile.bestTimes[lvl];
+      const timeStr = ms !== undefined ? `${(ms / 1000).toFixed(2)}s` : "–";
+      d(this.add.text(lx, ly, lvl.replace("Level", "Lvl "), {
+        fontSize: "12px", color: "#888888"
+      }).setOrigin(0.5).setDepth(52));
+      d(this.add.text(lx, ly + 14, timeStr, {
+        fontSize: "14px", color: ms !== undefined ? "#00FF99" : "#555555", fontStyle: "bold"
+      }).setOrigin(0.5).setDepth(52));
+    });
+
+    // Bouton Fermer
+    const closeBtn = this.add.text(cx, cy + 175, "Fermer", {
+      fontSize: "18px", color: "#ffffff",
+      backgroundColor: "#444444", padding: { x: 22, y: 8 }
+    }).setOrigin(0.5).setInteractive().setDepth(52);
+    closeBtn.on("pointerover", () => closeBtn.setStyle({ backgroundColor: "#666666" }));
+    closeBtn.on("pointerout",  () => closeBtn.setStyle({ backgroundColor: "#444444" }));
+    closeBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      all.forEach(o => o.destroy());
+      closeBtn.destroy();
+    });
   }
 }
