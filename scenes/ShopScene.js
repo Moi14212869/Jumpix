@@ -8,7 +8,7 @@ import {
 } from "../globals.js";
 
 import { normalizeKeyToHex, showNotEnoughCoinsPopup } from "../utils/helpers.js";
-import { save, skinOwned, loadPlayerData } from "../utils/db.js";
+import { save, skinOwned, loadPlayerData, updateLeaderboardColor } from "../utils/db.js";
 
 export class ShopScene extends Phaser.Scene {
   constructor() {
@@ -182,6 +182,7 @@ export class ShopScene extends Phaser.Scene {
     pd.colorPlayer = colorNumber;
 
     await save.color(colorNumber);
+    await updateLeaderboardColor(colorNumber);
 
     this.scene.restart({
       page: this.page,
