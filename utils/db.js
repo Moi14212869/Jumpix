@@ -22,7 +22,8 @@ export const DEFAULTS = {
   colorPlayer:     0xAA66CC,
   skins:           {},
   completedLevels: {},
-  bestTimes:       {}
+  bestTimes:       {},
+  bestRanks:       {}
 };
 
 // ── Référence document du joueur connecté ────────────────
@@ -74,8 +75,9 @@ export const save = {
   party:         v      => saveFields({ party: v }),
   color:         v      => saveFields({ colorPlayer: v }),
   skin:   (key, v)      => saveFields({ [`skins.${key}`]: v }),
-  level:     (key)    => saveFields({ [`completedLevels.${key}`]: true }),
-  bestTime:  (key, ms) => saveFields({ [`bestTimes.${key}`]: ms }),
+  level:     (key)       => saveFields({ [`completedLevels.${key}`]: true }),
+  bestTime:  (key, ms)   => saveFields({ [`bestTimes.${key}`]: ms }),
+  bestRank:  (key, rank) => saveFields({ [`bestRanks.${key}`]: rank }),
 };
 
 // ── Vérifier si un skin est débloqué ─────────────────────
@@ -96,7 +98,7 @@ export async function resetAccount() {
 
 export async function saveLeaderboard(levelKey, timeMs) {
   const user = getCurrentUser();
-  if (!user) return; // invité → pas de classement
+  if (!user) return null; // invité → pas de classement
 
   const entryRef = doc(db, "leaderboards", levelKey, "entries", user.uid);
   const snap     = await getDoc(entryRef);
@@ -109,6 +111,13 @@ export async function saveLeaderboard(levelKey, timeMs) {
       timeMs
     });
   }
+
+  // Calculer le rang actuel (après écriture)
+  const entriesRef = collection(db, "leaderboards", levelKey, "entries");
+  const q          = query(entriesRef, orderBy("timeMs", "asc"), limit(100));
+  const allSnap    = await getDocs(q);
+  const rank       = allSnap.docs.findIndex(d => d.id === user.uid) + 1;
+  return rank > 0 ? rank : null;
 }
 
 export async function loadLeaderboard(levelKey) {
