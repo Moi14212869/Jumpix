@@ -11,7 +11,7 @@ import {
 import { hashText }    from "../utils/helpers.js";
 import { openDevMenu } from "../utils/devMenu.js";
 import { DEV_PASSWORD_HASH } from "../globals.js";
-import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor } from "../utils/db.js";
+import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard } from "../utils/db.js";
 import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage, getCurrentUser
 } from "../utils/firebase.js";
@@ -575,8 +575,6 @@ export class CreditsScene extends Phaser.Scene {
 // =========================================================
 //                       STATS SCENE
 // =========================================================
-import { loadLeaderboard } from "../utils/db.js";
-import { getCurrentUser } from "../utils/firebase.js";
 
 const STATS_ALL_LEVELS = [
   "Level1","Level2","Level3","Level4","Level5",
@@ -778,7 +776,6 @@ export class ObjectivesScene extends Phaser.Scene {
 // =========================================================
 //                   LEADERBOARD SCENE
 // =========================================================
-import { loadLeaderboard } from "../utils/db.js";
 
 const ALL_LEVELS = [
   "Level1","Level2","Level3","Level4","Level5",
