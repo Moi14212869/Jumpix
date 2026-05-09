@@ -36,7 +36,8 @@ export class LevelScene extends Phaser.Scene {
     this.inheritedSlideDir = 0;
     this.isWorld2          = (level.nextScene === "World2");
     this.transitioning     = false;
-    this.startTime         = this.time.now; // ⏱ démarre le chrono
+    this.startTime         = null;   // ⏱ démarre à la première action du joueur
+    this.finalTime         = null;   // ⏱ figé au contact du cercle bleu
 
     // ── Groupes physiques ──
     this.platforms    = this.physics.add.staticGroup();
@@ -152,6 +153,11 @@ export class LevelScene extends Phaser.Scene {
       if (this.transitioning) return;
       this.transitioning = true;
 
+      // ⏱ Figer le chrono au moment du contact
+      this.finalTime = (this.startTime !== null)
+        ? Math.floor(this.time.now - this.startTime)
+        : null;
+
       this.sound.play("victory", { volume: gameVolume });
 
       const newParty = party + 1;
@@ -176,11 +182,13 @@ export class LevelScene extends Phaser.Scene {
           await save.level(this.levelKey);
 
           // ⏱ Meilleur temps
-          const elapsed = Math.floor(this.time.now - this.startTime);
-          const prev    = bestTimes[this.levelKey];
-          if (prev === undefined || elapsed < prev) {
-            updateBestTime(this.levelKey, elapsed);
-            await save.bestTime(this.levelKey, elapsed);
+          const elapsed = this.finalTime;
+          if (elapsed !== null) {
+            const prev = bestTimes[this.levelKey];
+            if (prev === undefined || elapsed < prev) {
+              updateBestTime(this.levelKey, elapsed);
+              await save.bestTime(this.levelKey, elapsed);
+            }
           }
 
           this.scene.start(level.nextScene);
@@ -203,16 +211,26 @@ export class LevelScene extends Phaser.Scene {
 
   // ── Update ────────────────────────────────────────────
   update() {
-    // Mise à jour du chrono
-    if (!this.transitioning) {
-      const elapsed = (this.time.now - this.startTime) / 1000;
-      this.chronoText.setText(elapsed.toFixed(2) + "s");
-    }
-
     const p     = this.player;
     const up    = this.cursors.up.isDown    || this.keys.up.isDown;
     const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
     const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
+
+    // ⏱ Démarrer le chrono à la première action
+    if (this.startTime === null && (left || right || up)) {
+      this.startTime = this.time.now;
+    }
+
+    // Mise à jour de l'affichage
+    if (this.transitioning && this.finalTime !== null) {
+      // Temps figé au contact du cercle bleu
+      this.chronoText.setText((this.finalTime / 1000).toFixed(2) + "s");
+    } else if (this.startTime !== null) {
+      const elapsed = (this.time.now - this.startTime) / 1000;
+      this.chronoText.setText(elapsed.toFixed(2) + "s");
+    } else {
+      this.chronoText.setText("–");
+    }
 
     if (p.body.touching.down && this.onIce) {
       if (!this.sliding) {
