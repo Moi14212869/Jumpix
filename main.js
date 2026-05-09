@@ -10,7 +10,8 @@ import {
   SettingsScene,
   CreditsScene,
   Stats,
-  ObjectivesScene
+  ObjectivesScene,
+  LeaderboardScene
 } from "./scenes/OtherScenes.js";
 
 const config = {
@@ -36,7 +37,8 @@ const config = {
     CreditsScene,
     Stats,
     World2,
-    ObjectivesScene
+    ObjectivesScene,
+    LeaderboardScene
   ]
 };
 
