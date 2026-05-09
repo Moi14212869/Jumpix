@@ -575,6 +575,14 @@ export class CreditsScene extends Phaser.Scene {
 // =========================================================
 //                       STATS SCENE
 // =========================================================
+import { loadLeaderboard } from "../utils/db.js";
+import { getCurrentUser } from "../utils/firebase.js";
+
+const STATS_ALL_LEVELS = [
+  "Level1","Level2","Level3","Level4","Level5",
+  "Level6","Level7","Level8","Level9"
+];
+
 export class Stats extends Phaser.Scene {
   constructor() { super("Stats"); }
 
@@ -599,21 +607,91 @@ export class Stats extends Phaser.Scene {
       { label: "Parties Played 🎮", value: pd.party       ?? 0 }
     ];
 
-    let startY = 150;
+    let startY = 140;
     statsData.forEach(stat => {
       this.add.text(width / 2, startY, `${stat.label} : ${stat.value}`, {
-        fontSize: "28px", color: "#ffff00"
+        fontSize: "26px", color: "#ffff00"
       }).setOrigin(0.5);
-      startY += 60;
+      startY += 52;
     });
 
     // Badge compte
     const badge = isLoggedIn()
       ? `🌐 Connecté : ${getPseudo()}`
       : "👤 Mode invité — progression non sauvegardée";
-    this.add.text(width / 2, startY + 20, badge, {
-      fontSize: "16px", color: isLoggedIn() ? "#88ff88" : "#ffaa44"
+    this.add.text(width / 2, startY + 8, badge, {
+      fontSize: "15px", color: isLoggedIn() ? "#88ff88" : "#ffaa44"
     }).setOrigin(0.5);
+
+    // ── Classements ──────────────────────────────────────────
+    this.add.text(width / 2, startY + 38, "🏆 Classements", {
+      fontSize: "22px", color: "#FFD700", fontStyle: "bold"
+    }).setOrigin(0.5);
+
+    const rankContainer = this.add.container(0, 0);
+
+    const myUid = getCurrentUser()?.uid ?? null;
+
+    if (!myUid) {
+      // Invité : pas de classement personnel
+      rankContainer.add(
+        this.add.text(width / 2, startY + 75, "Connectez-vous pour voir vos positions", {
+          fontSize: "15px", color: "#888888"
+        }).setOrigin(0.5)
+      );
+    } else {
+      // Indicateur de chargement
+      const loadTxt = this.add.text(width / 2, startY + 75, "Chargement des classements…", {
+        fontSize: "15px", color: "#888888"
+      }).setOrigin(0.5);
+      rankContainer.add(loadTxt);
+
+      // Charger tous les classements en parallèle
+      const results = await Promise.allSettled(
+        STATS_ALL_LEVELS.map(lvl => loadLeaderboard(lvl))
+      );
+
+      rankContainer.removeAll(true);
+
+      // Grille : 3 colonnes
+      const colCount  = 3;
+      const colW      = Math.floor((width - 40) / colCount);
+      const rowH      = 36;
+      const gridStartY = startY + 65;
+
+      STATS_ALL_LEVELS.forEach((lvl, i) => {
+        const col  = i % colCount;
+        const row  = Math.floor(i / colCount);
+        const cx   = 20 + col * colW + colW / 2;
+        const cy   = gridStartY + row * rowH;
+
+        const result = results[i];
+        let rankStr  = "–";
+        let rankColor = "#aaaaaa";
+
+        if (result.status === "fulfilled") {
+          const entries = result.value;
+          const pos = entries.findIndex(e => e.uid === myUid);
+          if (pos !== -1) {
+            const rank = pos + 1;
+            rankStr   = rank === 1 ? "🥇 #1" : rank === 2 ? "🥈 #2" : rank === 3 ? "🥉 #3" : `#${rank}`;
+            rankColor = rank <= 3 ? "#FFD700" : rank <= 10 ? "#00FF99" : "#ffffff";
+          }
+        }
+
+        const shortName = lvl.replace("Level", "Lvl ");
+        rankContainer.add(
+          this.add.text(cx, cy, `${shortName}`, {
+            fontSize: "14px", color: "#aaaaaa"
+          }).setOrigin(0.5)
+        );
+        rankContainer.add(
+          this.add.text(cx, cy + 16, rankStr, {
+            fontSize: "15px", color: rankColor, fontStyle: "bold"
+          }).setOrigin(0.5)
+        );
+      });
+    }
 
     const back = this.add.text(10, 10, "←", {
       fontSize: "24px", color: "#ffffff",
