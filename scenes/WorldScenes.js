@@ -1,7 +1,7 @@
 // =========================================================
 //                       WORLD 1
 // =========================================================
-import { gameVolume, playerCoins, completedLevels } from "../globals.js";
+import { gameVolume, playerCoins, completedLevels, bestTimes } from "../globals.js";
 
 export class World1 extends Phaser.Scene {
   constructor() { super("World1"); }
@@ -82,9 +82,15 @@ export class World1 extends Phaser.Scene {
         btn.on("pointerout",  () => btn.setStyle({ color: "#ffffff" }));
       }
 
-      // Badge ✅ si déjà terminé
+      // Meilleur temps si niveau terminé
       if (completedLevels[niv.scene]) {
-        this.add.text(x + 110, startY, "✅", { fontSize: "20px" }).setOrigin(0.5);
+        const ms = bestTimes[niv.scene];
+        const label = ms !== undefined
+          ? `⏱ ${(ms / 1000).toFixed(2)}s`
+          : "✅";
+        this.add.text(x + 115, startY, label, {
+          fontSize: "16px", color: "#00FF99"
+        }).setOrigin(0.5);
       }
 
       startY += 60;
