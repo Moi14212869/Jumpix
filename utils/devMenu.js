@@ -10,7 +10,7 @@ export function openDevMenu() {
   // `this` = scène Phaser courante (appelé via .call(scene))
 
   const overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.75);
-  const box     = this.add.rectangle(400, 300, 420, 320, 0x1c1c1c).setStrokeStyle(3, 0x00ffff);
+  const box     = this.add.rectangle(400, 300, 420, 370, 0x1c1c1c).setStrokeStyle(3, 0x00ffff);
 
   this.add.text(400, 160, "DEV MENU", { fontSize: "26px", color: "#00ffff" }).setOrigin(0.5);
 
@@ -65,14 +65,36 @@ export function openDevMenu() {
     this.scene.restart();
   });
 
+  // ── Bouton Unlock all levels ──
+  const unlockLevelsBtn = this.add.text(400, 390, "UNLOCK ALL LEVELS", {
+    fontSize: "20px", backgroundColor: "#005588", color: "#ffffff", padding: { x: 20, y: 8 }
+  }).setOrigin(0.5).setInteractive();
+
+  unlockLevelsBtn.on("pointerdown", async () => {
+    const allLevels = [
+      "Level1","Level2","Level3","Level4","Level5",
+      "Level6","Level7","Level8","Level9"
+    ];
+    const fields = {};
+    allLevels.forEach(k => { fields[`completedLevels.${k}`] = true; });
+    const { saveFields } = await import("./db.js");
+    await saveFields(fields);
+    // Mettre à jour la variable en mémoire aussi
+    const { setCompletedLevels } = await import("../globals.js");
+    const completed = {};
+    allLevels.forEach(k => { completed[k] = true; });
+    setCompletedLevels(completed);
+    this.scene.restart();
+  });
+
   // ── Bouton Close ──
-  const closeBtn = this.add.text(400, 390, "CLOSE", {
+  const closeBtn = this.add.text(400, 440, "CLOSE", {
     fontSize: "18px", backgroundColor: "#AA0000", color: "#ffffff", padding: { x: 20, y: 6 }
   }).setOrigin(0.5).setInteractive();
 
   closeBtn.on("pointerdown", () => {
     this.input.keyboard.off("keydown", keyboardHandler);
-    [overlay, box, coinInputBox, coinInputText, setCoinsBtn, unlockBtn, closeBtn]
+    [overlay, box, coinInputBox, coinInputText, setCoinsBtn, unlockBtn, unlockLevelsBtn, closeBtn]
       .forEach(o => o.destroy());
   });
 }
