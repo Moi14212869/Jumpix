@@ -66,32 +66,48 @@ export function createRedTriangle(scene, x, y, orientation = "up") {
   gfx.beginPath();
 
   if      (orientation === "up")    { gfx.moveTo(size / 2, 0);      gfx.lineTo(0, height);  gfx.lineTo(size, height); }
-  else if (orientation === "down")  { gfx.moveTo(size / 2, height); gfx.lineTo(0, 0);       gfx.lineTo(size, 0);      }
+  else if (orientation === "down")  { gfx.moveTo(size / 2, height); gfx.lineTo(0, 0);       gfx.lineTo(size, 0); }
   else if (orientation === "left")  { gfx.moveTo(0, size / 2);      gfx.lineTo(height, 0);  gfx.lineTo(height, size); }
-  else if (orientation === "right") { gfx.moveTo(height, size / 2); gfx.lineTo(0, 0);       gfx.lineTo(0, size);      }
+  else if (orientation === "right") { gfx.moveTo(height, size / 2); gfx.lineTo(0, 0);       gfx.lineTo(0, size); }
 
   gfx.closePath();
   gfx.fillPath();
 
-  if (orientation === "left" || orientation === "right") gfx.generateTexture(key, height, size);
-  else                                                   gfx.generateTexture(key, size, height);
+  if (orientation === "left" || orientation === "right") {
+    gfx.generateTexture(key, height, size);
+  } else {
+    gfx.generateTexture(key, size, height);
+  }
+
   gfx.destroy();
 
   const triangle = scene.spikes.create(x, y, key);
 
-  const origins = { up: [0.5, 1], down: [0.5, 0], left: [1, 0.5], right: [0, 0.5] };
+  const origins = {
+    up: [0.5, 1],
+    down: [0.5, 0],
+    left: [1, 0.5],
+    right: [0, 0.5]
+  };
+
   triangle.setOrigin(...origins[orientation]);
   triangle.refreshBody();
 
-  const body     = triangle.body;
-  const bw       = body.width  * 0.7;
-  const bh       = body.height * 0.7;
+  const body = triangle.body;
+
+  // dimensions originales
+  const originalW = body.width;
+  const originalH = body.height;
+
+  // hitbox réduite
+  const bw = originalW * 0.5;
+  const bh = originalH * 0.5;
+
   body.setSize(bw, bh);
-  body.setOffset((body.width - bw) / 2, (body.height - bh) / 2);
+  body.setOffset((originalW - bw) / 2, (originalH - bh) / 2);
 
   return triangle;
 }
-
 // ── Ennemis mobiles ───────────────────────────────────────
 export function createRedCircle(scene, x, y, riseAmount = 100, direction = "up") {
   const radius = 10;
