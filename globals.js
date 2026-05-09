@@ -11,7 +11,8 @@ export let playerCoins   = 0;
 export let dead          = 0;
 export let kill          = 0;
 export let party         = 0;
-export let colorPlayer   = 0xAA66CC;
+export let colorPlayer      = 0xAA66CC;
+export let completedLevels  = {}; // { Level1: true, Level2: true, … }
 
 export const DEV_PASSWORD_HASH =
   "9651d08ab7a975b70a93f3c918842c44cda8f335ecbbaae88d5610d3a1790b4b";
@@ -47,15 +48,18 @@ export function setPlayerCoins(v)    { playerCoins    = v; }
 export function setDead(v)           { dead           = v; }
 export function setKill(v)           { kill           = v; }
 export function setParty(v)          { party          = v; }
-export function setColorPlayer(v)    { colorPlayer    = v; }
+export function setColorPlayer(v)      { colorPlayer      = v; }
+export function setCompletedLevels(v)  { completedLevels  = v; }
+export function markLevelCompleted(key) { completedLevels = { ...completedLevels, [key]: true }; }
 
 // ── Charge toutes les variables depuis un objet playerData ─
 export function applyPlayerData(data) {
-  setGameVolume(data.gameVolume       ?? 0.5);
+  setGameVolume(data.gameVolume         ?? 0.5);
   setKeyboardLayout(data.keyboardLayout ?? "zqsd");
-  setPlayerCoins(data.playerCoins     ?? 0);
-  setDead(data.dead                   ?? 0);
-  setKill(data.kill                   ?? 0);
-  setParty(data.party                 ?? 0);
-  setColorPlayer(data.colorPlayer     ?? 0xAA66CC);
+  setPlayerCoins(data.playerCoins       ?? 0);
+  setDead(data.dead                     ?? 0);
+  setKill(data.kill                     ?? 0);
+  setParty(data.party                   ?? 0);
+  setColorPlayer(data.colorPlayer       ?? 0xAA66CC);
+  setCompletedLevels(data.completedLevels ?? {});
 }
