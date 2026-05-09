@@ -20,7 +20,8 @@ export const DEFAULTS = {
   party:           0,
   colorPlayer:     0xAA66CC,
   skins:           {},
-  completedLevels: {}
+  completedLevels: {},
+  bestTimes:       {}
 };
 
 // ── Référence document du joueur connecté ────────────────
@@ -72,7 +73,8 @@ export const save = {
   party:         v      => saveFields({ party: v }),
   color:         v      => saveFields({ colorPlayer: v }),
   skin:   (key, v)      => saveFields({ [`skins.${key}`]: v }),
-  level:  (key)         => saveFields({ [`completedLevels.${key}`]: true }),
+  level:     (key)    => saveFields({ [`completedLevels.${key}`]: true }),
+  bestTime:  (key, ms) => saveFields({ [`bestTimes.${key}`]: ms }),
 };
 
 // ── Vérifier si un skin est débloqué ─────────────────────
