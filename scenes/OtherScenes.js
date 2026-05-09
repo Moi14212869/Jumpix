@@ -11,7 +11,7 @@ import {
 import { hashText }    from "../utils/helpers.js";
 import { openDevMenu } from "../utils/devMenu.js";
 import { DEV_PASSWORD_HASH } from "../globals.js";
-import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS } from "../utils/db.js";
+import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor } from "../utils/db.js";
 import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage, getCurrentUser
 } from "../utils/firebase.js";
@@ -678,6 +678,7 @@ export class ObjectivesScene extends Phaser.Scene {
           setColorPlayer(obj.color);
           pd.colorPlayer = obj.color;
           await save.color(obj.color);
+          await updateLeaderboardColor(obj.color);
           select.setText("Selected").setColor("#00FF66");
         });
       } else {
