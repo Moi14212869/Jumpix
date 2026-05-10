@@ -57,91 +57,59 @@ export class SettingsScene extends Phaser.Scene {
   create() {
     const { width } = this.scale;
 
-    this.add.text(width / 2, 50, "Settings", {
-      fontSize: "40px", color: "#ffffff"
+    this.add.text(width / 2, 36, "Settings", {
+      fontSize: "36px", color: "#ffffff"
     }).setOrigin(0.5);
 
-    // ── Volume ──────────────────────────────────────────────
-    this.add.text(width / 2, 110, "Volume", { fontSize: "22px", color: "#aaaaaa" }).setOrigin(0.5);
-    this.add.rectangle(width / 2, 145, 300, 8, 0x555555);
-    const knob = this.add.circle(width / 2 - 150 + gameVolume * 300, 145, 11, 0xffffff)
-      .setInteractive({ draggable: true });
-    this.input.setDraggable(knob);
-    this.input.on("drag", (pointer, obj, dragX) => {
-      const minX = width / 2 - 150, maxX = width / 2 + 150;
-      obj.x = Phaser.Math.Clamp(dragX, minX, maxX);
-      const newVol = Phaser.Math.Clamp((obj.x - minX) / 300, 0, 1);
-      setGameVolume(newVol);
-      this.sound.volume = newVol;
-      save.volume(newVol);
+    // ── Onglets ─────────────────────────────────────────────
+    const TABS = ["Général", "Gameplay"];
+    this._activeTab = 0;
+    this._tabContainer = null;
+
+    const TAB_Y = 75;
+    const TAB_W = 160, TAB_H = 34;
+    const totalTabW = TABS.length * TAB_W + (TABS.length - 1) * 8;
+    const tabStartX = width / 2 - totalTabW / 2;
+
+    this._tabBgs = [];
+    this._tabLabels = [];
+
+    TABS.forEach((label, i) => {
+      const tx = tabStartX + i * (TAB_W + 8) + TAB_W / 2;
+      const bg = this.add.rectangle(tx, TAB_Y, TAB_W, TAB_H, 0x223344)
+        .setStrokeStyle(1, 0x00BFFF).setInteractive();
+      const txt = this.add.text(tx, TAB_Y, label, {
+        fontSize: "17px", color: "#aaaaaa"
+      }).setOrigin(0.5);
+
+      bg.on("pointerover",  () => { if (i !== this._activeTab) bg.setFillStyle(0x335566); });
+      bg.on("pointerout",   () => { if (i !== this._activeTab) bg.setFillStyle(0x223344); });
+      bg.on("pointerdown",  () => {
+        if (i === this._activeTab) return;
+        this.sound.play("menu", { volume: gameVolume });
+        this._activeTab = i;
+        this._refreshTabs();
+        this._buildTabContent();
+      });
+
+      this._tabBgs.push(bg);
+      this._tabLabels.push(txt);
     });
 
-    // ── Clavier ZQSD / WASD ─────────────────────────────────
-    const keyboardBtn = this.add.text(width / 2, 190, "", {
-      fontSize: "20px", color: "#ffffff",
-      backgroundColor: "#00BFFF", padding: { x: 18, y: 8 }
-    }).setOrigin(0.5).setInteractive();
+    // ── Ligne sous les onglets ───────────────────────────────
+    this.add.rectangle(width / 2, TAB_Y + TAB_H / 2 + 1, width - 40, 1, 0x444444);
 
-    const updateKeyboardBtn = () =>
-      keyboardBtn.setText(`Clavier : ${keyboardLayout.toUpperCase()}`);
-    updateKeyboardBtn();
+    // ── Contenu dynamique ────────────────────────────────────
+    this._tabContainer = this.add.container(0, 0);
+    this._refreshTabs();
+    this._buildTabContent();
 
-    keyboardBtn.on("pointerover",  () => {
-      keyboardBtn.setStyle({ backgroundColor: "#00FFFF", color: "#000000" });
-    });
-    keyboardBtn.on("pointerout",   () => {
-      keyboardBtn.setStyle({ backgroundColor: "#00BFFF", color: "#ffffff" });
-    });
-    keyboardBtn.on("pointerdown",  () => {
-      const newLayout = keyboardLayout === "zqsd" ? "wasd" : "zqsd";
-      setKeyboardLayout(newLayout);
-      save.keyboard(newLayout);
-      this.sound.play("menu", { volume: gameVolume });
-      updateKeyboardBtn();
-    });
-
-    // 25002500 Tutoriel double saut 25002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500
-    const LS_TUTO = "jumpix_doubleJumpTutorialSeen";
-    let tutoHidden = localStorage.getItem(LS_TUTO) === "true";
-
-    const tutoBtn = this.add.text(width / 2, 220, "", {
-      fontSize: "18px", color: "#ffffff",
-      backgroundColor: "#00BFFF", padding: { x: 18, y: 8 }
-    }).setOrigin(0.5).setInteractive();
-
-    const updateTutoBtn = () => {
-      tutoBtn.setText(tutoHidden
-        ? "Tutoriel double saut : masqu00e9"
-        : "Tutoriel double saut : visible");
-      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#555555" : "#00BFFF" });
-    };
-    updateTutoBtn();
-
-    tutoBtn.on("pointerover", () => {
-      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#777777" : "#00DFFF", color: "#000000" });
-    });
-    tutoBtn.on("pointerout", () => {
-      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#555555" : "#00BFFF", color: "#ffffff" });
-    });
-    tutoBtn.on("pointerdown", () => {
-      tutoHidden = !tutoHidden;
-      if (tutoHidden) localStorage.setItem(LS_TUTO, "true");
-      else            localStorage.removeItem(LS_TUTO);
-      this.sound.play("menu", { volume: gameVolume });
-      updateTutoBtn();
-    });
-
-    // 25002500 S00e9parateur 250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500
-    this.add.rectangle(width / 2, 260, 500, 1, 0x444444);
-
-    // ── Bloc compte (connecté ou non) ───────────────────────
+    // ── Bloc compte (commun aux deux onglets) ────────────────
     this._buildAccountBlock();
-
-    // ── Boutons bas de page ─────────────────────────────────
 
     // ── Toggle blocage demandes d'ami ───────────────────────
     if (isLoggedIn()) {
-      const blockBtn = this.add.text(400, 455, "🔓 Demandes d'ami : autorisées", {
+      const blockBtn = this.add.text(400, 455, "\uD83D\uDD13 Demandes d'ami : autoris\u00e9es", {
         fontSize: "15px", color: "#ffffff",
         backgroundColor: "#226622", padding: { x: 14, y: 6 }
       }).setOrigin(0.5).setInteractive();
@@ -150,8 +118,8 @@ export class SettingsScene extends Phaser.Scene {
 
       const updateBlockBtn = () => {
         blockBtn.setText(blockActive
-          ? "🔒 Demandes d'ami : bloquées"
-          : "🔓 Demandes d'ami : autorisées");
+          ? "\uD83D\uDD12 Demandes d'ami : bloqu\u00e9es"
+          : "\uD83D\uDD13 Demandes d'ami : autoris\u00e9es");
         blockBtn.setStyle({ backgroundColor: blockActive ? "#882222" : "#226622" });
       };
 
@@ -186,7 +154,7 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     // ── Retour ──────────────────────────────────────────────
-    const back = this.add.text(5, 5, "←", {
+    const back = this.add.text(5, 5, "\u2190", {
       fontSize: "24px", color: "#ffffff",
       backgroundColor: "#00BFFF", padding: { x: 7, y: 4 }
     }).setInteractive();
@@ -194,6 +162,115 @@ export class SettingsScene extends Phaser.Scene {
       this.sound.play("menu", { volume: gameVolume });
       this.scene.start("MenuScene");
     });
+  }
+
+  // ── Met à jour l'apparence des onglets ───────────────────
+  _refreshTabs() {
+    this._tabBgs.forEach((bg, i) => {
+      const active = i === this._activeTab;
+      bg.setFillStyle(active ? 0x00BFFF : 0x223344);
+    });
+    this._tabLabels.forEach((txt, i) => {
+      txt.setStyle({ color: i === this._activeTab ? "#000000" : "#aaaaaa",
+                     fontStyle: i === this._activeTab ? "bold" : "normal" });
+    });
+  }
+
+  // ── Construit le contenu de l'onglet actif ───────────────
+  _buildTabContent() {
+    if (this._tabContainer) this._tabContainer.removeAll(true);
+
+    if (this._activeTab === 0) {
+      this._buildTabGeneral();
+    } else {
+      this._buildTabGameplay();
+    }
+  }
+
+  // ── Onglet "Général" : volume + clavier ──────────────────
+  _buildTabGeneral() {
+    const { width } = this.scale;
+    const startY = 130;
+
+    // Volume
+    const volLabel = this.add.text(width / 2, startY, "Volume", {
+      fontSize: "22px", color: "#aaaaaa"
+    }).setOrigin(0.5);
+    const track = this.add.rectangle(width / 2, startY + 35, 300, 8, 0x555555);
+    const knob = this.add.circle(width / 2 - 150 + gameVolume * 300, startY + 35, 11, 0xffffff)
+      .setInteractive({ draggable: true });
+    this.input.setDraggable(knob);
+    this.input.on("drag", (pointer, obj, dragX) => {
+      const minX = width / 2 - 150, maxX = width / 2 + 150;
+      obj.x = Phaser.Math.Clamp(dragX, minX, maxX);
+      const newVol = Phaser.Math.Clamp((obj.x - minX) / 300, 0, 1);
+      setGameVolume(newVol);
+      this.sound.volume = newVol;
+      save.volume(newVol);
+    });
+
+    // Clavier
+    const keyboardBtn = this.add.text(width / 2, startY + 90, "", {
+      fontSize: "20px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 18, y: 8 }
+    }).setOrigin(0.5).setInteractive();
+
+    const updateKeyboardBtn = () =>
+      keyboardBtn.setText(`Clavier : ${keyboardLayout.toUpperCase()}`);
+    updateKeyboardBtn();
+
+    keyboardBtn.on("pointerover",  () => keyboardBtn.setStyle({ backgroundColor: "#00FFFF", color: "#000000" }));
+    keyboardBtn.on("pointerout",   () => keyboardBtn.setStyle({ backgroundColor: "#00BFFF", color: "#ffffff" }));
+    keyboardBtn.on("pointerdown",  () => {
+      const newLayout = keyboardLayout === "zqsd" ? "wasd" : "zqsd";
+      setKeyboardLayout(newLayout);
+      save.keyboard(newLayout);
+      this.sound.play("menu", { volume: gameVolume });
+      updateKeyboardBtn();
+    });
+
+    this._tabContainer.add([volLabel, track, knob, keyboardBtn]);
+  }
+
+  // ── Onglet "Gameplay" : tutoriel ─────────────────────────
+  _buildTabGameplay() {
+    const { width } = this.scale;
+    const startY = 130;
+
+    const LS_TUTO = "jumpix_doubleJumpTutorialSeen";
+    let tutoHidden = localStorage.getItem(LS_TUTO) === "true";
+
+    // Titre de section
+    const sectionLabel = this.add.text(width / 2, startY, "Tutoriels", {
+      fontSize: "20px", color: "#aaaaaa"
+    }).setOrigin(0.5);
+
+    // Ligne descriptive
+    const desc = this.add.text(width / 2, startY + 36, "Double saut (Level 1)", {
+      fontSize: "16px", color: "#888888"
+    }).setOrigin(0.5);
+
+    // Toggle bouton
+    const tutoBtn = this.add.text(width / 2, startY + 80, "", {
+      fontSize: "18px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setInteractive();
+
+    const updateTutoBtn = () => {
+      tutoBtn.setText(tutoHidden ? "Activer" : "D\u00e9sactiver");
+      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#226622" : "#882222" });
+    };
+    updateTutoBtn();
+
+    tutoBtn.on("pointerdown", () => {
+      tutoHidden = !tutoHidden;
+      if (tutoHidden) localStorage.setItem(LS_TUTO, "true");
+      else            localStorage.removeItem(LS_TUTO);
+      this.sound.play("menu", { volume: gameVolume });
+      updateTutoBtn();
+    });
+
+    this._tabContainer.add([sectionLabel, desc, tutoBtn]);
   }
 
   // ── Bloc compte dynamique ───────────────────────────────
