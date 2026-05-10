@@ -574,9 +574,11 @@ export class SettingsScene extends Phaser.Scene {
       errorMsg.setText("Création du compte…").setColor("#aaaaaa");
       try {
         await registerWithEmail(email, pwValue, pseudo);
-        // Créer le document Firestore avec les défauts
+        // Créer le document Firestore avec les défauts + pseudo
         const data = await loadPlayerData();
         applyPlayerData(data);
+        // Sauvegarder le pseudo dans Firestore pour la recherche d'amis
+        await save.pseudo(pseudo);
         destroy();
         this._buildAccountBlock();
         this.sound.play("select", { volume: gameVolume });
