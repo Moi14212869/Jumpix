@@ -208,6 +208,142 @@ export class LevelScene extends Phaser.Scene {
     }, null, this);
 
     createMobileControls(this);
+
+    // ── Tutoriel double saut (Level1 uniquement) ──
+    if (this.levelKey === "Level1") {
+      this._showDoubleJumpTutorial();
+    }
+  }
+
+  // \u2500\u2500 Tutoriel double saut \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  _showDoubleJumpTutorial() {
+    const LS_KEY = "jumpix_doubleJumpTutorialSeen";
+    if (localStorage.getItem(LS_KEY) === "true") return;
+
+    const { width, height } = this.scale;
+    const cx = width / 2, cy = height / 2;
+    const W = 460, H = 370;
+    const x0 = cx - W / 2, y0 = cy - H / 2;
+    const DEPTH = 30;
+    this._tutorialOpen = true;
+
+    // Fond semi-transparent
+    const overlay = this.add.rectangle(cx, cy, width, height, 0x000000, 0.55)
+      .setScrollFactor(0).setDepth(DEPTH).setInteractive();
+    overlay.on("pointerdown", () => {});
+
+    // Boîte
+    const box = this.add.graphics().setScrollFactor(0).setDepth(DEPTH);
+    box.fillStyle(0x1a1a2e, 1);
+    box.fillRoundedRect(x0, y0, W, H, 16);
+    box.lineStyle(2, 0x00bfff, 1);
+    box.strokeRoundedRect(x0, y0, W, H, 16);
+
+    // Titre
+    this.add.text(cx, y0 + 26, "Double saut", {
+      fontSize: "22px", color: "#00BFFF", fontStyle: "bold"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 1);
+
+    // Illustration (Phaser Graphics)
+    const ilY = y0 + 58;  // zone illustration
+    const ilH = 175;
+    const peakX = cx - 55;
+    const peakY = ilY + 10;
+    const groundY = ilY + ilH - 8;
+
+    const g = this.add.graphics().setScrollFactor(0).setDepth(DEPTH + 1);
+
+    // Pré-calcule les points des deux arcs
+    const arc1 = [];
+    for (let t = 0; t <= 1; t += 0.05)
+      arc1.push({ x: cx - 120 + t * 120, y: groundY - Math.sin(t * Math.PI) * ilH });
+    const arc2 = [];
+    for (let t = 0; t <= 1; t += 0.05)
+      arc2.push({ x: peakX + t * 135, y: peakY - Math.sin(t * Math.PI) * 68 + t * (groundY - peakY) });
+
+    // Joueur animé
+    const pSq = this.add.rectangle(cx - 120, groundY - 9, 18, 18, 0xaa66cc)
+      .setScrollFactor(0).setDepth(DEPTH + 2);
+
+    let phase = 1, ti = 0;
+    const animTimer = this.time.addEvent({
+      delay: 16, loop: true, callback: () => {
+        ti += phase === 1 ? 0.007 : 0.009;
+        if (ti >= 1) { phase = phase === 1 ? 2 : 1; ti = 0; }
+        const pts = phase === 1 ? arc1 : arc2;
+        const idx = Math.min(Math.floor(ti * (pts.length - 1)), pts.length - 2);
+        const a = pts[idx], b = pts[idx + 1], f = (ti * (pts.length - 1)) - idx;
+        pSq.x = a.x + (b.x - a.x) * f;
+        pSq.y = a.y + (b.y - a.y) * f - 9;
+        // Redessine le graphique
+        g.clear();
+        // Sol
+        g.fillStyle(0x4a4a6a, 1);
+        g.fillRect(x0 + 20, groundY, W - 40, 10);
+        // Arc 1 (gris)
+        g.lineStyle(2, 0x888888, 0.5);
+        g.beginPath();
+        arc1.forEach((p, i) => i === 0 ? g.moveTo(p.x, p.y) : g.lineTo(p.x, p.y));
+        g.strokePath();
+        // Arc 2 (vert)
+        g.lineStyle(3, 0x00ff99, 0.9);
+        g.beginPath();
+        arc2.forEach((p, i) => i === 0 ? g.moveTo(p.x, p.y) : g.lineTo(p.x, p.y));
+        g.strokePath();
+        // Halo sommet (pulsé via ti)
+        const hr = 10 + 8 * Math.abs(Math.sin(Date.now() * 0.003));
+        g.fillStyle(0x00bfff, 0.15);
+        g.fillCircle(peakX, peakY, hr);
+        g.lineStyle(1.5, 0x00bfff, 0.8);
+        g.strokeCircle(peakX, peakY, hr);
+      }
+    });
+
+    // Étiquettes illustration
+    this.add.text(peakX, peakY - 26, "appuie ici !", {
+      fontSize: "12px", color: "#00bfff"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 2);
+    this.add.text(peakX + 80, peakY + 20, "2e saut →", {
+      fontSize: "12px", color: "#00ff99"
+    }).setScrollFactor(0).setDepth(DEPTH + 2);
+
+    // Texte explicatif
+    this.add.text(cx, y0 + H - 108, "Attends le sommet du 1er saut,\npuis appuie ⬆ une 2e fois !", {
+      fontSize: "15px", color: "#ffffff", align: "center", lineSpacing: 6
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 1);
+
+    // Case à cocher
+    let dontShow = false;
+    const cbBg = this.add.rectangle(x0 + 30, y0 + H - 38, 18, 18, 0x333355)
+      .setStrokeStyle(1.5, 0x00bfff).setScrollFactor(0).setDepth(DEPTH + 1).setInteractive();
+    const cbMark = this.add.text(x0 + 30, y0 + H - 38, "✓", {
+      fontSize: "14px", color: "#00ff99"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 2).setAlpha(0);
+    this.add.text(x0 + 44, y0 + H - 38, "Ne plus me montrer", {
+      fontSize: "13px", color: "#aaaaaa"
+    }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(DEPTH + 1);
+    cbBg.on("pointerdown", () => {
+      dontShow = !dontShow;
+      cbMark.setAlpha(dontShow ? 1 : 0);
+      cbBg.setFillStyle(dontShow ? 0x004433 : 0x333355);
+      if (dontShow) localStorage.setItem(LS_KEY, "true");
+      else          localStorage.removeItem(LS_KEY);
+    });
+
+    // Croix de fermeture
+    const closeBtn = this.add.text(x0 + W - 14, y0 + 14, "✕", {
+      fontSize: "18px", color: "#ffffff",
+      backgroundColor: "#333355", padding: { x: 6, y: 3 }
+    }).setOrigin(1, 0).setScrollFactor(0).setDepth(DEPTH + 2).setInteractive();
+    closeBtn.on("pointerover", () => closeBtn.setStyle({ color: "#00bfff" }));
+    closeBtn.on("pointerout",  () => closeBtn.setStyle({ color: "#ffffff" }));
+    closeBtn.on("pointerdown", () => {
+      this._tutorialOpen = false;
+      animTimer.remove();
+      this.children.list
+        .filter(c => c.depth >= DEPTH)
+        .forEach(c => c.destroy());
+    });
   }
 
   // ── Écran de victoire ─────────────────────────────────
