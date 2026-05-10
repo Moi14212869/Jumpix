@@ -38,7 +38,7 @@ export const SHOP_PAGES = [
     { key: "480437", label: "Eggplant",    price: 500 },
     { key: "E9C4F4", label: "Mauve",       price: 600 },
     { key: "A0A45B", label: "Olive Green", price: 700 },
-    { key: "ADD8E6", label: "",            price: 800 },
+    { key: "2AF42D", label: "Light Green", price: 800 },
     { key: "ADD8E6", label: "",            price: 900 }
   ]
 ];
