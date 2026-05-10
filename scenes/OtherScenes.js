@@ -100,8 +100,39 @@ export class SettingsScene extends Phaser.Scene {
       updateKeyboardBtn();
     });
 
-    // ── Séparateur ──────────────────────────────────────────
-    this.add.rectangle(width / 2, 225, 500, 1, 0x444444);
+    // 25002500 Tutoriel double saut 25002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500
+    const LS_TUTO = "jumpix_doubleJumpTutorialSeen";
+    let tutoHidden = localStorage.getItem(LS_TUTO) === "true";
+
+    const tutoBtn = this.add.text(width / 2, 220, "", {
+      fontSize: "18px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 18, y: 8 }
+    }).setOrigin(0.5).setInteractive();
+
+    const updateTutoBtn = () => {
+      tutoBtn.setText(tutoHidden
+        ? "Tutoriel double saut : masqu00e9"
+        : "Tutoriel double saut : visible");
+      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#555555" : "#00BFFF" });
+    };
+    updateTutoBtn();
+
+    tutoBtn.on("pointerover", () => {
+      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#777777" : "#00DFFF", color: "#000000" });
+    });
+    tutoBtn.on("pointerout", () => {
+      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#555555" : "#00BFFF", color: "#ffffff" });
+    });
+    tutoBtn.on("pointerdown", () => {
+      tutoHidden = !tutoHidden;
+      if (tutoHidden) localStorage.setItem(LS_TUTO, "true");
+      else            localStorage.removeItem(LS_TUTO);
+      this.sound.play("menu", { volume: gameVolume });
+      updateTutoBtn();
+    });
+
+    // 25002500 S00e9parateur 250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500
+    this.add.rectangle(width / 2, 260, 500, 1, 0x444444);
 
     // ── Bloc compte (connecté ou non) ───────────────────────
     this._buildAccountBlock();
