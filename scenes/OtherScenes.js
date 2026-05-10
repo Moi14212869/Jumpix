@@ -1153,6 +1153,9 @@ export class FriendsScene extends Phaser.Scene {
   }
 
   _showTab(key) {
+    (this._lbTabObjs || []).forEach(o => o.destroy());
+    this._lbTabObjs = [];
+    if (this._lbListContainer) { this._lbListContainer.destroy(); this._lbListContainer = null; }
     this._contentContainer.removeAll(true);
     if (key === "friends")     this._buildFriendsTab();
     if (key === "leaderboard") this._buildLeaderboardTab();
