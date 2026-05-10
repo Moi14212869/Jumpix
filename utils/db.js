@@ -5,7 +5,6 @@
 // est connecté (compte email). Les invités jouent en local
 // (variables en mémoire seulement, pas de persistance).
 // =========================================================
-
 import { db, getCurrentUser } from "./firebase.js";
 import {
   doc, getDoc, setDoc, updateDoc, deleteField,
