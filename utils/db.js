@@ -5,6 +5,7 @@
 // est connecté (compte email). Les invités jouent en local
 // (variables en mémoire seulement, pas de persistance).
 // =========================================================
+
 import { db, getCurrentUser } from "./firebase.js";
 import {
   doc, getDoc, setDoc, updateDoc, deleteField,
@@ -46,14 +47,21 @@ export function getPseudo() {
 
 // ── Charger la progression depuis Firestore ───────────────
 // Retourne les données du joueur, ou les DEFAULTS si invité.
+// CORRECTION : le document initial inclut le pseudo Auth pour
+// que findPlayerByPseudo puisse le retrouver immédiatement.
 export async function loadPlayerData() {
   const ref = playerRef();
   if (!ref) return { ...DEFAULTS }; // invité → défauts en mémoire
 
   const snap = await getDoc(ref);
   if (!snap.exists()) {
-    await setDoc(ref, DEFAULTS);
-    return { ...DEFAULTS };
+    const user = getCurrentUser();
+    const initialData = {
+      ...DEFAULTS,
+      pseudo: user?.displayName || "" // ← préserve le pseudo Auth dès la création
+    };
+    await setDoc(ref, initialData);
+    return { ...initialData };
   }
   return { ...DEFAULTS, ...snap.data() };
 }
@@ -156,17 +164,25 @@ export async function updateLeaderboardColor(colorPlayer) {
 //   players/{uid}.settings         = { blockFriendRequests: bool }
 
 // ── Chercher un joueur par pseudo (scan limité) ───────────
+// CORRECTION : cherche aussi sur le champ `displayName` en plus de `pseudo`
+// pour les comptes dont le pseudo Firestore n'a pas encore été écrit.
 export async function findPlayerByPseudo(pseudo) {
   const pseudoLower = pseudo.trim().toLowerCase();
   const snap = await getDocs(collection(db, "players"));
+
   for (const d of snap.docs) {
     const data = d.data();
-    // Cherche sur le champ `pseudo` sauvegardé dans Firestore
-    const name = (data.pseudo || "").toLowerCase();
-    if (name === pseudoLower) {
-      return { uid: d.id, pseudo: data.pseudo, colorPlayer: data.colorPlayer ?? 0xAA66CC };
+    const name1 = (data.pseudo      || "").toLowerCase();
+    const name2 = (data.displayName || "").toLowerCase(); // fallback champ Auth mirroré
+    if (name1 === pseudoLower || name2 === pseudoLower) {
+      return {
+        uid:         d.id,
+        pseudo:      data.pseudo || data.displayName || pseudo,
+        colorPlayer: data.colorPlayer ?? 0xAA66CC
+      };
     }
   }
+
   // Fallback : chercher dans les entrées leaderboard (pseudo y est fiable)
   for (const lvl of ALL_LEVELS) {
     const entriesSnap = await getDocs(collection(db, "leaderboards", lvl, "entries"));
@@ -181,6 +197,7 @@ export async function findPlayerByPseudo(pseudo) {
       }
     }
   }
+
   return null;
 }
 
@@ -266,12 +283,13 @@ export async function removeFriend(friendUid) {
 
 // ── Charger le profil public d'un joueur ─────────────────
 // Retourne : { pseudo, colorPlayer, playerCoins, dead, kill, party, bestTimes }
+// CORRECTION : lire d.pseudo en priorité (et non d.displayName qui n'existe pas dans Firestore)
 export async function loadFriendProfile(uid) {
   const snap = await getDoc(doc(db, "players", uid));
   if (!snap.exists()) return null;
   const d = snap.data();
   return {
-    pseudo:      d.displayName  ?? "Anonyme",
+    pseudo:      d.pseudo       ?? d.displayName ?? "Anonyme",
     colorPlayer: d.colorPlayer  ?? 0xAA66CC,
     playerCoins: d.playerCoins  ?? 0,
     dead:        d.dead         ?? 0,
