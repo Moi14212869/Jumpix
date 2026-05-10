@@ -20,6 +20,7 @@ export const DEFAULTS = {
   kill:            0,
   party:           0,
   colorPlayer:     0xAA66CC,
+  pseudo:          "",
   skins:           {},
   completedLevels: {},
   bestTimes:       {},
@@ -74,6 +75,7 @@ export const save = {
   kill:          v      => saveFields({ kill: v }),
   party:         v      => saveFields({ party: v }),
   color:         v      => saveFields({ colorPlayer: v }),
+  pseudo:        v      => saveFields({ pseudo: v }),
   skin:   (key, v)      => saveFields({ [`skins.${key}`]: v }),
   level:     (key)       => saveFields({ [`completedLevels.${key}`]: true }),
   bestTime:  (key, ms)   => saveFields({ [`bestTimes.${key}`]: ms }),
@@ -157,16 +159,13 @@ export async function updateLeaderboardColor(colorPlayer) {
 // ── Chercher un joueur par pseudo (scan limité) ───────────
 export async function findPlayerByPseudo(pseudo) {
   const pseudoLower = pseudo.trim().toLowerCase();
-  // Firestore n'a pas de recherche insensible à la casse ; on compare côté client
   const snap = await getDocs(collection(db, "players"));
   for (const d of snap.docs) {
     const data = d.data();
-    const name = (data.displayName || "").toLowerCase();
-    // Firebase Auth stocke displayName dans Auth, pas forcément dans Firestore
-    // On cherche donc via le pseudo enregistré dans le leaderboard (champ pseudo)
-    // OU via un champ dédié si présent
+    // Cherche sur le champ `pseudo` sauvegardé dans Firestore
+    const name = (data.pseudo || "").toLowerCase();
     if (name === pseudoLower) {
-      return { uid: d.id, pseudo: data.displayName, colorPlayer: data.colorPlayer ?? 0xAA66CC };
+      return { uid: d.id, pseudo: data.pseudo, colorPlayer: data.colorPlayer ?? 0xAA66CC };
     }
   }
   // Fallback : chercher dans les entrées leaderboard (pseudo y est fiable)
@@ -175,7 +174,6 @@ export async function findPlayerByPseudo(pseudo) {
     for (const d of entriesSnap.docs) {
       const data = d.data();
       if ((data.pseudo || "").toLowerCase() === pseudoLower) {
-        // Récupérer la couleur actuelle depuis le profil
         const playerSnap = await getDoc(doc(db, "players", d.id));
         const colorPlayer = playerSnap.exists()
           ? (playerSnap.data().colorPlayer ?? 0xAA66CC)
