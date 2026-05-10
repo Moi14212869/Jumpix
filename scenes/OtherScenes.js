@@ -1064,6 +1064,10 @@ export class LeaderboardScene extends Phaser.Scene {
 // =========================================================
 //                     FRIENDS SCENE
 // =========================================================
+// Trois onglets :
+//   0 – Amis & demandes reçues
+//   1 – Classement entre amis (par niveau)
+// =========================================================
 const FRIENDS_LEVELS = [
   "Level1","Level2","Level3","Level4","Level5",
   "Level6","Level7","Level8","Level9"
@@ -1072,16 +1076,16 @@ const FRIENDS_LEVELS = [
 export class FriendsScene extends Phaser.Scene {
   constructor() { super("FriendsScene"); }
 
+  init() {
+    this.activeTab      = "friends"; // "friends" | "leaderboard"
+    this.lbLevel        = 0;         // index dans FRIENDS_LEVELS pour le classement
+  }
+
   async create() {
     const { width, height } = this.scale;
 
     // ── Fond ────────────────────────────────────────────────
     this.add.rectangle(width / 2, height / 2, width, height, 0x0d1b2a);
-
-    // ── Titre ───────────────────────────────────────────────
-    this.add.text(width / 2, 30, "👥 Amis", {
-      fontSize: "36px", color: "#ffffff", fontStyle: "bold"
-    }).setOrigin(0.5);
 
     // ── Retour ──────────────────────────────────────────────
     this.add.text(8, 8, "←", {
@@ -1099,25 +1103,86 @@ export class FriendsScene extends Phaser.Scene {
       return;
     }
 
-    // ── Champ recherche d'ami ────────────────────────────────
-    this.add.text(width / 2, 75, "Ajouter un ami par pseudo :", {
-      fontSize: "17px", color: "#aaaaaa"
+    // ── Onglets principaux ───────────────────────────────────
+    this._mainTabObjs = [];
+    this._buildMainTabs(width);
+
+    // ── Conteneur de contenu ─────────────────────────────────
+    this._contentContainer = this.add.container(0, 0);
+
+    // ── Charger les données amis ─────────────────────────────
+    let pd;
+    try { pd = await loadPlayerData(); }
+    catch { pd = {}; }
+    this._pd = pd;
+
+    this._showTab(this.activeTab);
+  }
+
+  // =========================================================
+  //  ONGLETS PRINCIPAUX
+  // =========================================================
+  _buildMainTabs(width) {
+    (this._mainTabObjs || []).forEach(o => o.destroy());
+    this._mainTabObjs = [];
+
+    const tabs = [
+      { key: "friends",     label: "👥 Amis"       },
+      { key: "leaderboard", label: "🏆 Classement"  },
+    ];
+    const tw = Math.floor((width - 20) / tabs.length);
+
+    tabs.forEach((t, i) => {
+      const x      = 10 + i * tw + tw / 2;
+      const active = this.activeTab === t.key;
+      const bg = this.add.rectangle(x, 28, tw - 6, 32, active ? 0x00BFFF : 0x1a2e44).setInteractive();
+      const lbl = this.add.text(x, 28, t.label, {
+        fontSize: "15px", color: active ? "#000000" : "#aaaaaa", fontStyle: active ? "bold" : "normal"
+      }).setOrigin(0.5);
+      bg.on("pointerdown", () => {
+        if (this.activeTab !== t.key) {
+          this.activeTab = t.key;
+          this._buildMainTabs(width);
+          this._showTab(t.key);
+        }
+      });
+      bg.on("pointerover",  () => { if (!active) bg.setFillStyle(0x2a4466); });
+      bg.on("pointerout",   () => { if (!active) bg.setFillStyle(0x1a2e44); });
+      this._mainTabObjs.push(bg, lbl);
+    });
+  }
+
+  _showTab(key) {
+    this._contentContainer.removeAll(true);
+    if (key === "friends")     this._buildFriendsTab();
+    if (key === "leaderboard") this._buildLeaderboardTab();
+  }
+
+  // =========================================================
+  //  ONGLET AMIS
+  // =========================================================
+  _buildFriendsTab() {
+    const { width, height } = this.scale;
+    const pd = this._pd || {};
+
+    // ── Barre de recherche ───────────────────────────────────
+    const searchLabel = this.add.text(width / 2, 66, "Ajouter un ami par pseudo :", {
+      fontSize: "15px", color: "#aaaaaa"
     }).setOrigin(0.5);
 
-    const inputBox  = this.add.rectangle(width / 2 - 60, 105, 260, 36, 0x111111)
-      .setStrokeStyle(1, 0x555555).setOrigin(0.5);
-    this._inputText = this.add.text(width / 2 - 185, 91, "", {
-      fontSize: "18px", color: "#ffffff"
-    });
-    this._inputValue = "";
+    const inputBox = this.add.rectangle(width / 2 - 65, 92, 270, 34, 0x111111)
+      .setStrokeStyle(1, 0x555555).setOrigin(0.5).setInteractive();
 
-    inputBox.setInteractive();
+    this._inputText  = this.add.text(width / 2 - 195, 79, "", { fontSize: "17px", color: "#ffffff" });
+    this._inputValue = "";
     this._inputFocused = false;
+
     inputBox.on("pointerdown", () => {
       this._inputFocused = true;
       inputBox.setStrokeStyle(2, 0x00BFFF);
     });
 
+    this.input.keyboard.removeAllListeners("keydown");
     this.input.keyboard.on("keydown", e => {
       if (!this._inputFocused) return;
       if (e.key === "Backspace") this._inputValue = this._inputValue.slice(0, -1);
@@ -1126,16 +1191,14 @@ export class FriendsScene extends Phaser.Scene {
       this._inputText.setText(this._inputValue);
     });
 
-    // ── Feedback message ────────────────────────────────────
-    this._feedbackText = this.add.text(width / 2, 148, "", {
-      fontSize: "14px", color: "#aaaaaa"
+    this._feedbackText = this.add.text(width / 2, 118, "", {
+      fontSize: "13px", color: "#aaaaaa"
     }).setOrigin(0.5);
 
-    const sendBtn = this.add.text(width / 2 + 100, 105, "Envoyer ➤", {
-      fontSize: "16px", color: "#ffffff",
-      backgroundColor: "#226688", padding: { x: 12, y: 8 }
+    const sendBtn = this.add.text(width / 2 + 110, 92, "Envoyer ➤", {
+      fontSize: "14px", color: "#ffffff",
+      backgroundColor: "#226688", padding: { x: 10, y: 7 }
     }).setOrigin(0.5).setInteractive();
-
     sendBtn.on("pointerover", () => sendBtn.setStyle({ backgroundColor: "#2288AA" }));
     sendBtn.on("pointerout",  () => sendBtn.setStyle({ backgroundColor: "#226688" }));
     sendBtn.on("pointerdown", async () => {
@@ -1143,165 +1206,296 @@ export class FriendsScene extends Phaser.Scene {
       inputBox.setStrokeStyle(1, 0x555555);
       const pseudo = this._inputValue.trim();
       if (!pseudo) return;
-
       this._setFeedback("Recherche…", "#aaaaaa");
       const result = await findPlayerByPseudo(pseudo);
-      if (!result) {
-        this._setFeedback("❌ Joueur introuvable.", "#ff5555");
-        return;
-      }
-
+      if (!result) { this._setFeedback("❌ Joueur introuvable.", "#ff5555"); return; }
       const res = await sendFriendRequest(result.uid, result.pseudo);
-      if (res.ok)                     this._setFeedback("✅ Demande envoyée !", "#00FF99");
+      if (res.ok)                              this._setFeedback("✅ Demande envoyée !", "#00FF99");
       else if (res.error === "self")           this._setFeedback("❌ C'est vous !", "#ff5555");
-      else if (res.error === "already_friends") this._setFeedback("✅ Déjà ami avec ce joueur.", "#00FF99");
-      else if (res.error === "already_sent")    this._setFeedback("⏳ Demande déjà envoyée.", "#ffaa44");
-      else if (res.error === "blocked")         this._setFeedback("🔒 Ce joueur n'accepte pas les demandes.", "#ffaa44");
-      else                                       this._setFeedback("❌ Erreur lors de l'envoi.", "#ff5555");
+      else if (res.error === "already_friends") this._setFeedback("✅ Déjà ami.", "#00FF99");
+      else if (res.error === "already_sent")   this._setFeedback("⏳ Demande déjà envoyée.", "#ffaa44");
+      else if (res.error === "blocked")        this._setFeedback("🔒 Ce joueur n'accepte pas les demandes.", "#ffaa44");
+      else                                     this._setFeedback("❌ Erreur.", "#ff5555");
     });
 
-    // ── Séparateur ──────────────────────────────────────────
-    this.add.rectangle(width / 2, 163, width - 40, 1, 0x333333);
+    this.add.rectangle(width / 2, 132, width - 20, 1, 0x333333);
 
-    // ── Charger données ─────────────────────────────────────
-    this._mainContainer = this.add.container(0, 0);
-    this._setFeedback("Chargement…", "#888888");
+    this._contentContainer.add([searchLabel, inputBox, this._inputText, this._feedbackText, sendBtn]);
 
-    let pd;
-    try { pd = await loadPlayerData(); }
-    catch { pd = {}; }
+    // ── Demandes reçues ──────────────────────────────────────
+    const requests = pd.friendRequests ? Object.entries(pd.friendRequests).filter(([, r]) => r.status === "pending") : [];
+    const friends  = pd.friends        ? Object.entries(pd.friends) : [];
 
-    this._setFeedback("", "#aaaaaa");
-    this._buildLists(pd, width, height);
-  }
+    let y = 144;
 
-  _setFeedback(msg, color) {
-    this._feedbackText.setText(msg).setColor(color);
-  }
-
-  _buildLists(pd, width, height) {
-    this._mainContainer.removeAll(true);
-
-    const requests = pd.friendRequests ? Object.entries(pd.friendRequests) : [];
-    const friends  = pd.friends        ? Object.entries(pd.friends)        : [];
-
-    let y = 178;
-
-    // ── DEMANDES REÇUES ────────────────────────────────────
     if (requests.length > 0) {
-      this._mainContainer.add(
-        this.add.text(20, y, `📩 Demandes reçues (${requests.length})`, {
-          fontSize: "17px", color: "#FFD700", fontStyle: "bold"
-        })
-      );
-      y += 28;
+      const reqTitle = this.add.text(14, y, `📩 Demandes reçues (${requests.length})`, {
+        fontSize: "15px", color: "#FFD700", fontStyle: "bold"
+      });
+      this._contentContainer.add(reqTitle);
+      y += 24;
 
       requests.forEach(([fromUid, req]) => {
-        if (req.status !== "pending") return;
+        // Fond de ligne coloré (orange doux)
+        const rowBg = this.add.rectangle(width / 2, y + 17, width - 10, 34, 0x1f1200);
+        this._contentContainer.add(rowBg);
 
         // Skin
         const skinColor = typeof req.colorPlayer === "number"
           ? req.colorPlayer : parseInt(req.colorPlayer) || 0xAA66CC;
-        this._mainContainer.add(this.add.rectangle(34, y + 14, 24, 24, skinColor));
+        this._contentContainer.add(this.add.rectangle(26, y + 17, 22, 22, skinColor));
 
         // Pseudo
-        this._mainContainer.add(
-          this.add.text(52, y + 4, req.pseudo || "Anonyme", {
-            fontSize: "17px", color: "#ffffff"
-          })
-        );
+        this._contentContainer.add(this.add.text(42, y + 7, req.pseudo || "Anonyme", {
+          fontSize: "15px", color: "#ffffff"
+        }));
 
         // Bouton Accepter
-        const acceptBtn = this.add.text(500, y + 2, "✅ Accepter", {
-          fontSize: "15px", color: "#ffffff",
-          backgroundColor: "#226622", padding: { x: 8, y: 4 }
+        const acceptBtn = this.add.text(width - 170, y + 5, "✅ Accepter", {
+          fontSize: "13px", color: "#ffffff",
+          backgroundColor: "#1a5c1a", padding: { x: 7, y: 4 }
         }).setInteractive();
+        acceptBtn.on("pointerover", () => acceptBtn.setStyle({ backgroundColor: "#226622" }));
+        acceptBtn.on("pointerout",  () => acceptBtn.setStyle({ backgroundColor: "#1a5c1a" }));
         acceptBtn.on("pointerdown", async () => {
           this.sound.play("select", { volume: gameVolume });
           await acceptFriendRequest(fromUid, req.pseudo, req.colorPlayer);
-          const newPd = await loadPlayerData();
-          this._buildLists(newPd, width, height);
+          this._pd = await loadPlayerData();
+          this._showTab("friends");
         });
-        this._mainContainer.add(acceptBtn);
+        this._contentContainer.add(acceptBtn);
 
         // Bouton Refuser
-        const declineBtn = this.add.text(620, y + 2, "❌ Refuser", {
-          fontSize: "15px", color: "#ffffff",
-          backgroundColor: "#662222", padding: { x: 8, y: 4 }
+        const declineBtn = this.add.text(width - 70, y + 5, "❌ Refuser", {
+          fontSize: "13px", color: "#ffffff",
+          backgroundColor: "#5c1a1a", padding: { x: 7, y: 4 }
         }).setInteractive();
+        declineBtn.on("pointerover", () => declineBtn.setStyle({ backgroundColor: "#882222" }));
+        declineBtn.on("pointerout",  () => declineBtn.setStyle({ backgroundColor: "#5c1a1a" }));
         declineBtn.on("pointerdown", async () => {
           this.sound.play("menu", { volume: gameVolume });
           await declineFriendRequest(fromUid);
-          const newPd = await loadPlayerData();
-          this._buildLists(newPd, width, height);
+          this._pd = await loadPlayerData();
+          this._showTab("friends");
         });
-        this._mainContainer.add(declineBtn);
+        this._contentContainer.add(declineBtn);
 
-        y += 36;
+        y += 38;
       });
 
       // Séparateur
-      this._mainContainer.add(this.add.rectangle(width / 2, y + 4, width - 40, 1, 0x333333));
-      y += 14;
+      this._contentContainer.add(this.add.rectangle(width / 2, y + 4, width - 20, 1, 0x2a2a2a));
+      y += 12;
     }
 
-    // ── LISTE DES AMIS ─────────────────────────────────────
-    this._mainContainer.add(
-      this.add.text(20, y, friends.length > 0
-        ? `👥 Mes amis (${friends.length})`
-        : "👥 Aucun ami pour l'instant", {
-        fontSize: "17px", color: "#aaaaaa", fontStyle: "bold"
-      })
-    );
-    y += 28;
+    // ── Liste des amis ───────────────────────────────────────
+    const friendTitle = this.add.text(14, y, friends.length > 0
+      ? `👥 Mes amis (${friends.length})`
+      : "👥 Aucun ami pour l'instant", {
+      fontSize: "15px", color: "#aaaaaa", fontStyle: "bold"
+    });
+    this._contentContainer.add(friendTitle);
+    y += 24;
 
     friends.forEach(([friendUid, info]) => {
       const skinColor = typeof info.colorPlayer === "number"
         ? info.colorPlayer : parseInt(info.colorPlayer) || 0xAA66CC;
 
-      // Fond de ligne interactif
-      const rowBg = this.add.rectangle(width / 2, y + 16, width - 20, 34, 0x111122)
-        .setInteractive();
-
-      // Skin
-      const skinRect = this.add.rectangle(34, y + 16, 24, 24, skinColor);
-
-      // Pseudo
-      const pseudoTxt = this.add.text(52, y + 6, info.pseudo || "Anonyme", {
-        fontSize: "17px", color: "#ffffff"
-      });
-
-      // Bouton supprimer
-      const removeBtn = this.add.text(width - 20, y + 6, "✖", {
-        fontSize: "15px", color: "#ff6666",
-        backgroundColor: "#330000", padding: { x: 6, y: 3 }
-      }).setOrigin(1, 0).setInteractive();
-      removeBtn.on("pointerdown", async () => {
-        this.sound.play("menu", { volume: gameVolume });
-        await removeFriend(friendUid);
-        const newPd = await loadPlayerData();
-        this._buildLists(newPd, width, height);
-      });
-
-      // Clic sur la ligne → popup stats
+      const rowBg = this.add.rectangle(width / 2, y + 17, width - 10, 34, 0x111122).setInteractive();
       rowBg.on("pointerover",  () => rowBg.setFillStyle(0x1a2244));
       rowBg.on("pointerout",   () => rowBg.setFillStyle(0x111122));
       rowBg.on("pointerdown",  () => {
         this.sound.play("select", { volume: gameVolume });
         this._showFriendProfile(friendUid, info.pseudo || "Anonyme", skinColor, width, height);
       });
-      pseudoTxt.setInteractive();
+      this._contentContainer.add(rowBg);
+
+      this._contentContainer.add(this.add.rectangle(26, y + 17, 22, 22, skinColor));
+
+      const pseudoTxt = this.add.text(42, y + 7, info.pseudo || "Anonyme", {
+        fontSize: "15px", color: "#ffffff"
+      }).setInteractive();
       pseudoTxt.on("pointerdown", () => {
         this.sound.play("select", { volume: gameVolume });
         this._showFriendProfile(friendUid, info.pseudo || "Anonyme", skinColor, width, height);
       });
+      this._contentContainer.add(pseudoTxt);
 
-      this._mainContainer.add([rowBg, skinRect, pseudoTxt, removeBtn]);
-      y += 36;
+      const removeBtn = this.add.text(width - 14, y + 7, "✖", {
+        fontSize: "13px", color: "#ff6666",
+        backgroundColor: "#330000", padding: { x: 5, y: 3 }
+      }).setOrigin(1, 0).setInteractive();
+      removeBtn.on("pointerdown", async () => {
+        this.sound.play("menu", { volume: gameVolume });
+        await removeFriend(friendUid);
+        this._pd = await loadPlayerData();
+        this._showTab("friends");
+      });
+      this._contentContainer.add(removeBtn);
+
+      y += 38;
     });
   }
 
-  // ── Popup profil d'un ami ────────────────────────────────
+  _setFeedback(msg, color) {
+    if (this._feedbackText) this._feedbackText.setText(msg).setColor(color);
+  }
+
+  // =========================================================
+  //  ONGLET CLASSEMENT ENTRE AMIS
+  // =========================================================
+  _buildLeaderboardTab() {
+    const { width, height } = this.scale;
+
+    // Titre
+    this._contentContainer.add(
+      this.add.text(width / 2, 58, "🏆 Classement entre amis", {
+        fontSize: "20px", color: "#FFD700", fontStyle: "bold"
+      }).setOrigin(0.5)
+    );
+
+    // ── Onglets de niveau ────────────────────────────────────
+    this._lbTabObjs = [];
+    this._lbListContainer = this.add.container(0, 0);
+    this._contentContainer.add(this._lbListContainer);
+
+    this._buildLbTabs(width);
+    this._loadFriendsLeaderboard(this.lbLevel);
+  }
+
+  _buildLbTabs(width) {
+    (this._lbTabObjs || []).forEach(o => o.destroy());
+    this._lbTabObjs = [];
+
+    const tw   = Math.floor((width - 20) / FRIENDS_LEVELS.length);
+    const tabY = 86;
+
+    FRIENDS_LEVELS.forEach((lvl, i) => {
+      const x      = 10 + i * tw + tw / 2;
+      const active = i === this.lbLevel;
+
+      const bg = this.add.rectangle(x, tabY, tw - 4, 24, active ? 0x00BFFF : 0x223344).setInteractive();
+      const lbl = this.add.text(x, tabY, lvl.replace("Level", "Lvl "), {
+        fontSize: "12px", color: active ? "#000000" : "#aaaaaa", fontStyle: active ? "bold" : "normal"
+      }).setOrigin(0.5);
+
+      bg.on("pointerdown", () => {
+        if (i !== this.lbLevel) {
+          this.lbLevel = i;
+          this._buildLbTabs(width);
+          this._loadFriendsLeaderboard(i);
+        }
+      });
+      bg.on("pointerover",  () => { if (i !== this.lbLevel) bg.setFillStyle(0x335566); });
+      bg.on("pointerout",   () => { if (i !== this.lbLevel) bg.setFillStyle(0x223344); });
+
+      this._lbTabObjs.push(bg, lbl);
+    });
+  }
+
+  async _loadFriendsLeaderboard(index) {
+    const { width } = this.scale;
+    this._lbListContainer.removeAll(true);
+
+    const loadTxt = this.add.text(width / 2, 300, "Chargement…", {
+      fontSize: "18px", color: "#888888"
+    }).setOrigin(0.5);
+    this._lbListContainer.add(loadTxt);
+
+    try {
+      const pd      = this._pd || {};
+      const friends = pd.friends ? Object.entries(pd.friends) : [];
+      const myUid   = getCurrentUser()?.uid ?? null;
+
+      // Récupérer toutes les entrées du leaderboard global pour ce niveau
+      const allEntries = await loadLeaderboard(FRIENDS_LEVELS[index]);
+
+      // Filtrer : garder seulement moi + mes amis
+      const friendUids = new Set([myUid, ...friends.map(([uid]) => uid)]);
+      const filtered   = allEntries.filter(e => friendUids.has(e.uid));
+
+      this._lbListContainer.removeAll(true);
+
+      if (filtered.length === 0) {
+        this._lbListContainer.add(
+          this.add.text(width / 2, 300,
+            friends.length === 0
+              ? "Ajoutez des amis pour voir le classement."
+              : "Aucun temps enregistré parmi vos amis.", {
+            fontSize: "17px", color: "#666666", align: "center", wordWrap: { width: width - 40 }
+          }).setOrigin(0.5)
+        );
+        return;
+      }
+
+      // Colonnes header
+      const headerY = 108;
+      this._lbListContainer.add([
+        this.add.text(50,         headerY, "#",       { fontSize: "13px", color: "#888888" }).setOrigin(0.5),
+        this.add.text(100,        headerY, "Skin",    { fontSize: "13px", color: "#888888" }).setOrigin(0.5),
+        this.add.text(130,        headerY, "Joueur",  { fontSize: "13px", color: "#888888" }).setOrigin(0, 0.5),
+        this.add.text(width - 16, headerY, "Temps",  { fontSize: "13px", color: "#888888" }).setOrigin(1, 0.5),
+      ]);
+      this._lbListContainer.add(
+        this.add.rectangle(width / 2, headerY + 14, width - 16, 1, 0x333333)
+      );
+
+      const rowH   = 42;
+      const startY = 130;
+
+      filtered.forEach((entry, i) => {
+        const y      = startY + i * rowH;
+        const isMe   = entry.uid === myUid;
+        const rowCol = isMe ? "#FFD700" : (i % 2 === 0 ? "#ffffff" : "#cccccc");
+        const bgCol  = isMe ? 0x2a2000  : (i % 2 === 0 ? 0x111122  : 0x0d0d1a);
+
+        this._lbListContainer.add(
+          this.add.rectangle(width / 2, y + rowH / 2, width, rowH, bgCol)
+        );
+
+        // Rang
+        const rankStr  = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+        this._lbListContainer.add(
+          this.add.text(50, y + rowH / 2, rankStr, {
+            fontSize: i < 3 ? "18px" : "15px", color: rowCol
+          }).setOrigin(0.5)
+        );
+
+        // Skin
+        const skinColor = typeof entry.colorPlayer === "number"
+          ? entry.colorPlayer : parseInt(entry.colorPlayer) || 0xAA66CC;
+        this._lbListContainer.add(this.add.rectangle(100, y + rowH / 2, 24, 24, skinColor));
+
+        // Pseudo
+        this._lbListContainer.add(
+          this.add.text(118, y + rowH / 2, entry.pseudo || "Anonyme", {
+            fontSize: "16px", color: isMe ? "#FFD700" : rowCol,
+            fontStyle: isMe ? "bold" : "normal"
+          }).setOrigin(0, 0.5)
+        );
+
+        // Temps
+        this._lbListContainer.add(
+          this.add.text(width - 16, y + rowH / 2, (entry.timeMs / 1000).toFixed(2) + "s", {
+            fontSize: "16px", color: i === 0 ? "#FFD700" : rowCol
+          }).setOrigin(1, 0.5)
+        );
+      });
+
+    } catch (err) {
+      this._lbListContainer.removeAll(true);
+      this._lbListContainer.add(
+        this.add.text(width / 2, 300, "Erreur de chargement.", {
+          fontSize: "18px", color: "#ff4444"
+        }).setOrigin(0.5)
+      );
+      console.error("Friends leaderboard error:", err);
+    }
+  }
+
+  // =========================================================
+  //  POPUP PROFIL AMI
+  // =========================================================
   async _showFriendProfile(uid, pseudo, skinColor, width, height) {
     const cx = width / 2, cy = height / 2;
 
@@ -1319,32 +1513,29 @@ export class FriendsScene extends Phaser.Scene {
 
     loadTxt.destroy();
 
-    if (!profile) {
-      this.add.text(cx, cy, "Profil indisponible.", {
-        fontSize: "18px", color: "#ff5555"
-      }).setOrigin(0.5).setDepth(52);
+    const all = [overlay, box];
+    const d   = obj => { all.push(obj); return obj; };
 
-      const closeBtn = this.add.text(cx, cy + 60, "Fermer", {
+    if (!profile) {
+      d(this.add.text(cx, cy, "Profil indisponible.", {
+        fontSize: "18px", color: "#ff5555"
+      }).setOrigin(0.5).setDepth(52));
+      const closeBtn = d(this.add.text(cx, cy + 60, "Fermer", {
         fontSize: "18px", color: "#ffffff",
         backgroundColor: "#444444", padding: { x: 18, y: 8 }
-      }).setOrigin(0.5).setInteractive().setDepth(52);
-      closeBtn.on("pointerdown", () => [overlay, box, closeBtn].forEach(o => o.destroy()));
+      }).setOrigin(0.5).setInteractive().setDepth(52));
+      closeBtn.on("pointerdown", () => all.forEach(o => o.destroy()));
       return;
     }
 
-    const all = [overlay, box];
-    const d = (obj) => { all.push(obj); return obj; };
-
-    // En-tête : skin + pseudo
+    // En-tête
     d(this.add.rectangle(cx - 200, cy - 155, 36, 36, skinColor).setDepth(52));
     d(this.add.text(cx - 178, cy - 168, pseudo, {
       fontSize: "26px", color: "#ffffff", fontStyle: "bold"
     }).setDepth(52));
 
-    // Séparateur
     d(this.add.rectangle(cx, cy - 127, 500, 1, 0x333333).setDepth(52));
 
-    // Stats générales
     const statsRows = [
       { label: "Coins 💰",          value: profile.playerCoins },
       { label: "Deaths ☠️",         value: profile.dead        },
@@ -1360,11 +1551,9 @@ export class FriendsScene extends Phaser.Scene {
       sy += 32;
     });
 
-    // Séparateur
     d(this.add.rectangle(cx, sy + 2, 500, 1, 0x333333).setDepth(52));
     sy += 14;
 
-    // Meilleurs temps (grille 3 col)
     d(this.add.text(cx, sy, "⏱ Meilleurs temps", {
       fontSize: "15px", color: "#FFD700", fontStyle: "bold"
     }).setOrigin(0.5).setDepth(52));
@@ -1387,7 +1576,6 @@ export class FriendsScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(52));
     });
 
-    // Bouton Fermer
     const closeBtn = this.add.text(cx, cy + 175, "Fermer", {
       fontSize: "18px", color: "#ffffff",
       backgroundColor: "#444444", padding: { x: 22, y: 8 }
