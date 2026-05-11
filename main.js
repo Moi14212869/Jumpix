@@ -1,11 +1,12 @@
 // =========================================================
 //                     MAIN — POINT D'ENTRÉE
 // =========================================================
-import { LoadingScene }  from "./scenes/LoadingScene.js";
-import { MenuScene }     from "./scenes/MenuScene.js";
-import { LevelScene }    from "./scenes/LevelScene.js";
-import { ShopScene }     from "./scenes/ShopScene.js";
-import { World1, World2 } from "./scenes/WorldScenes.js";
+import { LoadingScene }      from "./scenes/LoadingScene.js";
+import { MenuScene }         from "./scenes/MenuScene.js";
+import { LevelScene }        from "./scenes/LevelScene.js";
+import { ShopScene }         from "./scenes/ShopScene.js";
+import { World1, World2 }    from "./scenes/WorldScenes.js";
+import { LevelEditorScene }  from "./scenes/LevelEditorScene.js";
 import {
   SettingsScene,
   CreditsScene,
@@ -40,7 +41,8 @@ const config = {
     World2,
     ObjectivesScene,
     LeaderboardScene,
-    FriendsScene
+    FriendsScene,
+    LevelEditorScene,
   ]
 };
 
