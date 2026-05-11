@@ -23,7 +23,11 @@ export class LevelScene extends Phaser.Scene {
   init(data) { this.levelKey = data.levelKey; }
 
   preload() {
-    this.load.json(this.levelKey, `levels/${this.levelKey}.json`);
+    // Si le JSON est déjà dans le cache (ex : niveau éditeur injecté en mémoire),
+    // on ne tente pas de le charger depuis le disque — ce qui provoquerait une erreur 404.
+    if (!this.cache.json.has(this.levelKey)) {
+      this.load.json(this.levelKey, `levels/${this.levelKey}.json`);
+    }
   }
 
   create() {
@@ -178,14 +182,16 @@ export class LevelScene extends Phaser.Scene {
           setPlayerCoins(newCoins);
           if (reward > 0) await save.coins(newCoins);
 
-          // Marquer ce niveau comme terminé
-          markLevelCompleted(this.levelKey);
-          await save.level(this.levelKey);
+          // Marquer ce niveau comme terminé (pas pour les niveaux éditeur)
+          if (this.levelKey !== "__editorLevel__") {
+            markLevelCompleted(this.levelKey);
+            await save.level(this.levelKey);
+          }
 
-          // ⏱ Meilleur temps
+          // ⏱ Meilleur temps (pas pour les niveaux éditeur)
           const elapsed = this.finalTime;
           let isNewRecord = false;
-          if (elapsed !== null) {
+          if (elapsed !== null && this.levelKey !== "__editorLevel__") {
             const prev = bestTimes[this.levelKey];
             if (prev === undefined || elapsed < prev) {
               isNewRecord = true;
@@ -215,7 +221,7 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
-  // \u2500\u2500 Tutoriel double saut \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // ── Tutoriel double saut ───────────────────────────────
   _showDoubleJumpTutorial() {
     const LS_KEY = "jumpix_doubleJumpTutorialSeen";
     if (localStorage.getItem(LS_KEY) === "true") return;
@@ -245,7 +251,7 @@ export class LevelScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 1);
 
     // Illustration (Phaser Graphics)
-    const ilY = y0 + 58;  // zone illustration
+    const ilY = y0 + 58;
     const ilH = 175;
     const peakX = cx - 55;
     const peakY = ilY + 10;
@@ -253,7 +259,6 @@ export class LevelScene extends Phaser.Scene {
 
     const g = this.add.graphics().setScrollFactor(0).setDepth(DEPTH + 1);
 
-    // Pré-calcule les points des deux arcs
     const arc1 = [];
     for (let t = 0; t <= 1; t += 0.05)
       arc1.push({ x: cx - 120 + t * 120, y: groundY - Math.sin(t * Math.PI) * ilH });
@@ -261,7 +266,6 @@ export class LevelScene extends Phaser.Scene {
     for (let t = 0; t <= 1; t += 0.05)
       arc2.push({ x: peakX + t * 135, y: peakY - Math.sin(t * Math.PI) * 68 + t * (groundY - peakY) });
 
-    // Joueur animé
     const pSq = this.add.rectangle(cx - 120, groundY - 9, 18, 18, 0xaa66cc)
       .setScrollFactor(0).setDepth(DEPTH + 2);
 
@@ -275,22 +279,17 @@ export class LevelScene extends Phaser.Scene {
         const a = pts[idx], b = pts[idx + 1], f = (ti * (pts.length - 1)) - idx;
         pSq.x = a.x + (b.x - a.x) * f;
         pSq.y = a.y + (b.y - a.y) * f - 9;
-        // Redessine le graphique
         g.clear();
-        // Sol
         g.fillStyle(0x4a4a6a, 1);
         g.fillRect(x0 + 20, groundY, W - 40, 10);
-        // Arc 1 (gris)
         g.lineStyle(2, 0x888888, 0.5);
         g.beginPath();
         arc1.forEach((p, i) => i === 0 ? g.moveTo(p.x, p.y) : g.lineTo(p.x, p.y));
         g.strokePath();
-        // Arc 2 (vert)
         g.lineStyle(3, 0x00ff99, 0.9);
         g.beginPath();
         arc2.forEach((p, i) => i === 0 ? g.moveTo(p.x, p.y) : g.lineTo(p.x, p.y));
         g.strokePath();
-        // Halo sommet (pulsé via ti)
         const hr = 10 + 8 * Math.abs(Math.sin(Date.now() * 0.003));
         g.fillStyle(0x00bfff, 0.15);
         g.fillCircle(peakX, peakY, hr);
@@ -299,7 +298,6 @@ export class LevelScene extends Phaser.Scene {
       }
     });
 
-    // Étiquettes illustration
     this.add.text(peakX, peakY - 26, "appuie ici !", {
       fontSize: "12px", color: "#00bfff"
     }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 2);
@@ -307,12 +305,10 @@ export class LevelScene extends Phaser.Scene {
       fontSize: "12px", color: "#00ff99"
     }).setScrollFactor(0).setDepth(DEPTH + 2);
 
-    // Texte explicatif
     this.add.text(cx, y0 + H - 108, "Attends le sommet du 1er saut,\npuis appuie ⬆ une 2e fois !", {
       fontSize: "15px", color: "#ffffff", align: "center", lineSpacing: 6
     }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 1);
 
-    // Case à cocher
     let dontShow = false;
     const cbBg = this.add.rectangle(x0 + 30, y0 + H - 38, 18, 18, 0x333355)
       .setStrokeStyle(1.5, 0x00bfff).setScrollFactor(0).setDepth(DEPTH + 1).setInteractive();
@@ -330,7 +326,6 @@ export class LevelScene extends Phaser.Scene {
       else          localStorage.removeItem(LS_KEY);
     });
 
-    // Croix de fermeture
     const closeBtn = this.add.text(x0 + W - 14, y0 + 14, "✕", {
       fontSize: "18px", color: "#ffffff",
       backgroundColor: "#333355", padding: { x: 6, y: 3 }
@@ -351,15 +346,12 @@ export class LevelScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const cx = width / 2, cy = height / 2;
 
-    // Fond semi-transparent
     this.add.rectangle(cx, cy, width, height, 0x000000, 0.65).setScrollFactor(0).setDepth(20);
 
-    // Titre
     this.add.text(cx, cy - 110, "✅ NIVEAU TERMINÉ !", {
       fontSize: "36px", color: "#FFD700", fontStyle: "bold"
     }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
 
-    // Temps
     if (elapsed !== null) {
       const timeStr = (elapsed / 1000).toFixed(2) + "s";
       const recordStr = isNewRecord ? "  🏆 Nouveau record !" : "";
@@ -368,18 +360,15 @@ export class LevelScene extends Phaser.Scene {
       }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
     }
 
-    // Hint "appuie sur une touche"
     const hint = this.add.text(cx, cy - 10, "Appuie sur n'importe quelle touche pour rejouer", {
       fontSize: "16px", color: "#aaaaaa"
     }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
 
-    // Clignotement du hint
     this.tweens.add({
       targets: hint, alpha: 0, duration: 600,
       yoyo: true, repeat: -1, ease: "Sine.easeInOut"
     });
 
-    // Bouton Rejouer
     const replayBtn = this.add.text(cx - 90, cy + 55, "🔄 Rejouer", {
       fontSize: "26px", color: "#ffffff",
       backgroundColor: "#00BFFF", padding: { x: 18, y: 10 }
@@ -392,7 +381,6 @@ export class LevelScene extends Phaser.Scene {
       this._doReplay();
     });
 
-    // Bouton Quitter
     const quitBtn = this.add.text(cx + 90, cy + 55, "🚪 Quitter", {
       fontSize: "26px", color: "#ffffff",
       backgroundColor: "#444444", padding: { x: 18, y: 10 }
@@ -405,7 +393,6 @@ export class LevelScene extends Phaser.Scene {
       this.scene.start(level.nextScene);
     });
 
-    // N'importe quelle touche → rejouer
     this.input.keyboard.once("keydown", () => this._doReplay());
   }
 
@@ -435,9 +422,7 @@ export class LevelScene extends Phaser.Scene {
       this.startTime = this.time.now;
     }
 
-    // Mise à jour de l'affichage
     if (this.transitioning && this.finalTime !== null) {
-      // Temps figé au contact du cercle bleu
       this.chronoText.setText((this.finalTime / 1000).toFixed(2) + "s");
     } else if (this.startTime !== null) {
       const elapsed = (this.time.now - this.startTime) / 1000;
