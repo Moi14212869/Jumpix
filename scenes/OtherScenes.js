@@ -903,6 +903,8 @@ export class LeaderboardScene extends Phaser.Scene {
     this.currentTab = 0;   // index dans ALL_LEVELS
     this.entries    = [];  // données chargées pour l'onglet actif
     this.loading    = true;
+    this.scrollY    = 0;
+    this.maxScrollY = 0;
   }
 
   create() {
@@ -931,6 +933,34 @@ export class LeaderboardScene extends Phaser.Scene {
 
     // ── Zone liste (conteneur scrollable) ──
     this.listContainer = this.add.container(0, 0);
+    const { width, height } = this.scale;
+
+// zone visible du leaderboard
+this.viewportY = 110;
+this.viewportH = height - 140;
+
+// masque (zone scrollable)
+const maskShape = this.make.graphics();
+maskShape.fillRect(0, this.viewportY, width, this.viewportH);
+
+const mask = maskShape.createGeometryMask();
+this.listContainer.setMask(mask);
+
+// position de base du container
+this.listContainer.y = this.viewportY;
+    this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY) => {
+  const scrollSpeed = 0.6;
+
+  this.scrollY += deltaY * scrollSpeed;
+
+  this.scrollY = Phaser.Math.Clamp(
+    this.scrollY,
+    -this.maxScrollY,
+    0
+  );
+
+  this.listContainer.y = this.viewportY + this.scrollY;
+});
 
     // ── Charger le premier onglet ──
     this._loadTab(0);
