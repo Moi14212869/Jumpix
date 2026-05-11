@@ -21,25 +21,25 @@ export const DEV_PASSWORD_HASH =
 
 export const SHOP_PAGES = [
   [
-    { key: "AA66CC", label: "Purple",     price: 0   },
-    { key: "73BE73", label: "Green",      price: 50  },
-    { key: "CC99A2", label: "Pink",       price: 100 },
-    { key: "40E0D0", label: "Turquoise",  price: 150 },
-    { key: "FFA500", label: "Orange",     price: 200 }
+    { key: "AA66CC", label: "Purple",      price: 0   },
+    { key: "73BE73", label: "Green",       price: 50  },
+    { key: "CC99A2", label: "Pink",        price: 100 },
+    { key: "40E0D0", label: "Turquoise",   price: 150 },
+    { key: "FFA500", label: "Orange",      price: 200 }
   ],
   [
-    { key: "7A0000", label: "Maroon",     price: 250 },
-    { key: "0B228A", label: "Dark Blue",  price: 300 },
-    { key: "226546", label: "Dark Green", price: 350 },
-    { key: "E2FF00", label: "Yellow",     price: 400 },
-    { key: "FFEADD", label: "Inna Beige", price: 450 }
+    { key: "7A0000", label: "Maroon",      price: 250 },
+    { key: "0B228A", label: "Dark Blue",   price: 300 },
+    { key: "226546", label: "Dark Green",  price: 350 },
+    { key: "E2FF00", label: "Yellow",      price: 400 },
+    { key: "FFEADD", label: "Inna Beige",  price: 450 }
   ],
   [
-    { key: "480437", label: "Eggplant",    price: 500 },
-    { key: "E9C4F4", label: "Mauve",       price: 600 },
-    { key: "A0A45B", label: "Olive Green", price: 700 },
-    { key: "2AF42D", label: "Light Green", price: 800 },
-    { key: "7C6A95", label: "Ash mauve",   price: 900 }
+    { key: "480437", label: "Eggplant",     price: 500 },
+    { key: "E9C4F4", label: "Mauve",        price: 600 },
+    { key: "A0A45B", label: "Olive Green",  price: 700 },
+    { key: "2AF42D", label: "Light Green",  price: 800 },
+    { key: "A5985A", label: "Antique gold", price: 900 }
   ]
 ];
 
