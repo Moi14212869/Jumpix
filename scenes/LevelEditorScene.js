@@ -35,6 +35,9 @@ const DEFAULTS = {
   redSquare: { rise: 100, direction: "right" },
 };
 
+// ── Clé localStorage ─────────────────────────────────────
+const LS_KEY = "jumpix_editorLevel";
+
 // ── Utilitaires ───────────────────────────────────────────
 function snapToGrid(val) { return Math.floor(val / CELL) * CELL; }
 function cellCol(x)      { return Math.floor(x / CELL); }
@@ -64,9 +67,12 @@ export class LevelEditorScene extends Phaser.Scene {
     this._buildTopBar();
     this._bindInput();
 
-    // Import JSON si passé en paramètre
+    // Import JSON si passé en paramètre, sinon restaurer depuis localStorage
     if (this.importedLevel) {
       this._importLevel(this.importedLevel);
+    } else {
+      const saved = this._loadFromStorage();
+      if (saved) this._importLevel(saved);
     }
   }
 
@@ -231,6 +237,7 @@ export class LevelEditorScene extends Phaser.Scene {
       this._drawSpecial(col, row, 0xAA66CC, "P");
       this.selectedCell = null;
       this._drawPropsPanel(null);
+      this._saveToStorage();
       return;
     }
 
@@ -240,6 +247,7 @@ export class LevelEditorScene extends Phaser.Scene {
       this._drawSpecial(col, row, 0x0000FF, "O");
       this.selectedCell = null;
       this._drawPropsPanel(null);
+      this._saveToStorage();
       return;
     }
 
@@ -276,6 +284,7 @@ export class LevelEditorScene extends Phaser.Scene {
     this.selectedCell = key;
     this._drawPropsPanel(key);
     this._highlightSelected(key);
+    this._saveToStorage();
   }
 
   _renderObject(gfx, col, row, type, props) {
@@ -365,6 +374,7 @@ export class LevelEditorScene extends Phaser.Scene {
       this._drawPropsPanel(null);
     }
     if (this._selHighlight) { this._selHighlight.destroy(); this._selHighlight = null; }
+    this._saveToStorage();
   }
 
   _highlightSelected(key) {
@@ -420,6 +430,7 @@ export class LevelEditorScene extends Phaser.Scene {
           props.orientation = ori;
           this._renderObject(obj.gfx, obj.col, obj.row, type, props);
           this._drawPropsPanel(key);
+          this._saveToStorage();
         });
         this.propLabels.push(btn);
         if (ori === "up" || ori === "left") py += 22;
@@ -438,6 +449,7 @@ export class LevelEditorScene extends Phaser.Scene {
         b.on("pointerdown", () => {
           props.rise = Math.max(20, Math.min(400, (props.rise || 100) + delta));
           this._drawPropsPanel(key);
+          this._saveToStorage();
         });
         this.propLabels.push(b);
       };
@@ -464,6 +476,7 @@ export class LevelEditorScene extends Phaser.Scene {
         btn.on("pointerdown", () => {
           props.direction = dir;
           this._drawPropsPanel(key);
+          this._saveToStorage();
         });
         this.propLabels.push(btn);
       });
@@ -488,6 +501,7 @@ export class LevelEditorScene extends Phaser.Scene {
           props.color = c.hex;
           this._renderObject(obj.gfx, obj.col, obj.row, type, props);
           this._drawPropsPanel(key);
+          this._saveToStorage();
         });
         this.propLabels.push(swatch);
       });
@@ -519,6 +533,7 @@ export class LevelEditorScene extends Phaser.Scene {
     if (this._exitLbl)   { this._exitLbl.destroy();    this._exitLbl   = null; }
     if (this._selHighlight) { this._selHighlight.destroy(); this._selHighlight = null; }
     this._drawPropsPanel(null);
+    this._saveToStorage();
   }
 
   // ── Génération du JSON ────────────────────────────────
@@ -748,6 +763,7 @@ export class LevelEditorScene extends Phaser.Scene {
         close();
         this._clearAll();
         this._importLevel(parsed);
+        this._saveToStorage();
       } catch(e) {
         ta.style.border = "2px solid red";
         ta.value = "❌ JSON invalide : " + e.message;
@@ -853,6 +869,27 @@ export class LevelEditorScene extends Phaser.Scene {
       this._renderObject(gfx, col, row, "redSquare", props);
       this.objects.set(key, { type: "redSquare", col, row, props, gfx });
     });
+  }
+
+  // ── Persistance localStorage ─────────────────────────
+  _saveToStorage() {
+    try {
+      const json = JSON.stringify(this._buildLevelJSON());
+      localStorage.setItem(LS_KEY, json);
+    } catch(e) {
+      console.warn("Impossible de sauvegarder dans localStorage :", e);
+    }
+  }
+
+  _loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch(e) {
+      console.warn("Impossible de lire depuis localStorage :", e);
+      return null;
+    }
   }
 
   // ── Toast notification ────────────────────────────────
