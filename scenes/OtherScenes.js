@@ -900,9 +900,14 @@ export class LeaderboardScene extends Phaser.Scene {
   constructor() { super("LeaderboardScene"); }
 
   init() {
-    this.currentTab = 0;   // index dans ALL_LEVELS
-    this.entries    = [];  // données chargées pour l'onglet actif
-    this.loading    = true;
+    this.currentTab  = 0;     // index dans ALL_LEVELS
+    this.entries     = [];    // données chargées pour l'onglet actif
+    this.loading     = true;
+    this.scrollY     = 0;     // position de scroll actuelle
+    this.maxScrollY  = 0;     // limite basse du scroll
+    this.isDragging  = false;
+    this.dragStartY  = 0;
+    this.dragStartScrollY = 0;
   }
 
   create() {
@@ -932,8 +937,45 @@ export class LeaderboardScene extends Phaser.Scene {
     // ── Zone liste (conteneur scrollable) ──
     this.listContainer = this.add.container(0, 0);
 
+    // ── Masque pour clipper la liste ──
+    const LIST_TOP    = 90;
+    const LIST_BOTTOM = height - 10;
+    const maskShape   = this.add.graphics();
+    maskShape.fillStyle(0xffffff);
+    maskShape.fillRect(0, LIST_TOP, width, LIST_BOTTOM - LIST_TOP);
+    this.listContainer.setMask(maskShape.createGeometryMask());
+
+    // ── Scroll molette ──
+    this.input.on("wheel", (_p, _objs, _dx, dy) => {
+      this._scroll(dy * 0.8);
+    });
+
+    // ── Scroll tactile / drag ──
+    this.input.on("pointerdown", (p) => {
+      this.isDragging       = true;
+      this.dragStartY       = p.y;
+      this.dragStartScrollY = this.scrollY;
+    });
+    this.input.on("pointermove", (p) => {
+      if (!this.isDragging) return;
+      const delta = this.dragStartY - p.y;
+      this._setScroll(this.dragStartScrollY + delta);
+    });
+    this.input.on("pointerup",   () => { this.isDragging = false; });
+    this.input.on("pointerout",  () => { this.isDragging = false; });
+
     // ── Charger le premier onglet ──
     this._loadTab(0);
+  }
+
+  // ── Helpers de scroll ─────────────────────────────────────
+  _scroll(delta) {
+    this._setScroll(this.scrollY + delta);
+  }
+
+  _setScroll(newY) {
+    this.scrollY = Phaser.Math.Clamp(newY, 0, Math.max(0, this.maxScrollY));
+    this.listContainer.y = -this.scrollY;
   }
 
   // ── Construction des onglets niveaux ──────────────────────
@@ -973,7 +1015,11 @@ export class LeaderboardScene extends Phaser.Scene {
 
   // ── Chargement + affichage d'un onglet ────────────────────
   async _loadTab(index) {
-    const { width } = this.scale;
+    const { width, height } = this.scale;
+
+    // Remettre le scroll à zéro à chaque changement d'onglet
+    this.scrollY = 0;
+    this.listContainer.y = 0;
 
     // Vider la liste
     this.listContainer.removeAll(true);
@@ -1051,6 +1097,12 @@ export class LeaderboardScene extends Phaser.Scene {
           }).setOrigin(1, 0.5)
         );
       });
+
+      // Calculer la hauteur totale du contenu pour limiter le scroll
+      const LIST_TOP    = 90;
+      const LIST_BOTTOM = height - 10;
+      const contentH    = startY + entries.length * rowH;
+      this.maxScrollY   = Math.max(0, contentH - (LIST_BOTTOM - LIST_TOP));
 
     } catch (err) {
       this.listContainer.removeAll(true);
