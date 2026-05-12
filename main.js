@@ -40,7 +40,6 @@ const config = {
     World2,
     ObjectivesScene,
     LeaderboardScene,
-    FriendsScene,
     LevelEditorScene,
   ]
 };
