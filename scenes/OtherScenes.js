@@ -933,14 +933,6 @@ export class LeaderboardScene extends Phaser.Scene {
     this.listContainer = this.add.container(0, 0);
 
     //scroll
-    _scrollLeaderboard(delta) {
-  if (!this.listContainer) return;
-
-  this.scrollY += delta;
-  this.scrollY = Phaser.Math.Clamp(this.scrollY, -this.maxScroll, 0);
-
-  this.listContainer.y = this.scrollY;
-}
     this.scrollY = 0;
 this.maxScroll = 0;
 
@@ -957,7 +949,14 @@ this.input.on("pointermove", pointer => {
     // ── Charger le premier onglet ──
     this._loadTab(0);
   }
+    _scrollLeaderboard(delta) {
+  if (!this.listContainer) return;
 
+  this.scrollY += delta;
+  this.scrollY = Phaser.Math.Clamp(this.scrollY, -this.maxScroll, 0);
+
+  this.listContainer.y = this.scrollY;
+}
   // ── Construction des onglets niveaux ──────────────────────
   _buildTabs() {
     const { width } = this.scale;
