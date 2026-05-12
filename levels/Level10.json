@@ -1,0 +1,61 @@
+{
+  "playerStart": {
+    "x": 60,
+    "y": 420
+  },
+  "blueCircle": {
+    "x": 740,
+    "y": 40
+  },
+  "platforms": [
+    { "x": 0, "y": 480, "w": 120, "h": 120, "color": "0xA0522D" },
+{ "x": 0, "y": 0, "w": 80, "h": 80, "color": "0xA0522D" },
+    { "x": 320, "y": 520, "w": 40, "h": 80, "color": "0xA0522D" },
+    { "x": 560, "y": 440, "w": 40, "h": 40, "color": "0xA0522D" },
+    { "x": 560, "y": 560, "w": 40, "h": 40, "color": "0xA0522D" },
+    { "x": 600, "y": 200, "w": 40, "h": 400, "color": "0xA0522D" },
+    { "x": 720, "y": 80, "w": 80, "h": 40, "color": "0xA0522D" },
+    { "x": 0, "y": 320, "w": 480, "h": 40, "color": "0xA0522D" }
+  ],
+  "icePlatforms": [
+    { "x": 120, "y": 160, "w": 520, "h": 40 }
+  ],
+  "spikes": [
+    { "x": 140, "y": 600, "orientation": "up" },
+    { "x": 300, "y": 360, "orientation": "down" },
+    { "x": 100, "y": 360, "orientation": "down" },
+    { "x": 140, "y": 360, "orientation": "down" },
+    { "x": 180, "y": 360, "orientation": "down" },
+    { "x": 220, "y": 360, "orientation": "down" },
+    { "x": 260, "y": 360, "orientation": "down" },
+    { "x": 300, "y": 360, "orientation": "down" },
+    { "x": 340, "y": 360, "orientation": "down" },
+    { "x": 380, "y": 360, "orientation": "down" },
+    { "x": 420, "y": 360, "orientation": "down" },
+    { "x": 460, "y": 360, "orientation": "down" },
+    { "x": 720, "y": 100, "orientation": "left" },
+    { "x": 180, "y": 600, "orientation": "up" },
+    { "x": 220, "y": 600, "orientation": "up" },
+    { "x": 260, "y": 600, "orientation": "up" },
+    { "x": 300, "y": 600, "orientation": "up" },
+    { "x": 380, "y": 600, "orientation": "up" },
+    { "x": 420, "y": 600, "orientation": "up" },
+    { "x": 460, "y": 600, "orientation": "up" },
+    { "x": 500, "y": 600, "orientation": "up" },
+    { "x": 540, "y": 600, "orientation": "up" },
+    { "x": 600, "y": 500, "orientation": "left" },
+    { "x": 660, "y": 600, "orientation": "up" },
+    { "x": 700, "y": 600, "orientation": "up" },
+    { "x": 740, "y": 600, "orientation": "up" },
+    { "x": 780, "y": 600, "orientation": "up" },
+    { "x": 600, "y": 540, "orientation": "left" }
+  ],
+  "redCircles": [
+    { "x": 420, "y": 210, "rise": 100, "direction": "down" },
+    { "x": 380, "y": 210, "rise": 100, "direction": "down" },
+    { "x": 340, "y": 310, "rise": 100, "direction": "up" },
+    { "x": 180, "y": 210, "rise": 100, "direction": "down" },
+    { "x": 260, "y": 310, "rise": 100, "direction": "up" }
+  ],
+  "redSquares": []
+}
