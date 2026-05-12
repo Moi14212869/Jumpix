@@ -127,7 +127,7 @@ export class World2 extends Phaser.Scene {
 
     // Level9 débloqué si Level8 terminé
     const allW2 = ["Level8", "Level9"];
-    const niveaux = [{ nom: "➡ Level 9", scene: "Level9" }];
+    const niveaux = [{ nom: "➡ Level 9", scene: "Level9" }, { nom: "➡ Level 10", scene: "Level10" }
     renderLevelList(this, niveaux, 200, 260, allW2);
   }
 }
