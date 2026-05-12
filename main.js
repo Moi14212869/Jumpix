@@ -1,6 +1,7 @@
 // =========================================================
 //                     MAIN — POINT D'ENTRÉE
 // =========================================================
+
 import { LoadingScene }      from "./scenes/LoadingScene.js";
 import { MenuScene }         from "./scenes/MenuScene.js";
 import { LevelScene }        from "./scenes/LevelScene.js";
