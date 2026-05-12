@@ -12,8 +12,7 @@ import {
   CreditsScene,
   Stats,
   ObjectivesScene,
-  LeaderboardScene,
-  FriendsScene
+  LeaderboardScene
 } from "./scenes/OtherScenes.js";
 
 const config = {
