@@ -7,7 +7,7 @@
     "x": 740,
     "y": 40
   },
-  "reward": 25
+  "reward": 25,
   "nextScene": "World2",
   "platforms": [
     { "x": 0, "y": 480, "w": 120, "h": 120, "color": "0xA0522D" },
