@@ -141,28 +141,16 @@ export class LevelScene extends Phaser.Scene {
     });
 
     // Chargement de la ghost run précédente (si mode ghost activé)
+    // Le playback ne démarre qu'à la première action du joueur (synchronisé avec le chrono)
+    this._ghostReady = false; // true une fois les frames chargées
     if (ghostMode && this.levelKey !== "__editorLevel__") {
       loadGhostRun(this.levelKey).then(data => {
         if (data && data.frames && data.frames.length > 0) {
           this._ghostFrames = data.frames;
           this._ghostIndex  = 0;
+          this._ghostReady  = true;
           this._ghostSprite.setAlpha(0.35);
-          // Rejouer les frames ghost toutes les 80 ms en parallèle
-          this._ghostPlayTimer = this.time.addEvent({
-            delay: 80,
-            loop: true,
-            callback: () => {
-              if (this._ghostFrames && this._ghostIndex < this._ghostFrames.length) {
-                const f = this._ghostFrames[this._ghostIndex];
-                this._ghostSprite.setPosition(f.x, f.y);
-                this._ghostSprite.setAngle(f.angle);
-                this._ghostIndex++;
-              } else if (this._ghostFrames) {
-                // Run fantôme terminée : masquer
-                this._ghostSprite.setAlpha(0);
-              }
-            }
-          });
+          // Le timer de playback sera démarré dans update() à la première action
         }
       });
     }
@@ -458,11 +446,7 @@ export class LevelScene extends Phaser.Scene {
       this.scene.start(level.nextScene);
     });
 
-    // Délai pour éviter qu'une touche encore enfoncée (ex : direction)
-    // ne déclenche le replay immédiatement avant que l'écran s'affiche.
-    this.time.delayedCall(500, () => {
-      this.input.keyboard.once("keydown", () => this._doReplay());
-    });
+    this.input.keyboard.once("keydown", () => this._doReplay());
   }
 
   _doReplay() {
@@ -489,9 +473,27 @@ export class LevelScene extends Phaser.Scene {
     const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
     const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
 
-    // ⏱ Démarrer le chrono à la première action
+    // ⏱ Démarrer le chrono + le ghost à la première action
     if (this.startTime === null && (left || right || up)) {
       this.startTime = this.time.now;
+
+      // Démarrer le playback ghost si les frames sont prêtes
+      if (this._ghostReady && this._ghostFrames) {
+        this._ghostPlayTimer = this.time.addEvent({
+          delay: 80,
+          loop: true,
+          callback: () => {
+            if (this._ghostFrames && this._ghostIndex < this._ghostFrames.length) {
+              const f = this._ghostFrames[this._ghostIndex];
+              this._ghostSprite.setPosition(f.x, f.y);
+              this._ghostSprite.setAngle(f.angle);
+              this._ghostIndex++;
+            } else if (this._ghostFrames) {
+              this._ghostSprite.setAlpha(0);
+            }
+          }
+        });
+      }
     }
 
     if (this.transitioning && this.finalTime !== null) {
