@@ -6,7 +6,8 @@ import {
   gameVolume, keyboardLayout, colorPlayer,
   setGameVolume, setKeyboardLayout,
   setPlayerCoins, setDead, setKill, setParty, setColorPlayer,
-  applyPlayerData
+  applyPlayerData,
+  ghostMode, setGhostMode
 } from "../globals.js";
 import { hashText }    from "../utils/helpers.js";
 import { openDevMenu } from "../utils/devMenu.js";
@@ -232,7 +233,7 @@ export class SettingsScene extends Phaser.Scene {
     this._tabContainer.add([volLabel, track, knob, keyboardBtn]);
   }
 
-  // ── Onglet "Gameplay" : tutoriel ─────────────────────────
+  // ── Onglet "Gameplay" : tutoriel + mode ghost ────────────
   _buildTabGameplay() {
     const { width } = this.scale;
     const startY = 130;
@@ -257,7 +258,7 @@ export class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive();
 
     const updateTutoBtn = () => {
-      tutoBtn.setText(tutoHidden ? "Activer" : "D\u00e9sactiver");
+      tutoBtn.setText(tutoHidden ? "Activer" : "Désactiver");
       tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#226622" : "#882222" });
     };
     updateTutoBtn();
@@ -270,7 +271,54 @@ export class SettingsScene extends Phaser.Scene {
       updateTutoBtn();
     });
 
-    this._tabContainer.add([sectionLabel, desc, tutoBtn]);
+    // ── Mode Ghost ────────────────────────────────────────────
+    const ghostSep = this.add.text(width / 2, startY + 140, "─────────────────────────", {
+      fontSize: "14px", color: "#333333"
+    }).setOrigin(0.5);
+
+    const ghostTitle = this.add.text(width / 2, startY + 168, "👻 Mode adversaire", {
+      fontSize: "20px", color: "#aaaaaa"
+    }).setOrigin(0.5);
+
+    const ghostDesc = this.add.text(width / 2, startY + 200,
+      ghostMode
+        ? "Votre meilleure run vous accompagne en transparence"
+        : "Jouez seul, sans votre ghost",
+      { fontSize: "15px", color: "#666666", align: "center" }
+    ).setOrigin(0.5);
+
+    const ghostBtn = this.add.text(width / 2, startY + 244, "", {
+      fontSize: "18px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setInteractive();
+
+    const updateGhostBtn = () => {
+      ghostBtn.setText(ghostMode ? "👻 Contre mon ghost" : "🏃 Solo");
+      ghostBtn.setStyle({ backgroundColor: ghostMode ? "#5500AA" : "#555555" });
+      ghostDesc.setText(ghostMode
+        ? "Votre meilleure run vous accompagne en transparence"
+        : "Jouez seul, sans votre ghost"
+      );
+    };
+    updateGhostBtn();
+
+    ghostBtn.on("pointerover",  () => ghostBtn.setAlpha(0.85));
+    ghostBtn.on("pointerout",   () => ghostBtn.setAlpha(1));
+    ghostBtn.on("pointerdown",  () => {
+      setGhostMode(!ghostMode);
+      this.sound.play("menu", { volume: gameVolume });
+      updateGhostBtn();
+    });
+
+    const ghostHint = this.add.text(width / 2, startY + 292,
+      "Le ghost se sauvegarde automatiquement\nlorsque vous battez votre record.",
+      { fontSize: "13px", color: "#445566", align: "center" }
+    ).setOrigin(0.5);
+
+    this._tabContainer.add([
+      sectionLabel, desc, tutoBtn,
+      ghostSep, ghostTitle, ghostDesc, ghostBtn, ghostHint
+    ]);
   }
 
   // ── Bloc compte dynamique ───────────────────────────────
