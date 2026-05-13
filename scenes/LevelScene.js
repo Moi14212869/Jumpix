@@ -7,10 +7,11 @@ import {
   dead, kill, party,
   setDead, setKill, setParty, setPlayerCoins,
   markLevelCompleted, bestTimes, updateBestTime,
-  bestRanks, updateBestRank
+  bestRanks, updateBestRank,
+  ghostMode
 } from "../globals.js";
 import { checkObjectives }   from "../utils/helpers.js";
-import { save, saveLeaderboard } from "../utils/db.js";
+import { save, saveLeaderboard, saveGhostRun, loadGhostRun } from "../utils/db.js";
 import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
@@ -43,6 +44,14 @@ export class LevelScene extends Phaser.Scene {
     this.transitioning     = false;
     this.startTime         = null;   // ⏱ démarre à la première action du joueur
     this.finalTime         = null;   // ⏱ figé au contact du cercle bleu
+
+    // ── Ghost run ──────────────────────────────────────────
+    // Enregistrement : démarre dès le spawn (indépendant du chrono)
+    this._recordFrames  = [];        // [{x, y, angle}] — frames enregistrées
+    this._recordTimer   = null;      // timer Phaser
+    this._ghostFrames   = null;      // frames de la meilleure run (pour playback)
+    this._ghostSprite   = null;      // sprite fantôme (semi-transparent)
+    this._ghostIndex    = 0;         // index courant dans _ghostFrames
 
     // ── Groupes physiques ──
     this.platforms    = this.physics.add.staticGroup();
@@ -103,6 +112,60 @@ export class LevelScene extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(level.playerStart.x, level.playerStart.y, "player");
     this.player.setBounce(0.2).setCollideWorldBounds(true);
+    this.player.setDepth(2); // au-dessus du ghost (depth 1)
+
+    // ── Ghost : création du sprite fantôme + démarrage de l'enregistrement ──
+    // Le sprite ghost est créé avec la même couleur mais transparent (alpha 0.35)
+    const ghostGfx = this.add.graphics();
+    ghostGfx.fillStyle(colorPlayer, 1);
+    ghostGfx.fillRect(0, 0, 40, 40);
+    ghostGfx.generateTexture("ghost_player", 40, 40);
+    ghostGfx.destroy();
+
+    this._ghostSprite = this.add.image(level.playerStart.x, level.playerStart.y, "ghost_player");
+    this._ghostSprite.setAlpha(0).setDepth(1); // caché par défaut, depth sous le joueur
+
+    // Enregistrement toutes les 80 ms dès le spawn
+    this._recordTimer = this.time.addEvent({
+      delay: 80,
+      loop: true,
+      callback: () => {
+        if (!this.transitioning) {
+          this._recordFrames.push({
+            x:     Math.round(this.player.x),
+            y:     Math.round(this.player.y),
+            angle: Math.round(this.player.angle)
+          });
+        }
+      }
+    });
+
+    // Chargement de la ghost run précédente (si mode ghost activé)
+    if (ghostMode && this.levelKey !== "__editorLevel__") {
+      loadGhostRun(this.levelKey).then(data => {
+        if (data && data.frames && data.frames.length > 0) {
+          this._ghostFrames = data.frames;
+          this._ghostIndex  = 0;
+          this._ghostSprite.setAlpha(0.35);
+          // Rejouer les frames ghost toutes les 80 ms en parallèle
+          this._ghostPlayTimer = this.time.addEvent({
+            delay: 80,
+            loop: true,
+            callback: () => {
+              if (this._ghostFrames && this._ghostIndex < this._ghostFrames.length) {
+                const f = this._ghostFrames[this._ghostIndex];
+                this._ghostSprite.setPosition(f.x, f.y);
+                this._ghostSprite.setAngle(f.angle);
+                this._ghostIndex++;
+              } else if (this._ghostFrames) {
+                // Run fantôme terminée : masquer
+                this._ghostSprite.setAlpha(0);
+              }
+            }
+          });
+        }
+      });
+    }
 
     // ── Sortie ──
     this.blueCircle = createBlueCircle(this, level.blueCircle.x, level.blueCircle.y);
@@ -205,6 +268,8 @@ export class LevelScene extends Phaser.Scene {
                   await save.bestRank(this.levelKey, rank);
                 }
               }
+              // 🏁 Sauvegarder la ghost run (nouveau record uniquement)
+              await saveGhostRun(this.levelKey, elapsed, this._recordFrames);
             }
           }
 
@@ -402,6 +467,9 @@ export class LevelScene extends Phaser.Scene {
 
   // ── Mort ──────────────────────────────────────────────
   die() {
+    // Stopper les timers avant le restart
+    if (this._recordTimer)    { this._recordTimer.remove();    this._recordTimer    = null; }
+    if (this._ghostPlayTimer) { this._ghostPlayTimer.remove(); this._ghostPlayTimer = null; }
     this.sound.play("dead", { volume: gameVolume });
     const newDead = dead + 1;
     setDead(newDead);
