@@ -458,7 +458,11 @@ export class LevelScene extends Phaser.Scene {
       this.scene.start(level.nextScene);
     });
 
-    this.input.keyboard.once("keydown", () => this._doReplay());
+    // Délai pour éviter qu'une touche encore enfoncée (ex : direction)
+    // ne déclenche le replay immédiatement avant que l'écran s'affiche.
+    this.time.delayedCall(500, () => {
+      this.input.keyboard.once("keydown", () => this._doReplay());
+    });
   }
 
   _doReplay() {
