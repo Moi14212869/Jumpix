@@ -3,9 +3,9 @@
 // =========================================================
 import {
   gameVolume, dead, kill, party,
-  setDead, setKill, setParty, setPlayerCoins, playerCoins
+  setPlayerCoins, playerCoins
 } from "../globals.js";
-import { save, skinOwned } from "./db.js";
+import { save } from "./db.js";
 
 // ── Hash (mot de passe dev) ───────────────────────────────
 export async function hashText(text) {
