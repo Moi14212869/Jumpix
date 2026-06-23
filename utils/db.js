@@ -94,30 +94,6 @@ export function skinOwned(playerData, key) {
   return !!(playerData.skins && playerData.skins[key]);
 }
 
-// ── Ghost run (meilleure trajectoire) ────────────────────
-// Structure Firestore : players/{uid}/ghostRuns/{levelKey}
-//   { timeMs, frames: [{x, y, angle}] }
-
-export async function saveGhostRun(levelKey, timeMs, frames) {
-  const user = getCurrentUser();
-  if (!user) return;
-
-  // N'écrire que si c'est un nouveau record
-  const ghostRef = doc(db, "players", user.uid, "ghostRuns", levelKey);
-  const snap     = await getDoc(ghostRef);
-  if (snap.exists() && snap.data().timeMs <= timeMs) return; // pas mieux
-
-  await setDoc(ghostRef, { timeMs, frames });
-}
-
-export async function loadGhostRun(levelKey) {
-  const user = getCurrentUser();
-  if (!user) return null;
-
-  const ghostRef = doc(db, "players", user.uid, "ghostRuns", levelKey);
-  const snap     = await getDoc(ghostRef);
-  return snap.exists() ? snap.data() : null;
-}
 export async function resetAccount() {
   const ref = playerRef();
   if (!ref) return;
