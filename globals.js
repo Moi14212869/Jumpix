@@ -5,6 +5,7 @@
 // écrasées par loadPlayerData() dans LoadingScene.
 // =========================================================
 
+
 export let gameVolume    = 0.5;
 export let keyboardLayout = "zqsd";
 export let playerCoins   = 0;
