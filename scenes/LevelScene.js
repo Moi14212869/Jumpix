@@ -209,10 +209,12 @@ export class LevelScene extends Phaser.Scene {
       if (this.transitioning) return;
       this.transitioning = true;
 
-      // ⏱ Figer le chrono au moment du contact
+      // ⏱ Figer le chrono + stopper les timers ghost
       this.finalTime = (this.startTime !== null)
         ? Math.floor(this.time.now - this.startTime)
         : null;
+      if (this._recordTimer)    { this._recordTimer.remove();    this._recordTimer    = null; }
+      if (this._ghostPlayTimer) { this._ghostPlayTimer.remove(); this._ghostPlayTimer = null; }
 
       this.sound.play("victory", { volume: gameVolume });
 
@@ -227,41 +229,10 @@ export class LevelScene extends Phaser.Scene {
         targets: this.player,
         x: this.blueCircle.x, y: this.blueCircle.y,
         scale: 0.3, angle: 720, duration: 800, ease: "Cubic.easeInOut",
-        onComplete: async () => {
-          const reward    = level.reward || 0;
-          const newCoins  = playerCoins + reward;
-          setPlayerCoins(newCoins);
-          if (reward > 0) await save.coins(newCoins);
-
-          // Marquer ce niveau comme terminé (pas pour les niveaux éditeur)
-          if (this.levelKey !== "__editorLevel__") {
-            markLevelCompleted(this.levelKey);
-            await save.level(this.levelKey);
-          }
-
-          // ⏱ Meilleur temps (pas pour les niveaux éditeur)
-          const elapsed = this.finalTime;
-          let isNewRecord = false;
-          if (elapsed !== null && this.levelKey !== "__editorLevel__") {
-            const prev = bestTimes[this.levelKey];
-            if (prev === undefined || elapsed < prev) {
-              isNewRecord = true;
-              updateBestTime(this.levelKey, elapsed);
-              await save.bestTime(this.levelKey, elapsed);
-              const rank = await saveLeaderboard(this.levelKey, elapsed);
-              if (rank !== null) {
-                const prevRank = bestRanks[this.levelKey];
-                if (prevRank === undefined || rank < prevRank) {
-                  updateBestRank(this.levelKey, rank);
-                  await save.bestRank(this.levelKey, rank);
-                }
-              }
-              // 🏁 Sauvegarder la ghost run (nouveau record uniquement)
-              await saveGhostRun(this.levelKey, elapsed, this._recordFrames);
-            }
-          }
-
-          this._showVictoryScreen(level, elapsed, isNewRecord);
+        onComplete: () => {
+          this._handleVictory(level).catch(err => {
+            console.warn("Erreur lors de la sauvegarde du score :", err);
+          });
         }
       });
     }, null, this);
@@ -392,6 +363,48 @@ export class LevelScene extends Phaser.Scene {
         .filter(c => c.depth >= DEPTH)
         .forEach(c => c.destroy());
     });
+  }
+
+  // ── Logique victoire (async isolée pour éviter de bloquer l'affichage) ──
+  async _handleVictory(level) {
+    const reward = level.reward || 0;
+    const newCoins = playerCoins + reward;
+    setPlayerCoins(newCoins);
+    if (reward > 0) await save.coins(newCoins);
+
+    const isEditor = this.levelKey === "__editorLevel__";
+
+    if (!isEditor) {
+      markLevelCompleted(this.levelKey);
+      await save.level(this.levelKey);
+    }
+
+    const elapsed = this.finalTime;
+    let isNewRecord = false;
+
+    if (elapsed !== null && !isEditor) {
+      const prev = bestTimes[this.levelKey];
+      if (prev === undefined || elapsed < prev) {
+        isNewRecord = true;
+        updateBestTime(this.levelKey, elapsed);
+        // Sauvegardes en parallèle pour aller plus vite
+        await Promise.all([
+          save.bestTime(this.levelKey, elapsed),
+          saveGhostRun(this.levelKey, elapsed, this._recordFrames),
+          saveLeaderboard(this.levelKey, elapsed).then(rank => {
+            if (rank !== null) {
+              const prevRank = bestRanks[this.levelKey];
+              if (prevRank === undefined || rank < prevRank) {
+                updateBestRank(this.levelKey, rank);
+                return save.bestRank(this.levelKey, rank);
+              }
+            }
+          })
+        ]);
+      }
+    }
+
+    this._showVictoryScreen(level, elapsed, isNewRecord);
   }
 
   // ── Écran de victoire ─────────────────────────────────
