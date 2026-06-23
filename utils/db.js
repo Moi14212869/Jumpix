@@ -8,8 +8,8 @@
 
 import { db, getCurrentUser } from "./firebase.js";
 import {
-  doc, getDoc, setDoc, updateDoc, deleteField,
-  collection, getDocs, query, orderBy, limit, where
+  doc, getDoc, setDoc, updateDoc,
+  collection, getDocs, query, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export const DEFAULTS = {
@@ -48,7 +48,7 @@ export function getPseudo() {
 // ── Charger la progression depuis Firestore ───────────────
 // Retourne les données du joueur, ou les DEFAULTS si invité.
 // CORRECTION : le document initial inclut le pseudo Auth pour
-// que findPlayerByPseudo puisse le retrouver immédiatement.
+// que le pseudo Auth soit disponible immédiatement.
 export async function loadPlayerData() {
   const ref = playerRef();
   if (!ref) return { ...DEFAULTS }; // invité → défauts en mémoire
@@ -94,6 +94,30 @@ export function skinOwned(playerData, key) {
   return !!(playerData.skins && playerData.skins[key]);
 }
 
+// ── Ghost run (meilleure trajectoire) ────────────────────
+// Structure Firestore : players/{uid}/ghostRuns/{levelKey}
+//   { timeMs, frames: [{x, y, angle}] }
+
+export async function saveGhostRun(levelKey, timeMs, frames) {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  // N'écrire que si c'est un nouveau record
+  const ghostRef = doc(db, "players", user.uid, "ghostRuns", levelKey);
+  const snap     = await getDoc(ghostRef);
+  if (snap.exists() && snap.data().timeMs <= timeMs) return; // pas mieux
+
+  await setDoc(ghostRef, { timeMs, frames });
+}
+
+export async function loadGhostRun(levelKey) {
+  const user = getCurrentUser();
+  if (!user) return null;
+
+  const ghostRef = doc(db, "players", user.uid, "ghostRuns", levelKey);
+  const snap     = await getDoc(ghostRef);
+  return snap.exists() ? snap.data() : null;
+}
 export async function resetAccount() {
   const ref = playerRef();
   if (!ref) return;
@@ -152,160 +176,4 @@ export async function updateLeaderboardColor(colorPlayer) {
       await updateDoc(entryRef, { colorPlayer });
     }
   }));
-}
-
-// =========================================================
-//                        AMIS
-// =========================================================
-// Structure Firestore :
-//   players/{uid}.friends          = { [friendUid]: { pseudo, colorPlayer } }
-//   players/{uid}.friendRequests   = { [fromUid]:   { pseudo, colorPlayer, status:"pending" } }
-//   players/{uid}.settings         = { blockFriendRequests: bool }
-
-// ── Chercher un joueur par pseudo (scan limité) ───────────
-// CORRECTION : cherche aussi sur le champ `displayName` en plus de `pseudo`
-// pour les comptes dont le pseudo Firestore n'a pas encore été écrit.
-export async function findPlayerByPseudo(pseudo) {
-  const pseudoLower = pseudo.trim().toLowerCase();
-  const snap = await getDocs(collection(db, "players"));
-
-  for (const d of snap.docs) {
-    const data = d.data();
-    const name1 = (data.pseudo      || "").toLowerCase();
-    const name2 = (data.displayName || "").toLowerCase(); // fallback champ Auth mirroré
-    if (name1 === pseudoLower || name2 === pseudoLower) {
-      return {
-        uid:         d.id,
-        pseudo:      data.pseudo || data.displayName || pseudo,
-        colorPlayer: data.colorPlayer ?? 0xAA66CC
-      };
-    }
-  }
-
-  // Fallback : chercher dans les entrées leaderboard (pseudo y est fiable)
-  for (const lvl of ALL_LEVELS) {
-    const entriesSnap = await getDocs(collection(db, "leaderboards", lvl, "entries"));
-    for (const d of entriesSnap.docs) {
-      const data = d.data();
-      if ((data.pseudo || "").toLowerCase() === pseudoLower) {
-        const playerSnap = await getDoc(doc(db, "players", d.id));
-        const colorPlayer = playerSnap.exists()
-          ? (playerSnap.data().colorPlayer ?? 0xAA66CC)
-          : (data.colorPlayer ?? 0xAA66CC);
-        return { uid: d.id, pseudo: data.pseudo, colorPlayer };
-      }
-    }
-  }
-
-  return null;
-}
-
-// ── Envoyer une demande d'ami ─────────────────────────────
-export async function sendFriendRequest(targetUid, targetPseudo) {
-  const user = getCurrentUser();
-  if (!user) return { error: "not_logged_in" };
-  if (targetUid === user.uid) return { error: "self" };
-
-  const myRef = doc(db, "players", user.uid);
-  const targetRef = doc(db, "players", targetUid);
-
-  const [mySnap, targetSnap] = await Promise.all([getDoc(myRef), getDoc(targetRef)]);
-
-  // Déjà amis ?
-  if (mySnap.exists() && mySnap.data().friends?.[targetUid]) return { error: "already_friends" };
-
-  // Demande déjà envoyée ?
-  if (targetSnap.exists() && targetSnap.data().friendRequests?.[user.uid]?.status === "pending") {
-    return { error: "already_sent" };
-  }
-
-  // Cible bloque les demandes ?
-  if (targetSnap.exists() && targetSnap.data().settings?.blockFriendRequests) {
-    return { error: "blocked" };
-  }
-
-  const myColorPlayer = mySnap.exists() ? (mySnap.data().colorPlayer ?? 0xAA66CC) : 0xAA66CC;
-
-  await updateDoc(targetRef, {
-    [`friendRequests.${user.uid}`]: {
-      pseudo:      user.displayName || "Anonyme",
-      colorPlayer: myColorPlayer,
-      status:      "pending"
-    }
-  });
-
-  return { ok: true };
-}
-
-// ── Accepter une demande ──────────────────────────────────
-export async function acceptFriendRequest(fromUid, fromPseudo, fromColorPlayer) {
-  const user = getCurrentUser();
-  if (!user) return;
-
-  const myRef   = doc(db, "players", user.uid);
-  const fromRef = doc(db, "players", fromUid);
-
-  const mySnap = await getDoc(myRef);
-  const myColor = mySnap.exists() ? (mySnap.data().colorPlayer ?? 0xAA66CC) : 0xAA66CC;
-  const myPseudo = user.displayName || "Anonyme";
-
-  // Ajouter dans les deux sens + supprimer la demande
-  await Promise.all([
-    updateDoc(myRef, {
-      [`friends.${fromUid}`]: { pseudo: fromPseudo, colorPlayer: fromColorPlayer },
-      [`friendRequests.${fromUid}`]: deleteField()
-    }),
-    updateDoc(fromRef, {
-      [`friends.${user.uid}`]: { pseudo: myPseudo, colorPlayer: myColor }
-    })
-  ]);
-}
-
-// ── Refuser / supprimer une demande ──────────────────────
-export async function declineFriendRequest(fromUid) {
-  const user = getCurrentUser();
-  if (!user) return;
-  await updateDoc(doc(db, "players", user.uid), {
-    [`friendRequests.${fromUid}`]: deleteField()
-  });
-}
-
-// ── Supprimer un ami ──────────────────────────────────────
-export async function removeFriend(friendUid) {
-  const user = getCurrentUser();
-  if (!user) return;
-  await Promise.all([
-    updateDoc(doc(db, "players", user.uid),      { [`friends.${friendUid}`]: deleteField() }),
-    updateDoc(doc(db, "players", friendUid),     { [`friends.${user.uid}`]:  deleteField() })
-  ]);
-}
-
-// ── Charger le profil public d'un joueur ─────────────────
-// Retourne : { pseudo, colorPlayer, playerCoins, dead, kill, party, bestTimes }
-// CORRECTION : lire d.pseudo en priorité (et non d.displayName qui n'existe pas dans Firestore)
-export async function loadFriendProfile(uid) {
-  const snap = await getDoc(doc(db, "players", uid));
-  if (!snap.exists()) return null;
-  const d = snap.data();
-  return {
-    pseudo:      d.pseudo       ?? d.displayName ?? "Anonyme",
-    colorPlayer: d.colorPlayer  ?? 0xAA66CC,
-    playerCoins: d.playerCoins  ?? 0,
-    dead:        d.dead         ?? 0,
-    kill:        d.kill         ?? 0,
-    party:       d.party        ?? 0,
-    bestTimes:   d.bestTimes    ?? {}
-  };
-}
-
-// ── Bloquer / débloquer les demandes d'ami ────────────────
-export async function setBlockFriendRequests(value) {
-  await saveFields({ "settings.blockFriendRequests": value });
-}
-
-export async function getBlockFriendRequests() {
-  const ref = playerRef();
-  if (!ref) return false;
-  const snap = await getDoc(ref);
-  return snap.exists() ? (snap.data().settings?.blockFriendRequests ?? false) : false;
 }
