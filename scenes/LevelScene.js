@@ -8,10 +8,9 @@ import {
   setDead, setKill, setParty, setPlayerCoins,
   markLevelCompleted, bestTimes, updateBestTime,
   bestRanks, updateBestRank,
-  ghostMode
 } from "../globals.js";
 import { checkObjectives }   from "../utils/helpers.js";
-import { save, saveLeaderboard, saveGhostRun, loadGhostRun } from "../utils/db.js";
+import { save, saveLeaderboard } from "../utils/db.js";
 import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
@@ -44,14 +43,6 @@ export class LevelScene extends Phaser.Scene {
     this.transitioning     = false;
     this.startTime         = null;   // ⏱ démarre à la première action du joueur
     this.finalTime         = null;   // ⏱ figé au contact du cercle bleu
-
-    // ── Ghost run ──────────────────────────────────────────
-    // Enregistrement : démarre dès le spawn (indépendant du chrono)
-    this._recordFrames  = [];        // [{x, y, angle}] — frames enregistrées
-    this._recordTimer   = null;      // timer Phaser
-    this._ghostFrames   = null;      // frames de la meilleure run (pour playback)
-    this._ghostSprite   = null;      // sprite fantôme (semi-transparent)
-    this._ghostIndex    = 0;         // index courant dans _ghostFrames
 
     // ── Groupes physiques ──
     this.platforms    = this.physics.add.staticGroup();
@@ -112,48 +103,6 @@ export class LevelScene extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(level.playerStart.x, level.playerStart.y, "player");
     this.player.setBounce(0.2).setCollideWorldBounds(true);
-    this.player.setDepth(2); // au-dessus du ghost (depth 1)
-
-    // ── Ghost : création du sprite fantôme + démarrage de l'enregistrement ──
-    // Le sprite ghost est créé avec la même couleur mais transparent (alpha 0.35)
-    const ghostGfx = this.add.graphics();
-    ghostGfx.fillStyle(colorPlayer, 1);
-    ghostGfx.fillRect(0, 0, 40, 40);
-    ghostGfx.generateTexture("ghost_player", 40, 40);
-    ghostGfx.destroy();
-
-    this._ghostSprite = this.add.image(level.playerStart.x, level.playerStart.y, "ghost_player");
-    this._ghostSprite.setAlpha(0).setDepth(1); // caché par défaut, depth sous le joueur
-
-    // Enregistrement toutes les 80 ms dès le spawn
-    this._recordTimer = this.time.addEvent({
-      delay: 80,
-      loop: true,
-      callback: () => {
-        if (!this.transitioning) {
-          this._recordFrames.push({
-            x:     Math.round(this.player.x),
-            y:     Math.round(this.player.y),
-            angle: Math.round(this.player.angle)
-          });
-        }
-      }
-    });
-
-    // Chargement de la ghost run précédente (si mode ghost activé)
-    // Le playback ne démarre qu'à la première action du joueur (synchronisé avec le chrono)
-    this._ghostReady = false; // true une fois les frames chargées
-    if (ghostMode && this.levelKey !== "__editorLevel__") {
-      loadGhostRun(this.levelKey).then(data => {
-        if (data && data.frames && data.frames.length > 0) {
-          this._ghostFrames = data.frames;
-          this._ghostIndex  = 0;
-          this._ghostReady  = true;
-          this._ghostSprite.setAlpha(0.35);
-          // Le timer de playback sera démarré dans update() à la première action
-        }
-      });
-    }
 
     // ── Sortie ──
     this.blueCircle = createBlueCircle(this, level.blueCircle.x, level.blueCircle.y);
@@ -209,12 +158,10 @@ export class LevelScene extends Phaser.Scene {
       if (this.transitioning) return;
       this.transitioning = true;
 
-      // ⏱ Figer le chrono + stopper les timers ghost
+      // ⏱ Figer le chrono au moment du contact
       this.finalTime = (this.startTime !== null)
         ? Math.floor(this.time.now - this.startTime)
         : null;
-      if (this._recordTimer)    { this._recordTimer.remove();    this._recordTimer    = null; }
-      if (this._ghostPlayTimer) { this._ghostPlayTimer.remove(); this._ghostPlayTimer = null; }
 
       this.sound.play("victory", { volume: gameVolume });
 
@@ -229,10 +176,39 @@ export class LevelScene extends Phaser.Scene {
         targets: this.player,
         x: this.blueCircle.x, y: this.blueCircle.y,
         scale: 0.3, angle: 720, duration: 800, ease: "Cubic.easeInOut",
-        onComplete: () => {
-          this._handleVictory(level).catch(err => {
-            console.warn("Erreur lors de la sauvegarde du score :", err);
-          });
+        onComplete: async () => {
+          const reward    = level.reward || 0;
+          const newCoins  = playerCoins + reward;
+          setPlayerCoins(newCoins);
+          if (reward > 0) await save.coins(newCoins);
+
+          // Marquer ce niveau comme terminé (pas pour les niveaux éditeur)
+          if (this.levelKey !== "__editorLevel__") {
+            markLevelCompleted(this.levelKey);
+            await save.level(this.levelKey);
+          }
+
+          // ⏱ Meilleur temps (pas pour les niveaux éditeur)
+          const elapsed = this.finalTime;
+          let isNewRecord = false;
+          if (elapsed !== null && this.levelKey !== "__editorLevel__") {
+            const prev = bestTimes[this.levelKey];
+            if (prev === undefined || elapsed < prev) {
+              isNewRecord = true;
+              updateBestTime(this.levelKey, elapsed);
+              await save.bestTime(this.levelKey, elapsed);
+              const rank = await saveLeaderboard(this.levelKey, elapsed);
+              if (rank !== null) {
+                const prevRank = bestRanks[this.levelKey];
+                if (prevRank === undefined || rank < prevRank) {
+                  updateBestRank(this.levelKey, rank);
+                  await save.bestRank(this.levelKey, rank);
+                }
+              }
+            }
+          }
+
+          this._showVictoryScreen(level, elapsed, isNewRecord);
         }
       });
     }, null, this);
@@ -365,48 +341,6 @@ export class LevelScene extends Phaser.Scene {
     });
   }
 
-  // ── Logique victoire (async isolée pour éviter de bloquer l'affichage) ──
-  async _handleVictory(level) {
-    const reward = level.reward || 0;
-    const newCoins = playerCoins + reward;
-    setPlayerCoins(newCoins);
-    if (reward > 0) await save.coins(newCoins);
-
-    const isEditor = this.levelKey === "__editorLevel__";
-
-    if (!isEditor) {
-      markLevelCompleted(this.levelKey);
-      await save.level(this.levelKey);
-    }
-
-    const elapsed = this.finalTime;
-    let isNewRecord = false;
-
-    if (elapsed !== null && !isEditor) {
-      const prev = bestTimes[this.levelKey];
-      if (prev === undefined || elapsed < prev) {
-        isNewRecord = true;
-        updateBestTime(this.levelKey, elapsed);
-        // Sauvegardes en parallèle pour aller plus vite
-        await Promise.all([
-          save.bestTime(this.levelKey, elapsed),
-          saveGhostRun(this.levelKey, elapsed, this._recordFrames),
-          saveLeaderboard(this.levelKey, elapsed).then(rank => {
-            if (rank !== null) {
-              const prevRank = bestRanks[this.levelKey];
-              if (prevRank === undefined || rank < prevRank) {
-                updateBestRank(this.levelKey, rank);
-                return save.bestRank(this.levelKey, rank);
-              }
-            }
-          })
-        ]);
-      }
-    }
-
-    this._showVictoryScreen(level, elapsed, isNewRecord);
-  }
-
   // ── Écran de victoire ─────────────────────────────────
   _showVictoryScreen(level, elapsed, isNewRecord) {
     const { width, height } = this.scale;
@@ -468,9 +402,6 @@ export class LevelScene extends Phaser.Scene {
 
   // ── Mort ──────────────────────────────────────────────
   die() {
-    // Stopper les timers avant le restart
-    if (this._recordTimer)    { this._recordTimer.remove();    this._recordTimer    = null; }
-    if (this._ghostPlayTimer) { this._ghostPlayTimer.remove(); this._ghostPlayTimer = null; }
     this.sound.play("dead", { volume: gameVolume });
     const newDead = dead + 1;
     setDead(newDead);
@@ -486,27 +417,9 @@ export class LevelScene extends Phaser.Scene {
     const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
     const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
 
-    // ⏱ Démarrer le chrono + le ghost à la première action
+    // ⏱ Démarrer le chrono à la première action
     if (this.startTime === null && (left || right || up)) {
       this.startTime = this.time.now;
-
-      // Démarrer le playback ghost si les frames sont prêtes
-      if (this._ghostReady && this._ghostFrames) {
-        this._ghostPlayTimer = this.time.addEvent({
-          delay: 80,
-          loop: true,
-          callback: () => {
-            if (this._ghostFrames && this._ghostIndex < this._ghostFrames.length) {
-              const f = this._ghostFrames[this._ghostIndex];
-              this._ghostSprite.setPosition(f.x, f.y);
-              this._ghostSprite.setAngle(f.angle);
-              this._ghostIndex++;
-            } else if (this._ghostFrames) {
-              this._ghostSprite.setAlpha(0);
-            }
-          }
-        });
-      }
     }
 
     if (this.transitioning && this.finalTime !== null) {
