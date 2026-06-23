@@ -12,7 +12,9 @@ import {
 import { hashText }    from "../utils/helpers.js";
 import { openDevMenu } from "../utils/devMenu.js";
 import { DEV_PASSWORD_HASH } from "../globals.js";
-import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard
+import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard,
+  sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend,
+  loadFriendProfile, setBlockFriendRequests, getBlockFriendRequests, findPlayerByPseudo
 } from "../utils/db.js";
 import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage, getCurrentUser
@@ -105,6 +107,34 @@ export class SettingsScene extends Phaser.Scene {
 
     // ── Bloc compte (commun aux deux onglets) ────────────────
     this._buildAccountBlock();
+
+    // ── Toggle blocage demandes d'ami ───────────────────────
+    if (isLoggedIn()) {
+      const blockBtn = this.add.text(400, 455, "\uD83D\uDD13 Demandes d'ami : autoris\u00e9es", {
+        fontSize: "15px", color: "#ffffff",
+        backgroundColor: "#226622", padding: { x: 14, y: 6 }
+      }).setOrigin(0.5).setInteractive();
+
+      let blockActive = false;
+
+      const updateBlockBtn = () => {
+        blockBtn.setText(blockActive
+          ? "\uD83D\uDD12 Demandes d'ami : bloqu\u00e9es"
+          : "\uD83D\uDD13 Demandes d'ami : autoris\u00e9es");
+        blockBtn.setStyle({ backgroundColor: blockActive ? "#882222" : "#226622" });
+      };
+
+      getBlockFriendRequests().then(val => {
+        blockActive = val;
+        updateBlockBtn();
+      });
+
+      blockBtn.on("pointerdown", async () => {
+        blockActive = !blockActive;
+        updateBlockBtn();
+        await setBlockFriendRequests(blockActive);
+      });
+    }
 
     const resetBtn = this.add.text(220, 530, "RESET ACCOUNT", {
       fontSize: "18px", color: "#ffffff",
@@ -593,6 +623,7 @@ export class SettingsScene extends Phaser.Scene {
       try {
         await registerWithEmail(email, pwValue, pseudo);
         // CORRECTION : sauvegarder le pseudo EN PREMIER dans Firestore
+        // pour que findPlayerByPseudo puisse le retrouver immédiatement.
         await save.pseudo(pseudo);
         // Ensuite charger la progression (le document contiendra déjà le pseudo)
         const data = await loadPlayerData();
@@ -954,12 +985,12 @@ export class LeaderboardScene extends Phaser.Scene {
 this.maxScroll = 0;
 
 this.input.on("wheel", (_, __, ___, deltaY) => {
-  this._scrollLeaderboard(deltaY);
+  this._scrollLeaderboard(-deltaY);
 });
 
 this.input.on("pointermove", pointer => {
   if (pointer.isDown) {
-    this._scrollLeaderboard(-pointer.velocity.y * 0.02);
+    this._scrollLeaderboard(pointer.velocity.y * 0.02);
   }
 });
 
