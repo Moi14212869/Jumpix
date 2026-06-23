@@ -17,6 +17,7 @@ import {
   createSnow, createMobileControls
 } from "../utils/gameObjects.js";
 
+
 export class LevelScene extends Phaser.Scene {
   constructor() { super("LevelScene"); }
 
