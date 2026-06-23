@@ -18,6 +18,7 @@ import {
 // =========================================================
 //  FILTRE PSEUDO INAPPROPRIÉ
 // =========================================================
+
 const BAD_WORDS = [
   // FR
   "putain","merde","connard","connasse","salope","pute","batard","bâtard",
