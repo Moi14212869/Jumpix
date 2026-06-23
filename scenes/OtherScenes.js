@@ -4,12 +4,15 @@
 
 import {
   gameVolume, keyboardLayout, colorPlayer,
-  setGameVolume, setKeyboardLayout
+  setGameVolume, setKeyboardLayout,
+  setPlayerCoins, setDead, setKill, setParty, setColorPlayer,
+  applyPlayerData,
+  ghostMode, setGhostMode
 } from "../globals.js";
-
-import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard,
-  sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend,
-  loadFriendProfile, setBlockFriendRequests, getBlockFriendRequests, findPlayerByPseudo
+import { hashText }    from "../utils/helpers.js";
+import { openDevMenu } from "../utils/devMenu.js";
+import { DEV_PASSWORD_HASH } from "../globals.js";
+import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard
 } from "../utils/db.js";
 import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage, getCurrentUser
@@ -18,7 +21,6 @@ import {
 // =========================================================
 //  FILTRE PSEUDO INAPPROPRIÉ
 // =========================================================
-
 const BAD_WORDS = [
   // FR
   "putain","merde","connard","connasse","salope","pute","batard","bâtard",
@@ -104,34 +106,6 @@ export class SettingsScene extends Phaser.Scene {
     // ── Bloc compte (commun aux deux onglets) ────────────────
     this._buildAccountBlock();
 
-    // ── Toggle blocage demandes d'ami ───────────────────────
-    if (isLoggedIn()) {
-      const blockBtn = this.add.text(400, 455, "\uD83D\uDD13 Demandes d'ami : autoris\u00e9es", {
-        fontSize: "15px", color: "#ffffff",
-        backgroundColor: "#226622", padding: { x: 14, y: 6 }
-      }).setOrigin(0.5).setInteractive();
-
-      let blockActive = false;
-
-      const updateBlockBtn = () => {
-        blockBtn.setText(blockActive
-          ? "\uD83D\uDD12 Demandes d'ami : bloqu\u00e9es"
-          : "\uD83D\uDD13 Demandes d'ami : autoris\u00e9es");
-        blockBtn.setStyle({ backgroundColor: blockActive ? "#882222" : "#226622" });
-      };
-
-      getBlockFriendRequests().then(val => {
-        blockActive = val;
-        updateBlockBtn();
-      });
-
-      blockBtn.on("pointerdown", async () => {
-        blockActive = !blockActive;
-        updateBlockBtn();
-        await setBlockFriendRequests(blockActive);
-      });
-    }
-
     const resetBtn = this.add.text(220, 530, "RESET ACCOUNT", {
       fontSize: "18px", color: "#ffffff",
       backgroundColor: "#FF4444", padding: { x: 14, y: 8 }
@@ -139,6 +113,15 @@ export class SettingsScene extends Phaser.Scene {
     resetBtn.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
       this._showResetConfirm();
+    });
+
+    const devBtn = this.add.text(580, 530, "DEV MENU", {
+      fontSize: "18px", color: "#ffffff",
+      backgroundColor: "#4444AA", padding: { x: 14, y: 8 }
+    }).setOrigin(0.5).setInteractive();
+    devBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this._showPasswordPopup();
     });
 
     // ── Retour ──────────────────────────────────────────────
@@ -220,7 +203,7 @@ export class SettingsScene extends Phaser.Scene {
     this._tabContainer.add([volLabel, track, knob, keyboardBtn]);
   }
 
-  // ── Onglet "Gameplay" : tutoriels ────────────────────────
+  // ── Onglet "Gameplay" : tutoriel + mode ghost ────────────
   _buildTabGameplay() {
     const { width } = this.scale;
     const startY = 130;
@@ -258,7 +241,54 @@ export class SettingsScene extends Phaser.Scene {
       updateTutoBtn();
     });
 
-    this._tabContainer.add([sectionLabel, desc, tutoBtn]);
+    // ── Mode Ghost ────────────────────────────────────────────
+    const ghostSep = this.add.text(width / 2, startY + 140, "─────────────────────────", {
+      fontSize: "14px", color: "#333333"
+    }).setOrigin(0.5);
+
+    const ghostTitle = this.add.text(width / 2, startY + 168, "👻 Mode adversaire", {
+      fontSize: "20px", color: "#aaaaaa"
+    }).setOrigin(0.5);
+
+    const ghostDesc = this.add.text(width / 2, startY + 200,
+      ghostMode
+        ? "Votre meilleure run vous accompagne en transparence"
+        : "Jouez seul, sans votre ghost",
+      { fontSize: "15px", color: "#666666", align: "center" }
+    ).setOrigin(0.5);
+
+    const ghostBtn = this.add.text(width / 2, startY + 244, "", {
+      fontSize: "18px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setInteractive();
+
+    const updateGhostBtn = () => {
+      ghostBtn.setText(ghostMode ? "👻 Contre mon ghost" : "🏃 Solo");
+      ghostBtn.setStyle({ backgroundColor: ghostMode ? "#5500AA" : "#555555" });
+      ghostDesc.setText(ghostMode
+        ? "Votre meilleure run vous accompagne en transparence"
+        : "Jouez seul, sans votre ghost"
+      );
+    };
+    updateGhostBtn();
+
+    ghostBtn.on("pointerover",  () => ghostBtn.setAlpha(0.85));
+    ghostBtn.on("pointerout",   () => ghostBtn.setAlpha(1));
+    ghostBtn.on("pointerdown",  () => {
+      setGhostMode(!ghostMode);
+      this.sound.play("menu", { volume: gameVolume });
+      updateGhostBtn();
+    });
+
+    const ghostHint = this.add.text(width / 2, startY + 292,
+      "Le ghost se sauvegarde automatiquement\nlorsque vous battez votre record.",
+      { fontSize: "13px", color: "#445566", align: "center" }
+    ).setOrigin(0.5);
+
+    this._tabContainer.add([
+      sectionLabel, desc, tutoBtn,
+      ghostSep, ghostTitle, ghostDesc, ghostBtn, ghostHint
+    ]);
   }
 
   // ── Bloc compte dynamique ───────────────────────────────
@@ -563,7 +593,6 @@ export class SettingsScene extends Phaser.Scene {
       try {
         await registerWithEmail(email, pwValue, pseudo);
         // CORRECTION : sauvegarder le pseudo EN PREMIER dans Firestore
-        // pour que findPlayerByPseudo puisse le retrouver immédiatement.
         await save.pseudo(pseudo);
         // Ensuite charger la progression (le document contiendra déjà le pseudo)
         const data = await loadPlayerData();
@@ -610,6 +639,50 @@ export class SettingsScene extends Phaser.Scene {
     });
   }
 
+  // ── Mot de passe dev ────────────────────────────────────
+  _showPasswordPopup() {
+    const { width, height } = this.scale;
+    const cx = width / 2, cy = height / 2;
+
+    const overlay  = this.add.rectangle(cx, cy, width, height, 0x000000, 0.7);
+    const box      = this.add.rectangle(cx, cy, 400, 240, 0x222222).setStrokeStyle(3, 0xffffff);
+    const title    = this.add.text(cx, cy - 80, "DEV PASSWORD", { fontSize: "24px", color: "#ffffff" }).setOrigin(0.5);
+    let inputText  = "";
+    const input    = this.add.text(cx, cy - 30, "••••••", {
+      fontSize: "26px", color: "#00ffcc",
+      backgroundColor: "#000000", padding: { x: 15, y: 8 }
+    }).setOrigin(0.5);
+    const info     = this.add.text(cx, cy + 15, "", { fontSize: "18px", color: "#ff5555" }).setOrigin(0.5);
+
+    const closeBtn = this.add.text(cx, cy + 65, "CANCEL", {
+      fontSize: "18px", backgroundColor: "#aa0000", color: "#ffffff", padding: { x: 20, y: 6 }
+    }).setOrigin(0.5).setInteractive();
+
+    const destroy = () => {
+      [overlay, box, title, input, info, closeBtn].forEach(o => o.destroy());
+      this.input.keyboard.removeAllListeners();
+    };
+
+    closeBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      destroy();
+    });
+
+    this.input.keyboard.on("keydown", async event => {
+      if (event.key === "Backspace")    inputText = inputText.slice(0, -1);
+      else if (event.key === "Enter") {
+        const hashed = await hashText(inputText);
+        if (hashed === DEV_PASSWORD_HASH) {
+          destroy();
+          openDevMenu.call(this);
+        } else {
+          info.setText("❌ Wrong password");
+          inputText = "";
+        }
+      } else if (event.key.length === 1) inputText += event.key;
+      input.setText("•".repeat(inputText.length));
+    });
+  }
 }
 
 // =========================================================
