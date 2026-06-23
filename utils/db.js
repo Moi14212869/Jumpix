@@ -26,7 +26,6 @@ export const DEFAULTS = {
   bestTimes:       {},
   bestRanks:       {}
 };
-
 // ── Référence document du joueur connecté ────────────────
 function playerRef() {
   const user = getCurrentUser();
