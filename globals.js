@@ -16,8 +16,6 @@ export let colorPlayer      = 0xAA66CC;
 export let completedLevels  = {}; // { Level1: true, Level2: true, … }
 export let bestTimes        = {}; // { Level1: 4230, Level2: 7100, … }  (ms)
 export let bestRanks        = {}; // { Level1: 3, Level2: 1, … }  (meilleur rang atteint)
-export const DEV_PASSWORD_HASH =
-  "9651d08ab7a975b70a93f3c918842c44cda8f335ecbbaae88d5610d3a1790b4b";
 
 export const SHOP_PAGES = [
   [
