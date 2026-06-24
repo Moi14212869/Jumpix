@@ -220,13 +220,13 @@
   "redCircles": [
     {
       "x": 580,
-      "y": 20,
+      "y": 10,
       "rise": 90,
       "direction": "down"
     },
     {
       "x": 420,
-      "y": 20,
+      "y": 10,
       "rise": 90,
       "direction": "down"
     },
