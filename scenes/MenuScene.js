@@ -24,15 +24,16 @@ export class MenuScene extends Phaser.Scene {
       { label: "🏆 Objectives", scene: "ObjectivesScene" },
       { label: "Statistics",    scene: "Stats"        },
       { label: "🛠 Level Editor", scene: "LevelEditorScene" },
+      { label: "⚔ Duel local", scene: "MinigameScene" },
     ];
 
-    let startY = 200;
+    let startY = 185;
     buttons.forEach((btn, i) => {
       createButton(this, width / 2, startY, 320, 60, btn.label, () => {
         this.sound.play("select", { volume: gameVolume });
         this.scene.start(btn.scene);
       }, i);
-      startY += 72;
+      startY += 62;
     });
 
     createButton(this, 40, 40, 60, 50, "⚙", () => {
