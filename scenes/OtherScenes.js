@@ -270,7 +270,7 @@ export class SettingsScene extends Phaser.Scene {
     siteBtn.on("pointerout",  () => siteBtn.setStyle({ backgroundColor: "#006633" }));
     siteBtn.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
-      window.open("https://moi14212869.github.io/onlevel/", "_blank");
+      window.open("https://moi14212869.github.io/onelevel/", "_blank");
     });
 
     this._tabContainer.add([sectionLabel, creditsBtn, siteBtn]);
