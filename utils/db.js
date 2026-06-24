@@ -177,3 +177,14 @@ export async function updateLeaderboardColor(colorPlayer) {
     }
   }));
 }
+
+// ── Stats publiques d'un joueur (vue depuis le leaderboard) ──
+// Lit directement players/{uid}. Nécessite que les règles Firestore
+// autorisent la lecture de ce document par d'autres utilisateurs
+// connectés (voir note de sécurité fournie séparément).
+export async function loadPublicPlayerStats(uid) {
+  const ref  = doc(db, "players", uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return { ...DEFAULTS };
+  return { ...DEFAULTS, ...snap.data() };
+}
