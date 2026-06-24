@@ -615,10 +615,31 @@ export class LevelEditorScene extends Phaser.Scene {
       }
 
       if (obj.type === "spike") {
+        // Le point d'ancrage (x, y) dépend de l'orientation, car createRedTriangle()
+        // utilise une origine différente selon le sens du pique :
+        //   up    → origine [0.5, 1] → point bas-centre de la case
+        //   down  → origine [0.5, 0] → point haut-centre de la case
+        //   left  → origine [1, 0.5] → point droit-centre de la case
+        //   right → origine [0, 0.5] → point gauche-centre de la case
+        const ori  = obj.props.orientation || "up";
+        const cx   = obj.col * CELL + CELL / 2;
+        const cy   = obj.row * CELL + CELL / 2;
+        const left = obj.col * CELL;
+        const right= obj.col * CELL + CELL;
+        const top  = obj.row * CELL;
+        const bottom = obj.row * CELL + CELL;
+
+        const anchor = {
+          up:    { x: cx,    y: bottom },
+          down:  { x: cx,    y: top },
+          left:  { x: right, y: cy },
+          right: { x: left,  y: cy },
+        }[ori];
+
         level.spikes.push({
-          x: (obj.col * CELL + CELL / 2) * GAME_SCALE,
-          y: (obj.row * CELL + CELL) * GAME_SCALE,
-          orientation: obj.props.orientation || "up"
+          x: anchor.x * GAME_SCALE,
+          y: anchor.y * GAME_SCALE,
+          orientation: ori
         });
       }
 
@@ -865,11 +886,26 @@ export class LevelEditorScene extends Phaser.Scene {
     // spikes
     (level.spikes || []).forEach(s => {
       const sx = s.x / GAME_SCALE, sy = s.y / GAME_SCALE;
-      const col = Math.floor(sx / CELL);
-      const row = Math.floor((sy - CELL) / CELL);  // origin bas → remonter
+      const ori = s.orientation || "up";
+      // Inverse exact de l'export : (sx, sy) est le point d'ancrage
+      // de la case selon l'orientation (voir _buildLevelJSON).
+      let col, row;
+      if (ori === "up") {
+        col = Math.floor(sx / CELL);
+        row = Math.floor((sy - CELL) / CELL); // sy = bas de la case → remonter
+      } else if (ori === "down") {
+        col = Math.floor(sx / CELL);
+        row = Math.floor(sy / CELL);           // sy = haut de la case
+      } else if (ori === "left") {
+        col = Math.floor(sx / CELL) - 1;       // sx = droite de la case → reculer
+        row = Math.floor((sy - CELL / 2) / CELL);
+      } else { // right
+        col = Math.floor(sx / CELL);           // sx = gauche de la case
+        row = Math.floor((sy - CELL / 2) / CELL);
+      }
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
       const key = cellKey(col, row);
-      const props = { orientation: s.orientation || "up" };
+      const props = { orientation: ori };
       const gfx = this.add.graphics();
       this._renderObject(gfx, col, row, "spike", props);
       this.objects.set(key, { type: "spike", col, row, props, gfx });
