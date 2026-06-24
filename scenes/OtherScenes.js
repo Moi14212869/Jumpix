@@ -645,7 +645,7 @@ export class CreditsScene extends Phaser.Scene {
       "Lead Level Designer", "Eliott MORBIDELLI", "",
       "Level Designers", "A. MORBIDELLI", "Alix MORBIDELLI", "",
       "QA Testers", "Maxence ROOS", "", "Communication", "Théodore_68", "",
-      "Sound", "Music : \"8bit Music for Game\"", "freesound_community", "",
+      "Sound", "Music :", "\"8bit Music for Game\"", "freesound_community", "",
       "Thanks for playing!", "", "For Inna"
     ];
 
