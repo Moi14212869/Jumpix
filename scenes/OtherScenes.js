@@ -57,7 +57,7 @@ export class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // ── Onglets ─────────────────────────────────────────────
-    const TABS = ["Général", "Gameplay"];
+    const TABS = ["Général", "Gameplay", "Crédits"];
     this._activeTab = 0;
     this._tabContainer = null;
 
@@ -140,8 +140,15 @@ export class SettingsScene extends Phaser.Scene {
 
     if (this._activeTab === 0) {
       this._buildTabGeneral();
-    } else {
+    } else if (this._activeTab === 1) {
       this._buildTabGameplay();
+    } else {
+      this._buildTabCredits();
+    }
+
+    // Le bloc compte n'a pas sa place sur l'onglet Crédits
+    if (this._accountContainer) {
+      this._accountContainer.setVisible(this._activeTab !== 2);
     }
   }
 
@@ -229,6 +236,44 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     this._tabContainer.add([sectionLabel, desc, tutoBtn]);
+  }
+
+  // ── Onglet "Crédits" : voir les crédits + lien site du studio ──
+  _buildTabCredits() {
+    const { width } = this.scale;
+    const startY = 150;
+
+    const sectionLabel = this.add.text(width / 2, startY, "À propos", {
+      fontSize: "20px", color: "#aaaaaa"
+    }).setOrigin(0.5);
+
+    // Bouton "Voir les crédits"
+    const creditsBtn = this.add.text(width / 2, startY + 50, "🎬 Voir les crédits", {
+      fontSize: "20px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setInteractive();
+
+    creditsBtn.on("pointerover", () => creditsBtn.setStyle({ backgroundColor: "#00DDFF" }));
+    creditsBtn.on("pointerout",  () => creditsBtn.setStyle({ backgroundColor: "#00BFFF" }));
+    creditsBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this.scene.start("CreditsScene");
+    });
+
+    // Bouton lien vers le site du studio
+    const siteBtn = this.add.text(width / 2, startY + 110, "🌐 Site du studio", {
+      fontSize: "20px", color: "#ffffff",
+      backgroundColor: "#006633", padding: { x: 20, y: 10 }
+    }).setOrigin(0.5).setInteractive();
+
+    siteBtn.on("pointerover", () => siteBtn.setStyle({ backgroundColor: "#008844" }));
+    siteBtn.on("pointerout",  () => siteBtn.setStyle({ backgroundColor: "#006633" }));
+    siteBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      window.open("https://moi14212869.github.io/onlevel/", "_blank");
+    });
+
+    this._tabContainer.add([sectionLabel, creditsBtn, siteBtn]);
   }
 
   // ── Bloc compte dynamique ───────────────────────────────
@@ -617,14 +662,14 @@ export class CreditsScene extends Phaser.Scene {
     this.scrollSpeed = 50;
     this.input.once("pointerdown", () => {
       this.sound.play("menu", { volume: gv });
-      this.scene.start("MenuScene");
+      this.scene.start("SettingsScene");
     });
   }
 
   update(time, delta) {
     this.creditContainer.y -= this.scrollSpeed * (delta / 1000);
     const last = this.creditContainer.list[this.creditContainer.list.length - 1];
-    if (last.y + this.creditContainer.y < -50) this.scene.start("MenuScene");
+    if (last.y + this.creditContainer.y < -50) this.scene.start("SettingsScene");
   }
 }
 
