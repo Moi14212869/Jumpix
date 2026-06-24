@@ -25,6 +25,7 @@ const TOOLS = [
   { id: "spike",       label: "Pique",         color: 0xFF0000, icon: "▲" },
   { id: "redCircle",   label: "Balle",         color: 0xFF4444, icon: "●" },
   { id: "redSquare",   label: "Carré ennemi",  color: 0xFF2222, icon: "■" },
+  { id: "snowstorm",   label: "Tempête neige", color: 0x9EE7FF, icon: "❄" },
   { id: "player",      label: "Départ joueur", color: 0xAA66CC, icon: "P" },
   { id: "exit",        label: "Sortie",        color: 0x0000FF, icon: "O" },
   { id: "eraser",      label: "Gomme",         color: 0x888888, icon: "✕" },
@@ -32,11 +33,12 @@ const TOOLS = [
 
 // Options par défaut pour chaque type
 const DEFAULTS = {
-  platform:  { w: CELL, h: CELL, color: "0xA0522D" },
-  ice:       { w: CELL, h: CELL },
-  spike:     { orientation: "up" },
-  redCircle: { rise: 100, direction: "up" },
-  redSquare: { rise: 100, direction: "right" },
+  platform:   { w: CELL, h: CELL, color: "0xA0522D" },
+  ice:        { w: CELL, h: CELL },
+  spike:      { orientation: "up" },
+  redCircle:  { rise: 100, direction: "up" },
+  redSquare:  { rise: 100, direction: "right" },
+  snowstorm:  { h: CELL * 2 }, // hauteur par défaut : 2 cellules (80px en jeu)
 };
 
 // ── Clé localStorage ─────────────────────────────────────
@@ -336,7 +338,25 @@ export class LevelEditorScene extends Phaser.Scene {
         gfx.fillStyle(0xFF2222, 1).fillRect(x, y, CELL, CELL);
         gfx.lineStyle(2, 0xFF8888).strokeRect(x, y, CELL, CELL);
         break;
-    }
+      case "snowstorm": {
+        const hCells = Math.round((props.h || CELL * 2) / CELL);
+        const totalH = hCells * CELL;
+        // Fond bleu clair semi-transparent
+        gfx.fillStyle(0x9EE7FF, 0.25).fillRect(x, y, CELL, totalH);
+        // Contour bleu clair
+        gfx.lineStyle(1.5, 0x9EE7FF, 0.9).strokeRect(x, y, CELL, totalH);
+        // Flocons dessinés à la main (petites croix blanches)
+        gfx.fillStyle(0xffffff, 0.85);
+        const snowPositions = [
+          [0.25, 0.2], [0.75, 0.4], [0.5, 0.65], [0.2, 0.8], [0.8, 0.85],
+        ].filter(([, ry]) => ry <= hCells);
+        snowPositions.forEach(([rx, ry]) => {
+          const sx = x + rx * CELL, sy = y + ry * totalH;
+          gfx.fillRect(sx - 1, sy - 3, 2, 6);
+          gfx.fillRect(sx - 3, sy - 1, 6, 2);
+        });
+        break;
+      }
   }
 
   _drawSpecial(col, row, color, letter) {
@@ -500,6 +520,35 @@ export class LevelEditorScene extends Phaser.Scene {
       py += 26;
     }
 
+    if (type === "snowstorm") {
+      label("Hauteur (cellules) :", "#cccccc");
+
+      const minH = CELL;      // 1 cellule
+      const maxH = CELL * 10; // 10 cellules max
+
+      const heightBtn = (delta) => {
+        const b = this.add.text(px + (delta > 0 ? 30 : -30), py, delta > 0 ? "+" : "−", {
+          fontSize: "18px", color: "#ffffff",
+          backgroundColor: "#334455", padding: { x: 8, y: 3 }
+        }).setOrigin(0.5).setInteractive();
+        b.on("pointerdown", () => {
+          props.h = Math.max(minH, Math.min(maxH, (props.h || CELL * 2) + delta * CELL));
+          this._renderObject(obj.gfx, obj.col, obj.row, type, props);
+          this._drawPropsPanel(key);
+          this._saveToStorage();
+        });
+        this.propLabels.push(b);
+      };
+
+      heightBtn(-1); heightBtn(+1);
+      const hCells = Math.round((props.h || CELL * 2) / CELL);
+      const heightVal = this.add.text(px, py, `${hCells} (${hCells * CELL * GAME_SCALE}px)`, {
+        fontSize: "13px", color: "#9EE7FF"
+      }).setOrigin(0.5);
+      this.propLabels.push(heightVal);
+      py += 26;
+    }
+
     if (type === "platform") {
       label("Couleur :", "#cccccc");
       const colors = [
@@ -566,6 +615,7 @@ export class LevelEditorScene extends Phaser.Scene {
       spikes:       [],
       redCircles:   [],
       redSquares:   [],
+      snowstorms:   [],
     };
 
     if (this.playerPos) {
@@ -667,6 +717,15 @@ export class LevelEditorScene extends Phaser.Scene {
           y: (obj.row * CELL + CELL / 2) * GAME_SCALE,
           rise: obj.props.rise || 100,
           direction: obj.props.direction || "right"
+        });
+      }
+
+      if (obj.type === "snowstorm") {
+        const hCells = Math.round((obj.props.h || CELL * 2) / CELL);
+        level.snowstorms.push({
+          x: obj.col * CELL * GAME_SCALE,
+          y: obj.row * CELL * GAME_SCALE,
+          h: hCells * CELL * GAME_SCALE  // hauteur en px jeu (base 40px)
         });
       }
     }
@@ -868,6 +927,20 @@ export class LevelEditorScene extends Phaser.Scene {
       const gfx = this.add.graphics();
       this._renderObject(gfx, col, row, "redSquare", props);
       this.objects.set(key, { type: "redSquare", col, row, props, gfx });
+    });
+
+    // snowstorms
+    (level.snowstorms || []).forEach(s => {
+      const sx = s.x / GAME_SCALE, sy = s.y / GAME_SCALE;
+      const col = Math.floor(sx / CELL);
+      const row = Math.floor(sy / CELL);
+      if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+      const key = cellKey(col, row);
+      const hEditor = Math.round((s.h / GAME_SCALE) / CELL) * CELL; // en px éditeur
+      const props = { h: hEditor };
+      const gfx = this.add.graphics();
+      this._renderObject(gfx, col, row, "snowstorm", props);
+      this.objects.set(key, { type: "snowstorm", col, row, props, gfx });
     });
   }
 
