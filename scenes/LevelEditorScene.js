@@ -147,7 +147,7 @@ export class LevelEditorScene extends Phaser.Scene {
     this.add.graphics().lineStyle(1, 0x00BFFF, 0.4).lineBetween(GRID_W + 8, 520, 798, 520);
 
     // JSON Export
-    const exportBtn = this.add.text(GRID_W + PANEL / 2, 540, "📋 Copier JSON", {
+    const exportBtn = this.add.text(GRID_W + PANEL / 2, 540, "💾 Télécharger JSON", {
       fontSize: "13px", color: "#ffffff",
       backgroundColor: "#007700", padding: { x: 8, y: 6 }
     }).setOrigin(0.5).setInteractive();
@@ -674,72 +674,22 @@ export class LevelEditorScene extends Phaser.Scene {
     return level;
   }
 
-  // ── Export JSON ───────────────────────────────────────
+  // ── Export JSON : téléchargement direct du fichier ────
   _exportJSON() {
     const json = JSON.stringify(this._buildLevelJSON(), null, 2);
 
-    // Afficher une popup avec le JSON
-    const { width, height } = this.scale;
+    const blob = new Blob([json], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
 
-    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.8)
-      .setScrollFactor(0).setDepth(50).setInteractive();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "level.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
-    const box = this.add.rectangle(width / 2, height / 2, 560, 480, 0x111122)
-      .setStrokeStyle(2, 0x00BFFF).setScrollFactor(0).setDepth(51);
-
-    this.add.text(width / 2, height / 2 - 215, "JSON du niveau", {
-      fontSize: "20px", color: "#00BFFF", fontStyle: "bold"
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(52);
-
-    // Afficher le JSON tronqué
-    const preview = json.length > 1200 ? json.slice(0, 1200) + "\n…" : json;
-    const jsonTxt = this.add.text(width / 2 - 260, height / 2 - 185, preview, {
-      fontSize: "10px", color: "#ccffcc",
-      wordWrap: { width: 520 }
-    }).setScrollFactor(0).setDepth(52);
-
-    // Bouton copier
-    const copyBtn = this.add.text(width / 2 - 60, height / 2 + 205, "📋 Copier", {
-      fontSize: "16px", color: "#ffffff",
-      backgroundColor: "#007700", padding: { x: 16, y: 8 }
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(52).setInteractive();
-
-    copyBtn.on("pointerdown", () => {
-      navigator.clipboard.writeText(json).then(() => {
-        copyBtn.setText("✅ Copié !");
-        this.time.delayedCall(1500, () => copyBtn.setText("📋 Copier"));
-      }).catch(() => {
-        // Fallback : sélection textarea
-        const ta = document.createElement("textarea");
-        ta.value = json;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        copyBtn.setText("✅ Copié !");
-        this.time.delayedCall(1500, () => copyBtn.setText("📋 Copier"));
-      });
-    });
-
-    const closeBtn = this.add.text(width / 2 + 60, height / 2 + 205, "✕ Fermer", {
-      fontSize: "16px", color: "#ffffff",
-      backgroundColor: "#660000", padding: { x: 16, y: 8 }
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(52).setInteractive();
-
-    const all = [overlay, box, jsonTxt, copyBtn, closeBtn,
-      ...this.children.list.filter(c => c.depth === 52 && c !== jsonTxt && c !== copyBtn && c !== closeBtn)
-    ];
-
-    const close = () => {
-      overlay.destroy(); box.destroy(); jsonTxt.destroy();
-      copyBtn.destroy(); closeBtn.destroy();
-      // fermer le texte titre aussi
-      this.children.list
-        .filter(c => c.depth === 52)
-        .forEach(c => c.destroy());
-    };
-    closeBtn.on("pointerdown", close);
-    overlay.on("pointerdown", close);
+    this._toast("✅ JSON téléchargé !", "#00FF99");
   }
 
   // ── Jouer le niveau ───────────────────────────────────
