@@ -716,64 +716,38 @@ export class LevelEditorScene extends Phaser.Scene {
     this.scene.start("LevelScene", { levelKey: "__editorLevel__" });
   }
 
-  // ── Import JSON ───────────────────────────────────────
+  // ── Import JSON : sélection d'un fichier sur le disque ──
   _openImportDialog() {
-    const { width, height } = this.scale;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json,application/json";
+    input.style.display = "none";
+    document.body.appendChild(input);
 
-    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.8)
-      .setScrollFactor(0).setDepth(60).setInteractive();
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      document.body.removeChild(input);
+      if (!file) return;
 
-    const box = this.add.rectangle(width / 2, height / 2, 500, 200, 0x111122)
-      .setStrokeStyle(2, 0x00BFFF).setScrollFactor(0).setDepth(61);
-
-    const title = this.add.text(width / 2, height / 2 - 80, "Coller le JSON ici :", {
-      fontSize: "18px", color: "#00BFFF"
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(62);
-
-    // Textarea HTML
-    const ta = document.createElement("textarea");
-    ta.style.cssText = `
-      position:fixed; left:50%; top:50%;
-      transform:translate(-50%,-25%);
-      width:440px; height:80px;
-      background:#111; color:#0f0; border:1px solid #00BFFF;
-      font-size:11px; padding:6px; z-index:9999; resize:none;
-    `;
-    ta.placeholder = '{ "playerStart": { "x": 40, "y": 540 }, … }';
-    document.body.appendChild(ta);
-    ta.focus();
-
-    const okBtn = this.add.text(width / 2 - 60, height / 2 + 70, "✅ Importer", {
-      fontSize: "16px", color: "#ffffff",
-      backgroundColor: "#007700", padding: { x: 16, y: 8 }
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(62).setInteractive();
-
-    const cancelBtn = this.add.text(width / 2 + 60, height / 2 + 70, "✕ Annuler", {
-      fontSize: "16px", color: "#ffffff",
-      backgroundColor: "#660000", padding: { x: 16, y: 8 }
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(62).setInteractive();
-
-    const close = () => {
-      document.body.removeChild(ta);
-      overlay.destroy(); box.destroy(); title.destroy();
-      okBtn.destroy(); cancelBtn.destroy();
-    };
-
-    okBtn.on("pointerdown", () => {
-      try {
-        const parsed = JSON.parse(ta.value.trim());
-        close();
-        this._clearAll();
-        this._importLevel(parsed);
-        this._saveToStorage();
-      } catch(e) {
-        ta.style.border = "2px solid red";
-        ta.value = "❌ JSON invalide : " + e.message;
-      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          this._clearAll();
+          this._importLevel(parsed);
+          this._saveToStorage();
+          this._toast("✅ Niveau importé !", "#00FF99");
+        } catch (e) {
+          this._toast("❌ JSON invalide : " + e.message, "#FF4444");
+        }
+      };
+      reader.onerror = () => {
+        this._toast("❌ Impossible de lire le fichier.", "#FF4444");
+      };
+      reader.readAsText(file);
     });
 
-    cancelBtn.on("pointerdown", close);
-    overlay.on("pointerdown", close);
+    input.click();
   }
 
   // ── Importer un niveau dans l'éditeur ────────────────
