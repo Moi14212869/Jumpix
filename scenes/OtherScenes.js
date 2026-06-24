@@ -8,7 +8,7 @@ import {
   setPlayerCoins, setDead, setKill, setParty, setColorPlayer,
   applyPlayerData
 } from "../globals.js";
-import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard
+import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard, loadPublicPlayerStats
 } from "../utils/db.js";
 import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage, getCurrentUser
@@ -952,8 +952,15 @@ this.input.on("pointermove", pointer => {
         const rowCol = isMe ? "#FFD700" : (i % 2 === 0 ? "#ffffff" : "#cccccc");
         const bgCol  = isMe ? 0x2a2000 : (i % 2 === 0 ? 0x111122 : 0x0d0d1a);
 
-        // Fond de ligne
-        const rowBg = this.add.rectangle(width / 2, y + rowH / 2, width, rowH, bgCol);
+        // Fond de ligne (cliquable → ouvre les stats du joueur)
+        const rowBg = this.add.rectangle(width / 2, y + rowH / 2, width, rowH, bgCol)
+          .setInteractive({ useHandCursor: true });
+        rowBg.on("pointerover", () => rowBg.setFillStyle(isMe ? 0x3a2a00 : 0x223344));
+        rowBg.on("pointerout",  () => rowBg.setFillStyle(bgCol));
+        rowBg.on("pointerdown", () => {
+          this.sound.play("select", { volume: gameVolume });
+          this._showPlayerStatsPopup(entry);
+        });
         this.listContainer.add(rowBg);
 
         // Rang
@@ -1000,6 +1007,114 @@ this.listContainer.y = 0;
         }).setOrigin(0.5)
       );
       console.error("Leaderboard error:", err);
+    }
+  }
+
+  // ── Popup stats d'un joueur (clic sur une ligne) ──────────
+  async _showPlayerStatsPopup(entry) {
+    const { width, height } = this.scale;
+
+    // Overlay + boîte
+    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
+      .setInteractive();
+    const box = this.add.rectangle(width / 2, height / 2, width - 60, 340, 0x1a1a2a)
+      .setStrokeStyle(3, 0xFFD700);
+
+    const closeBtn = this.add.text(width / 2 + (width - 60) / 2 - 24, height / 2 - 170 + 16, "✕", {
+      fontSize: "22px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 8, y: 4 }
+    }).setOrigin(0.5).setInteractive();
+
+    const elements = [overlay, box, closeBtn];
+
+    const skinColor = typeof entry.colorPlayer === "number"
+      ? entry.colorPlayer : parseInt(entry.colorPlayer) || 0xAA66CC;
+
+    elements.push(
+      this.add.rectangle(width / 2 - 80, height / 2 - 140, 30, 30, skinColor)
+    );
+    elements.push(
+      this.add.text(width / 2 - 50, height / 2 - 140, entry.pseudo || "Anonyme", {
+        fontSize: "26px", color: "#FFD700", fontStyle: "bold"
+      }).setOrigin(0, 0.5)
+    );
+
+    const loadTxt = this.add.text(width / 2, height / 2 - 70, "Chargement...", {
+      fontSize: "18px", color: "#888888"
+    }).setOrigin(0.5);
+    elements.push(loadTxt);
+
+    closeBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      elements.forEach(o => o.destroy());
+    });
+    overlay.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      elements.forEach(o => o.destroy());
+    });
+
+    try {
+      const pd = await loadPublicPlayerStats(entry.uid);
+      loadTxt.destroy();
+
+      // ── Stats générales (mêmes que la scène Statistics) ──
+      const statsData = [
+        { label: "Coins 💰",          value: pd.playerCoins ?? 0 },
+        { label: "Deaths ☠️",         value: pd.dead        ?? 0 },
+        { label: "Kills 🔪",          value: pd.kill        ?? 0 },
+        { label: "Parties Played 🎮", value: pd.party       ?? 0 }
+      ];
+
+      const col1X = width / 2 - 90, col2X = width / 2 + 90;
+      const statStartY = height / 2 - 90;
+      statsData.forEach((stat, i) => {
+        const x = i % 2 === 0 ? col1X : col2X;
+        const y = statStartY + Math.floor(i / 2) * 52;
+        elements.push(
+          this.add.text(x, y,      stat.label,        { fontSize: "16px", color: "#aaaaaa" }).setOrigin(0.5),
+          this.add.text(x, y + 20, String(stat.value), { fontSize: "20px", color: "#ffff00", fontStyle: "bold" }).setOrigin(0.5)
+        );
+      });
+
+      // ── Séparateur + meilleurs rangs ──
+      const sepY = statStartY + 60;
+      elements.push(this.add.rectangle(width / 2, sepY, width - 100, 1, 0x555555));
+      elements.push(
+        this.add.text(width / 2, sepY + 14, "🏆 Meilleurs rangs atteints", {
+          fontSize: "16px", color: "#FFD700", fontStyle: "bold"
+        }).setOrigin(0.5)
+      );
+
+      const ranks      = pd.bestRanks ?? {};
+      const colCount   = 5;
+      const colW       = Math.floor((width - 100) / colCount);
+      const rowH2      = 36;
+      const gridStartY = sepY + 40;
+
+      ALL_LEVELS.forEach((lvl, i) => {
+        const col = i % colCount;
+        const row = Math.floor(i / colCount);
+        const cx  = 50 + col * colW + colW / 2;
+        const cy  = gridStartY + row * rowH2;
+
+        const rank      = ranks[lvl];
+        const rankStr   = rank === undefined ? "–"
+                        : rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉"
+                        : `#${rank}`;
+        const rankColor = rank === undefined ? "#555555"
+                        : rank <= 3  ? "#FFD700"
+                        : rank <= 10 ? "#00FF99"
+                        : "#ffffff";
+
+        elements.push(
+          this.add.text(cx, cy,      lvl.replace("Level", "Lvl "), { fontSize: "11px", color: "#666666" }).setOrigin(0.5),
+          this.add.text(cx, cy + 14, rankStr, { fontSize: "14px", color: rankColor, fontStyle: "bold" }).setOrigin(0.5)
+        );
+      });
+    } catch (err) {
+      loadTxt.setText("Erreur de chargement");
+      loadTxt.setColor("#ff4444");
+      console.error("Player stats error:", err);
     }
   }
 }
