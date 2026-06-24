@@ -23,7 +23,6 @@ export class MenuScene extends Phaser.Scene {
       { label: "Shop 🛒",   scene: "ShopScene"       },
       { label: "🏆 Objectives", scene: "ObjectivesScene" },
       { label: "Statistics",    scene: "Stats"        },
-      { label: "Credits",       scene: "CreditsScene" },
       { label: "🛠 Level Editor", scene: "LevelEditorScene" },
     ];
 
