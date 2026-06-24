@@ -271,8 +271,8 @@ export function createSnowstorm(scene, x, y, heightInPx = 80) {
     scale:    { start: 1, end: 0.3 },
     alpha:    { start: 0.9, end: 0 },
     rotate:   { min: 0, max: 360 },
-    quantity:  3,
-    frequency: 60,
+    quantity:  12,
+    frequency: 30,
     blendMode: "NORMAL",
   });
 
@@ -285,8 +285,8 @@ export function createSnowstorm(scene, x, y, heightInPx = 80) {
     scale:    { start: 0.8, end: 0.1 },
     alpha:    { start: 0.7, end: 0 },
     rotate:   { min: 0, max: 360 },
-    quantity:  2,
-    frequency: 80,
+    quantity:  8,
+    frequency: 35,
     blendMode: "ADD",
   });
 
