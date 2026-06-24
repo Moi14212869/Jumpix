@@ -12,9 +12,12 @@ import { gameVolume, colorPlayer } from "../globals.js";
 const CELL       = 20;          // taille d'une cellule dans l'éditeur (grille fine)
 const GAME_SCALE = 2;           // 1 case éditeur (20px) = 40px en jeu → on multiplie/divise par 2
 const PANEL      = 200;         // largeur du panneau droit
-const GRID_W     = 800 - PANEL; // 600 → largeur réelle de la zone de jeu
-const COLS       = GRID_W / CELL; // 30 colonnes de 20px
-const ROWS       = 600 / CELL;    // 30 lignes de 20px — la grille est ancrée en bas à gauche
+const GRID_W     = 800 - PANEL; // 600 → largeur réelle de la zone de jeu (zone de fond)
+const COLS       = 20;          // nombre de colonnes affichées (20 × 20px = 400px)
+const ROWS       = 15;          // nombre de lignes affichées (15 × 20px = 300px)
+const GRID_PX_W  = COLS * CELL; // 400 → largeur de la grille affichée
+const GRID_PX_H  = ROWS * CELL; // 300 → hauteur de la grille affichée
+const GRID_TOP   = 600 - GRID_PX_H; // offset Y pour ancrer la grille en bas de la zone de jeu
 
 const TOOLS = [
   { id: "platform",    label: "Plateforme",    color: 0xA0522D, icon: "▬" },
@@ -42,8 +45,10 @@ const LS_KEY = "jumpix_editorLevel";
 // ── Utilitaires ───────────────────────────────────────────
 function snapToGrid(val) { return Math.floor(val / CELL) * CELL; }
 function cellCol(x)      { return Math.floor(x / CELL); }
-function cellRow(y)      { return Math.floor(y / CELL); }
+function cellRow(y)      { return Math.floor((y - GRID_TOP) / CELL); } // tient compte de l'ancrage en bas
 function cellKey(col, row) { return `${col}_${row}`; }
+function colToX(col)     { return col * CELL; }
+function rowToY(row)     { return row * CELL + GRID_TOP; } // position écran (tient compte de l'ancrage en bas)
 
 // =========================================================
 export class LevelEditorScene extends Phaser.Scene {
@@ -91,10 +96,10 @@ export class LevelEditorScene extends Phaser.Scene {
     g.lineStyle(1, 0x334455, 0.6);
 
     for (let c = 0; c <= COLS; c++) {
-      g.lineBetween(c * CELL, 0, c * CELL, ROWS * CELL);
+      g.lineBetween(c * CELL, GRID_TOP, c * CELL, GRID_TOP + GRID_PX_H);
     }
     for (let r = 0; r <= ROWS; r++) {
-      g.lineBetween(0, r * CELL, COLS * CELL, r * CELL);
+      g.lineBetween(0, GRID_TOP + r * CELL, GRID_PX_W, GRID_TOP + r * CELL);
     }
   }
 
@@ -202,14 +207,16 @@ export class LevelEditorScene extends Phaser.Scene {
   _bindInput() {
     this.isPointerDown = false;
 
+    const inGrid = ptr => ptr.x >= 0 && ptr.x < GRID_PX_W && ptr.y >= GRID_TOP && ptr.y < GRID_TOP + GRID_PX_H;
+
     this.input.on("pointerdown", ptr => {
-      if (ptr.x >= GRID_W) return; // dans le panneau
+      if (!inGrid(ptr)) return; // hors de la grille (panneau ou zone vide)
       this.isPointerDown = true;
       this._handleCell(ptr.x, ptr.y, true);
     });
 
     this.input.on("pointermove", ptr => {
-      if (!this.isPointerDown || ptr.x >= GRID_W) return;
+      if (!this.isPointerDown || !inGrid(ptr)) return;
       // En mode peinture continue seulement pour platform / ice / eraser
       if (["platform","ice","eraser"].includes(this.selectedTool)) {
         this._handleCell(ptr.x, ptr.y, false);
@@ -290,8 +297,8 @@ export class LevelEditorScene extends Phaser.Scene {
 
   _renderObject(gfx, col, row, type, props) {
     gfx.clear();
-    const x = col * CELL;
-    const y = row * CELL;
+    const x = colToX(col);
+    const y = rowToY(row);
 
     gfx.lineStyle(0);
     switch (type) {
@@ -338,7 +345,7 @@ export class LevelEditorScene extends Phaser.Scene {
     if (this.objects.has(key)) this._removeCell(key);
 
     const gfx = this.add.graphics();
-    const x = col * CELL, y = row * CELL;
+    const x = colToX(col), y = rowToY(row);
     gfx.fillStyle(color, 0.8).fillCircle(x + CELL / 2, y + CELL / 2, CELL / 2);
     const lbl = this.add.text(x + CELL / 2, y + CELL / 2, letter, {
       fontSize: "11px", color: "#ffffff", fontStyle: "bold"
@@ -383,7 +390,7 @@ export class LevelEditorScene extends Phaser.Scene {
     if (!key || !this.objects.has(key)) return;
     const { col, row } = this.objects.get(key);
     const g = this.add.graphics();
-    g.lineStyle(2, 0xFFFF00, 1).strokeRect(col * CELL + 1, row * CELL + 1, CELL - 2, CELL - 2);
+    g.lineStyle(2, 0xFFFF00, 1).strokeRect(colToX(col) + 1, rowToY(row) + 1, CELL - 2, CELL - 2);
     this._selHighlight = g;
   }
 
