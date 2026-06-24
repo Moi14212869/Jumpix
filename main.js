@@ -8,6 +8,7 @@ import { LevelScene }        from "./scenes/LevelScene.js";
 import { ShopScene }         from "./scenes/ShopScene.js";
 import { World1, World2 }    from "./scenes/WorldScenes.js";
 import { LevelEditorScene }  from "./scenes/LevelEditorScene.js";
+import { MinigameScene }     from "./scenes/MinigameScene.js";
 import {
   SettingsScene,
   CreditsScene,
@@ -42,6 +43,7 @@ const config = {
     ObjectivesScene,
     LeaderboardScene,
     LevelEditorScene,
+    MinigameScene,
   ]
 };
 
