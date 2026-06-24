@@ -221,19 +221,19 @@
     {
       "x": 580,
       "y": 10,
-      "rise": 90,
+      "rise": 100,
       "direction": "down"
     },
     {
       "x": 420,
       "y": 10,
-      "rise": 90,
+      "rise": 100,
       "direction": "down"
     },
     {
       "x": 500,
       "y": 100,
-      "rise": 90,
+      "rise": 100,
       "direction": "up"
     }
   ],
