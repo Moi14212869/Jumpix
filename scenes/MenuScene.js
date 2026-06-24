@@ -6,7 +6,6 @@ import { createButton } from "../utils/helpers.js";
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super("MenuScene"); }
-
   create() {
     const { width, height } = this.scale;
 
