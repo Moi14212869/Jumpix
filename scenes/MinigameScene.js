@@ -24,6 +24,9 @@ export class MinigameScene extends Phaser.Scene {
     this.mapChoice = null; // "empty" | "platforms" — choisi sur l'écran de sélection
     this.score1 = 0;
     this.score2 = 0;
+    this._resolvingStomp = false;
+    this.player1 = null;
+    this.player2 = null;
   }
 
   create() {
@@ -121,9 +124,33 @@ export class MinigameScene extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
 
     // ── Décor ──
+    // createPlatform() génère des clés de texture déterministes basées
+    // sur les coordonnées (block-x-y-normal). Comme ce mini-jeu utilise
+    // toujours les mêmes positions, on supprime les textures résiduelles
+    // d'une éventuelle partie précédente avant de les régénérer.
     const groundY = height - 20;
-    createPlatform(this, 0, groundY, width, 40, 0xA0522D);
+    const platformSpecs = [{ x: 0, y: groundY, w: width, h: 40 }];
+    if (this.mapChoice === "platforms") {
+      platformSpecs.push(
+        { x: 100, y: height - 180, w: 160, h: 40 },
+        { x: width - 260, y: height - 180, w: 160, h: 40 },
+        { x: width / 2 - 80, y: height - 320, w: 160, h: 40 }
+      );
+    }
 
+    platformSpecs.forEach(({ x, y, w, h }) => {
+      const tileSize = 40;
+      const blocksPerRow = Math.floor(w / tileSize);
+      const blocksPerCol = Math.floor(h / tileSize);
+      for (let row = 0; row < blocksPerCol; row++) {
+        for (let col = 0; col < blocksPerRow; col++) {
+          const key = `block-${x + col * tileSize}-${y + row * tileSize}-normal`;
+          if (this.textures.exists(key)) this.textures.remove(key);
+        }
+      }
+    });
+
+    createPlatform(this, 0, groundY, width, 40, 0xA0522D);
     if (this.mapChoice === "platforms") {
       createPlatform(this, 100, height - 180, 160, 40, 0xA0522D);
       createPlatform(this, width - 260, height - 180, 160, 40, 0xA0522D);
@@ -134,8 +161,10 @@ export class MinigameScene extends Phaser.Scene {
     this.start1 = { x: width * 0.25, y: groundY - 100 };
     this.start2 = { x: width * 0.75, y: groundY - 100 };
 
-    // ── Textures joueurs ──
+    // ── Textures joueurs (supprime l'ancienne si elle existe déjà,
+    //    pour éviter un conflit de clé lors d'un nouveau lancement) ──
     const makePlayerTexture = (key, color) => {
+      if (this.textures.exists(key)) this.textures.remove(key);
       const gfx = this.add.graphics();
       gfx.fillStyle(color, 1);
       gfx.fillRect(0, 0, PLAYER_SIZE, PLAYER_SIZE);
@@ -252,6 +281,8 @@ export class MinigameScene extends Phaser.Scene {
 
   // ── Remet les deux joueurs à leur position de départ ──────
   _resetRound() {
+    if (!this.player1 || !this.player2) return; // scène quittée avant la fin du délai
+
     this.player1.setPosition(this.start1.x, this.start1.y);
     this.player1.setVelocity(0, 0);
     this.player1.angle = 0;
