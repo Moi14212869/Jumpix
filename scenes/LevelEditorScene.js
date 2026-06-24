@@ -9,11 +9,12 @@
 import { gameVolume, colorPlayer } from "../globals.js";
 
 // ── Constantes ────────────────────────────────────────────
-const CELL   = 40;          // taille d'une cellule en px
-const COLS   = 20;          // nombre de colonnes de la grille (800 / 40)
-const ROWS   = 15;          // nombre de lignes (600 / 40)
-const PANEL  = 200;         // largeur du panneau droit
-const GRID_W = 800 - PANEL; // 600
+const CELL    = 40;          // taille d'une cellule en px (coordonnées / hitbox — toujours 40 en jeu)
+const VIS     = 20;          // taille visuelle des carrés dessinés dans l'éditeur (cosmétique uniquement)
+const PANEL   = 200;         // largeur du panneau droit
+const GRID_W  = 800 - PANEL; // 600 → largeur réelle de la zone de jeu
+const COLS    = GRID_W / CELL; // 15 colonnes (corrigé : la grille tient exactement dans GRID_W)
+const ROWS    = 15;          // nombre de lignes (600 / 40) — la grille est ancrée en bas à gauche
 
 const TOOLS = [
   { id: "platform",    label: "Plateforme",    color: 0xA0522D, icon: "▬" },
@@ -291,42 +292,46 @@ export class LevelEditorScene extends Phaser.Scene {
     gfx.clear();
     const x = col * CELL;
     const y = row * CELL;
+    // Décalage pour centrer un élément de taille VIS dans une case de CELL
+    const off = (CELL - VIS) / 2;
+    const vx = x + off;
+    const vy = y + off;
 
     gfx.lineStyle(0);
     switch (type) {
       case "platform": {
         const c = typeof props.color === "string" ? parseInt(props.color) : (props.color || 0xA0522D);
-        gfx.fillStyle(c, 1).fillRect(x, y, CELL, CELL);
+        gfx.fillStyle(c, 1).fillRect(vx, vy, VIS, VIS);
         break;
       }
       case "ice":
-        gfx.fillStyle(0x9EE7FF, 1).fillRect(x, y, CELL, CELL);
-        gfx.fillStyle(0xFFFFFF, 0.5).fillRect(x, y, CELL, 6);
+        gfx.fillStyle(0x9EE7FF, 1).fillRect(vx, vy, VIS, VIS);
+        gfx.fillStyle(0xFFFFFF, 0.5).fillRect(vx, vy, VIS, 3);
         break;
       case "spike": {
         gfx.fillStyle(0xFF0000, 1);
-        const h = Math.sqrt(3) / 2 * CELL;
+        const h = Math.sqrt(3) / 2 * VIS;
         gfx.beginPath();
         const ori = props.orientation || "up";
         if (ori === "up") {
-          gfx.moveTo(x + CELL / 2, y); gfx.lineTo(x, y + h); gfx.lineTo(x + CELL, y + h);
+          gfx.moveTo(vx + VIS / 2, vy); gfx.lineTo(vx, vy + h); gfx.lineTo(vx + VIS, vy + h);
         } else if (ori === "down") {
-          gfx.moveTo(x + CELL / 2, y + h); gfx.lineTo(x, y); gfx.lineTo(x + CELL, y);
+          gfx.moveTo(vx + VIS / 2, vy + h); gfx.lineTo(vx, vy); gfx.lineTo(vx + VIS, vy);
         } else if (ori === "left") {
-          gfx.moveTo(x, y + CELL / 2); gfx.lineTo(x + h, y); gfx.lineTo(x + h, y + CELL);
+          gfx.moveTo(vx, vy + VIS / 2); gfx.lineTo(vx + h, vy); gfx.lineTo(vx + h, vy + VIS);
         } else {
-          gfx.moveTo(x + h, y + CELL / 2); gfx.lineTo(x, y); gfx.lineTo(x, y + CELL);
+          gfx.moveTo(vx + h, vy + VIS / 2); gfx.lineTo(vx, vy); gfx.lineTo(vx, vy + VIS);
         }
         gfx.closePath(); gfx.fillPath();
         break;
       }
       case "redCircle":
-        gfx.fillStyle(0xFF0000, 1).fillCircle(x + CELL / 2, y + CELL / 2, 10);
-        gfx.lineStyle(2, 0xFFAAAA).strokeCircle(x + CELL / 2, y + CELL / 2, 10);
+        gfx.fillStyle(0xFF0000, 1).fillCircle(x + CELL / 2, y + CELL / 2, VIS / 2);
+        gfx.lineStyle(2, 0xFFAAAA).strokeCircle(x + CELL / 2, y + CELL / 2, VIS / 2);
         break;
       case "redSquare":
-        gfx.fillStyle(0xFF2222, 1).fillRect(x + 4, y + 4, CELL - 8, CELL - 8);
-        gfx.lineStyle(2, 0xFF8888).strokeRect(x + 4, y + 4, CELL - 8, CELL - 8);
+        gfx.fillStyle(0xFF2222, 1).fillRect(vx, vy, VIS, VIS);
+        gfx.lineStyle(2, 0xFF8888).strokeRect(vx, vy, VIS, VIS);
         break;
     }
   }
@@ -338,9 +343,9 @@ export class LevelEditorScene extends Phaser.Scene {
 
     const gfx = this.add.graphics();
     const x = col * CELL, y = row * CELL;
-    gfx.fillStyle(color, 0.8).fillCircle(x + CELL / 2, y + CELL / 2, CELL / 2 - 4);
+    gfx.fillStyle(color, 0.8).fillCircle(x + CELL / 2, y + CELL / 2, VIS / 2);
     const lbl = this.add.text(x + CELL / 2, y + CELL / 2, letter, {
-      fontSize: "18px", color: "#ffffff", fontStyle: "bold"
+      fontSize: "13px", color: "#ffffff", fontStyle: "bold"
     }).setOrigin(0.5);
 
     // On stocke le label pour pouvoir le détruire
