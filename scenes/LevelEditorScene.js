@@ -357,6 +357,7 @@ export class LevelEditorScene extends Phaser.Scene {
         });
         break;
       }
+    }
   }
 
   _drawSpecial(col, row, color, letter) {
