@@ -60,7 +60,7 @@ export class MinigameScene extends Phaser.Scene {
 
     const emptyBox = this.add.rectangle(emptyX, previewY, previewW, previewH, 0x1a1a2a)
       .setStrokeStyle(2, 0x00BFFF).setInteractive({ useHandCursor: true });
-    this.add.rectangle(emptyX, previewY + previewH / 2 - 14, previewW - 30, 14, 0xA0522D);
+    elements.push(this.add.rectangle(emptyX, previewY + previewH / 2 - 14, previewW - 30, 14, 0xA0522D));
     elements.push(emptyBox);
     elements.push(
       this.add.text(emptyX, previewY + previewH / 2 + 20, "Map vide", {
@@ -71,9 +71,9 @@ export class MinigameScene extends Phaser.Scene {
     // ── Aperçu "map avec plateformes" ──
     const platBox = this.add.rectangle(platX, previewY, previewW, previewH, 0x1a1a2a)
       .setStrokeStyle(2, 0x00BFFF).setInteractive({ useHandCursor: true });
-    this.add.rectangle(platX, previewY + previewH / 2 - 14, previewW - 30, 14, 0xA0522D);
-    this.add.rectangle(platX - 70, previewY + 5, 70, 10, 0xA0522D);
-    this.add.rectangle(platX + 60, previewY - 25, 70, 10, 0xA0522D);
+    elements.push(this.add.rectangle(platX, previewY + previewH / 2 - 14, previewW - 30, 14, 0xA0522D));
+    elements.push(this.add.rectangle(platX - 70, previewY + 5, 70, 10, 0xA0522D));
+    elements.push(this.add.rectangle(platX + 60, previewY - 25, 70, 10, 0xA0522D));
     elements.push(platBox);
     elements.push(
       this.add.text(platX, previewY + previewH / 2 + 20, "Map avec plateformes", {
