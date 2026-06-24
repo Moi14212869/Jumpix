@@ -206,6 +206,105 @@ export function createSnow(scene) {
   particles.setScrollFactor(0);
 }
 
+// ── Tempête de neige (colonne de 1 bloc de large, hauteur configurable) ──────
+// La zone est invisible en jeu (zone physique pure) mais remplie de particules
+// tourbillonnantes blanches et bleu clair. Le joueur qui la touche est éjecté
+// vers le haut avec une forte vélocité.
+export function createSnowstorm(scene, x, y, heightInPx = 80) {
+  const WIDTH       = 40;   // toujours 1 bloc de large (40px)
+  const LAUNCH_VY   = -600; // force d'éjection verticale
+  const PARTICLE_W  = 6;
+  const PARTICLE_H  = 6;
+
+  // ── Texture particule flocon ──────────────────────────────
+  const keyWhite = "snowstorm-particle-white";
+  const keyBlue  = "snowstorm-particle-blue";
+
+  if (!scene.textures.exists(keyWhite)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffffff, 1);
+    // Flocon stylisé : croix simple
+    g.fillRect(2, 0, 2, 6);
+    g.fillRect(0, 2, 6, 2);
+    g.generateTexture(keyWhite, PARTICLE_W, PARTICLE_H);
+    g.destroy();
+  }
+  if (!scene.textures.exists(keyBlue)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0x9EE7FF, 1);
+    g.fillRect(2, 0, 2, 6);
+    g.fillRect(0, 2, 6, 2);
+    g.generateTexture(keyBlue, PARTICLE_W, PARTICLE_H);
+    g.destroy();
+  }
+
+  // ── Zone physique (rectangle statique invisible) ──────────
+  const zone = scene.physics.add.staticImage(x + WIDTH / 2, y + heightInPx / 2, "__blank__");
+
+  // Crée une texture transparente unique si elle n'existe pas encore
+  if (!scene.textures.exists("__blank__")) {
+    const g = scene.add.graphics();
+    g.fillStyle(0x000000, 0);
+    g.fillRect(0, 0, 1, 1);
+    g.generateTexture("__blank__", 1, 1);
+    g.destroy();
+  }
+
+  zone.setDisplaySize(WIDTH, heightInPx);
+  zone.body.setSize(WIDTH, heightInPx);
+  zone.refreshBody();
+  zone.setVisible(false);
+  // Tag pour l'identifier lors de l'overlap dans LevelScene
+  zone.isSnowstorm = true;
+
+  // ── Particules tourbillonnantes ───────────────────────────
+  // Émetteur centré sur la zone, les particules tourbillonnent à l'intérieur
+  const cx = x + WIDTH / 2;
+  const cy = y + heightInPx / 2;
+
+  const emitter = scene.add.particles(cx, cy, keyWhite, {
+    x:        { min: -WIDTH / 2 + 4,       max: WIDTH / 2 - 4 },
+    y:        { min: -heightInPx / 2 + 4,  max: heightInPx / 2 - 4 },
+    lifespan: 1200,
+    speedX:   { min: -60, max: 60 },
+    speedY:   { min: -80, max: -20 },
+    scale:    { start: 1, end: 0.3 },
+    alpha:    { start: 0.9, end: 0 },
+    rotate:   { min: 0, max: 360 },
+    quantity:  3,
+    frequency: 60,
+    blendMode: "NORMAL",
+  });
+
+  const emitter2 = scene.add.particles(cx, cy, keyBlue, {
+    x:        { min: -WIDTH / 2 + 2,       max: WIDTH / 2 - 2 },
+    y:        { min: -heightInPx / 2 + 2,  max: heightInPx / 2 - 2 },
+    lifespan: 900,
+    speedX:   { min: -80, max: 80 },
+    speedY:   { min: -50, max: 50 },
+    scale:    { start: 0.8, end: 0.1 },
+    alpha:    { start: 0.7, end: 0 },
+    rotate:   { min: 0, max: 360 },
+    quantity:  2,
+    frequency: 80,
+    blendMode: "ADD",
+  });
+
+  emitter.setDepth(1);
+  emitter2.setDepth(1);
+
+  // ── Contour visuel subtil de la colonne ───────────────────
+  const border = scene.add.graphics();
+  border.lineStyle(1, 0x9EE7FF, 0.35);
+  border.strokeRect(x, y, WIDTH, heightInPx);
+  // Fond légèrement teinté
+  border.fillStyle(0x9EE7FF, 0.07);
+  border.fillRect(x, y, WIDTH, heightInPx);
+  border.setDepth(0);
+
+  return zone;
+}
+
 // ── Contrôles mobiles ─────────────────────────────────────
 export function createMobileControls(scene) {
   if (!scene.sys.game.device.input.touch) return;
