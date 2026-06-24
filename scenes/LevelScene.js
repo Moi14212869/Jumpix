@@ -14,7 +14,7 @@ import { save, saveLeaderboard } from "../utils/db.js";
 import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
-  createSnow, createMobileControls
+  createSnow, createMobileControls, createSnowstorm
 } from "../utils/gameObjects.js";
 
 
@@ -51,6 +51,7 @@ export class LevelScene extends Phaser.Scene {
     this.redCircles   = this.physics.add.group();
     this.redSquares   = this.physics.add.group();
     this.icePlatforms = this.physics.add.staticGroup();
+    this.snowstorms   = this.physics.add.staticGroup();
 
     this.input.addPointer(2);
     this.cursors    = this.input.keyboard.createCursorKeys();
@@ -94,6 +95,13 @@ export class LevelScene extends Phaser.Scene {
       );
     }
 
+    if (level.snowstorms) {
+      level.snowstorms.forEach(s => {
+        const zone = createSnowstorm(this, s.x, s.y, s.h || 80);
+        this.snowstorms.add(zone);
+      });
+    }
+
     // ── Joueur ──
     const size = 40;
     const gfx  = this.add.graphics();
@@ -133,8 +141,17 @@ export class LevelScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.spikes, () => this.die());
     this.physics.add.overlap(this.player, this.redCircles, () => this.die());
 
-    this.physics.add.overlap(this.player, this.redSquares, (player, square) => {
-      const verticalDiff = (player.y + player.displayHeight / 2) - (square.y - square.displayHeight / 2);
+    // ── Tempêtes de neige : éjection vers le haut ──
+    this.physics.add.overlap(this.player, this.snowstorms, (player) => {
+      // Lance le joueur vers le haut avec une impulsion puissante
+      player.setVelocityY(-600);
+      // Réinitialise le compteur de sauts (l'éjection compte comme un rebond)
+      this.jumpCount = 0;
+      // Son de saut pour le feedback
+      this.sound.play("jump", { volume: gameVolume });
+    }, null, this);
+
+    this.physics.add.overlap(this.player, this.redSquares, (player, square) => {      const verticalDiff = (player.y + player.displayHeight / 2) - (square.y - square.displayHeight / 2);
 
       if (verticalDiff < 10 && player.body.velocity.y > 0) {
         // Saut sur le carré — enregistre un kill
