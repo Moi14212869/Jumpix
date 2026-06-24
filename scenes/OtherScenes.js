@@ -1017,10 +1017,10 @@ this.listContainer.y = 0;
     // Overlay + boîte
     const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
       .setInteractive();
-    const box = this.add.rectangle(width / 2, height / 2, width - 60, 340, 0x1a1a2a)
+    const box = this.add.rectangle(width / 2, height / 2, width - 60, 380, 0x1a1a2a)
       .setStrokeStyle(3, 0xFFD700);
 
-    const closeBtn = this.add.text(width / 2 + (width - 60) / 2 - 24, height / 2 - 170 + 16, "✕", {
+    const closeBtn = this.add.text(width / 2 + (width - 60) / 2 - 24, height / 2 - 190 + 16, "✕", {
       fontSize: "22px", color: "#ffffff",
       backgroundColor: "#00BFFF", padding: { x: 8, y: 4 }
     }).setOrigin(0.5).setInteractive();
@@ -1031,15 +1031,15 @@ this.listContainer.y = 0;
       ? entry.colorPlayer : parseInt(entry.colorPlayer) || 0xAA66CC;
 
     elements.push(
-      this.add.rectangle(width / 2 - 80, height / 2 - 140, 30, 30, skinColor)
+      this.add.rectangle(width / 2 - 80, height / 2 - 160, 30, 30, skinColor)
     );
     elements.push(
-      this.add.text(width / 2 - 50, height / 2 - 140, entry.pseudo || "Anonyme", {
+      this.add.text(width / 2 - 50, height / 2 - 160, entry.pseudo || "Anonyme", {
         fontSize: "26px", color: "#FFD700", fontStyle: "bold"
       }).setOrigin(0, 0.5)
     );
 
-    const loadTxt = this.add.text(width / 2, height / 2 - 70, "Chargement...", {
+    const loadTxt = this.add.text(width / 2, height / 2 - 90, "Chargement...", {
       fontSize: "18px", color: "#888888"
     }).setOrigin(0.5);
     elements.push(loadTxt);
@@ -1066,21 +1066,23 @@ this.listContainer.y = 0;
       ];
 
       const col1X = width / 2 - 90, col2X = width / 2 + 90;
-      const statStartY = height / 2 - 90;
+      const statStartY = height / 2 - 110;
+      const statRowH   = 58;
       statsData.forEach((stat, i) => {
         const x = i % 2 === 0 ? col1X : col2X;
-        const y = statStartY + Math.floor(i / 2) * 52;
+        const y = statStartY + Math.floor(i / 2) * statRowH;
         elements.push(
           this.add.text(x, y,      stat.label,        { fontSize: "16px", color: "#aaaaaa" }).setOrigin(0.5),
-          this.add.text(x, y + 20, String(stat.value), { fontSize: "20px", color: "#ffff00", fontStyle: "bold" }).setOrigin(0.5)
+          this.add.text(x, y + 22, String(stat.value), { fontSize: "20px", color: "#ffff00", fontStyle: "bold" }).setOrigin(0.5)
         );
       });
 
       // ── Séparateur + meilleurs rangs ──
-      const sepY = statStartY + 60;
+      const statsBottom = statStartY + statRowH + 30; // bas de la 2e rangée de stats
+      const sepY = statsBottom + 14;
       elements.push(this.add.rectangle(width / 2, sepY, width - 100, 1, 0x555555));
       elements.push(
-        this.add.text(width / 2, sepY + 14, "🏆 Meilleurs rangs atteints", {
+        this.add.text(width / 2, sepY + 26, "🏆 Meilleurs rangs atteints", {
           fontSize: "16px", color: "#FFD700", fontStyle: "bold"
         }).setOrigin(0.5)
       );
@@ -1088,8 +1090,8 @@ this.listContainer.y = 0;
       const ranks      = pd.bestRanks ?? {};
       const colCount   = 5;
       const colW       = Math.floor((width - 100) / colCount);
-      const rowH2      = 36;
-      const gridStartY = sepY + 40;
+      const rowH2      = 38;
+      const gridStartY = sepY + 56;
 
       ALL_LEVELS.forEach((lvl, i) => {
         const col = i % colCount;
