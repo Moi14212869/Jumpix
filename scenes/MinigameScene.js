@@ -169,8 +169,9 @@ export class MinigameScene extends Phaser.Scene {
     this.physics.add.collider(this.player1, this.platforms);
     this.physics.add.collider(this.player2, this.platforms);
 
-    // ── Détection "atterrissage sur la tête" ──
-    this.physics.add.overlap(this.player1, this.player2, () => this._handleStomp(), null, this);
+    // ── Collision entre les deux joueurs (empêche de se traverser
+    //    sur les côtés) + détection "atterrissage sur la tête" ──
+    this.physics.add.collider(this.player1, this.player2, () => this._handleStomp(), null, this);
 
     // ── UI : scores ──
     this.score1Text = this.add.text(20, 20, `${this.score1}`, {
