@@ -9,12 +9,12 @@
 import { gameVolume, colorPlayer } from "../globals.js";
 
 // ── Constantes ────────────────────────────────────────────
-const CELL    = 40;          // taille d'une cellule en px (coordonnées / hitbox — toujours 40 en jeu)
-const VIS     = 20;          // taille visuelle des carrés dessinés dans l'éditeur (cosmétique uniquement)
-const PANEL   = 200;         // largeur du panneau droit
-const GRID_W  = 800 - PANEL; // 600 → largeur réelle de la zone de jeu
-const COLS    = GRID_W / CELL; // 15 colonnes (corrigé : la grille tient exactement dans GRID_W)
-const ROWS    = 15;          // nombre de lignes (600 / 40) — la grille est ancrée en bas à gauche
+const CELL       = 20;          // taille d'une cellule dans l'éditeur (grille fine)
+const GAME_SCALE = 2;           // 1 case éditeur (20px) = 40px en jeu → on multiplie/divise par 2
+const PANEL      = 200;         // largeur du panneau droit
+const GRID_W     = 800 - PANEL; // 600 → largeur réelle de la zone de jeu
+const COLS       = GRID_W / CELL; // 30 colonnes de 20px
+const ROWS       = 600 / CELL;    // 30 lignes de 20px — la grille est ancrée en bas à gauche
 
 const TOOLS = [
   { id: "platform",    label: "Plateforme",    color: 0xA0522D, icon: "▬" },
@@ -292,46 +292,42 @@ export class LevelEditorScene extends Phaser.Scene {
     gfx.clear();
     const x = col * CELL;
     const y = row * CELL;
-    // Décalage pour centrer un élément de taille VIS dans une case de CELL
-    const off = (CELL - VIS) / 2;
-    const vx = x + off;
-    const vy = y + off;
 
     gfx.lineStyle(0);
     switch (type) {
       case "platform": {
         const c = typeof props.color === "string" ? parseInt(props.color) : (props.color || 0xA0522D);
-        gfx.fillStyle(c, 1).fillRect(vx, vy, VIS, VIS);
+        gfx.fillStyle(c, 1).fillRect(x, y, CELL, CELL);
         break;
       }
       case "ice":
-        gfx.fillStyle(0x9EE7FF, 1).fillRect(vx, vy, VIS, VIS);
-        gfx.fillStyle(0xFFFFFF, 0.5).fillRect(vx, vy, VIS, 3);
+        gfx.fillStyle(0x9EE7FF, 1).fillRect(x, y, CELL, CELL);
+        gfx.fillStyle(0xFFFFFF, 0.5).fillRect(x, y, CELL, 3);
         break;
       case "spike": {
         gfx.fillStyle(0xFF0000, 1);
-        const h = Math.sqrt(3) / 2 * VIS;
+        const h = Math.sqrt(3) / 2 * CELL;
         gfx.beginPath();
         const ori = props.orientation || "up";
         if (ori === "up") {
-          gfx.moveTo(vx + VIS / 2, vy); gfx.lineTo(vx, vy + h); gfx.lineTo(vx + VIS, vy + h);
+          gfx.moveTo(x + CELL / 2, y); gfx.lineTo(x, y + h); gfx.lineTo(x + CELL, y + h);
         } else if (ori === "down") {
-          gfx.moveTo(vx + VIS / 2, vy + h); gfx.lineTo(vx, vy); gfx.lineTo(vx + VIS, vy);
+          gfx.moveTo(x + CELL / 2, y + h); gfx.lineTo(x, y); gfx.lineTo(x + CELL, y);
         } else if (ori === "left") {
-          gfx.moveTo(vx, vy + VIS / 2); gfx.lineTo(vx + h, vy); gfx.lineTo(vx + h, vy + VIS);
+          gfx.moveTo(x, y + CELL / 2); gfx.lineTo(x + h, y); gfx.lineTo(x + h, y + CELL);
         } else {
-          gfx.moveTo(vx + h, vy + VIS / 2); gfx.lineTo(vx, vy); gfx.lineTo(vx, vy + VIS);
+          gfx.moveTo(x + h, y + CELL / 2); gfx.lineTo(x, y); gfx.lineTo(x, y + CELL);
         }
         gfx.closePath(); gfx.fillPath();
         break;
       }
       case "redCircle":
-        gfx.fillStyle(0xFF0000, 1).fillCircle(x + CELL / 2, y + CELL / 2, VIS / 2);
-        gfx.lineStyle(2, 0xFFAAAA).strokeCircle(x + CELL / 2, y + CELL / 2, VIS / 2);
+        gfx.fillStyle(0xFF0000, 1).fillCircle(x + CELL / 2, y + CELL / 2, CELL / 2);
+        gfx.lineStyle(2, 0xFFAAAA).strokeCircle(x + CELL / 2, y + CELL / 2, CELL / 2);
         break;
       case "redSquare":
-        gfx.fillStyle(0xFF2222, 1).fillRect(vx, vy, VIS, VIS);
-        gfx.lineStyle(2, 0xFF8888).strokeRect(vx, vy, VIS, VIS);
+        gfx.fillStyle(0xFF2222, 1).fillRect(x, y, CELL, CELL);
+        gfx.lineStyle(2, 0xFF8888).strokeRect(x, y, CELL, CELL);
         break;
     }
   }
@@ -343,9 +339,9 @@ export class LevelEditorScene extends Phaser.Scene {
 
     const gfx = this.add.graphics();
     const x = col * CELL, y = row * CELL;
-    gfx.fillStyle(color, 0.8).fillCircle(x + CELL / 2, y + CELL / 2, VIS / 2);
+    gfx.fillStyle(color, 0.8).fillCircle(x + CELL / 2, y + CELL / 2, CELL / 2);
     const lbl = this.add.text(x + CELL / 2, y + CELL / 2, letter, {
-      fontSize: "13px", color: "#ffffff", fontStyle: "bold"
+      fontSize: "11px", color: "#ffffff", fontStyle: "bold"
     }).setOrigin(0.5);
 
     // On stocke le label pour pouvoir le détruire
@@ -542,6 +538,9 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   // ── Génération du JSON ────────────────────────────────
+  // Toutes les coordonnées/tailles de l'éditeur (grille 20px) sont
+  // multipliées par GAME_SCALE pour produire des coordonnées de jeu
+  // basées sur des blocs de 40px.
   _buildLevelJSON() {
     const level = {
       playerStart:  { x: 40, y: 540 },
@@ -555,14 +554,14 @@ export class LevelEditorScene extends Phaser.Scene {
 
     if (this.playerPos) {
       level.playerStart = {
-        x: this.playerPos.col * CELL + CELL / 2,
-        y: this.playerPos.row * CELL + CELL / 2
+        x: (this.playerPos.col * CELL + CELL / 2) * GAME_SCALE,
+        y: (this.playerPos.row * CELL + CELL / 2) * GAME_SCALE
       };
     }
     if (this.exitPos) {
       level.blueCircle = {
-        x: this.exitPos.col * CELL + CELL / 2,
-        y: this.exitPos.row * CELL + CELL / 2
+        x: (this.exitPos.col * CELL + CELL / 2) * GAME_SCALE,
+        y: (this.exitPos.row * CELL + CELL / 2) * GAME_SCALE
       };
     }
 
@@ -582,7 +581,13 @@ export class LevelEditorScene extends Phaser.Scene {
         }
         usedPlatform.add(key);
         const colorHex = obj.props.color || "0xA0522D";
-        level.platforms.push({ x: obj.col * CELL, y: obj.row * CELL, w, h: CELL, color: colorHex });
+        level.platforms.push({
+          x: obj.col * CELL * GAME_SCALE,
+          y: obj.row * CELL * GAME_SCALE,
+          w: w * GAME_SCALE,
+          h: CELL * GAME_SCALE,
+          color: colorHex
+        });
       }
 
       if (obj.type === "ice" && !usedIce.has(key)) {
@@ -594,21 +599,26 @@ export class LevelEditorScene extends Phaser.Scene {
           usedIce.add(nk); w += CELL; c++; nk = cellKey(c, obj.row);
         }
         usedIce.add(key);
-        level.icePlatforms.push({ x: obj.col * CELL, y: obj.row * CELL, w, h: CELL });
+        level.icePlatforms.push({
+          x: obj.col * CELL * GAME_SCALE,
+          y: obj.row * CELL * GAME_SCALE,
+          w: w * GAME_SCALE,
+          h: CELL * GAME_SCALE
+        });
       }
 
       if (obj.type === "spike") {
         level.spikes.push({
-          x: obj.col * CELL + CELL / 2,
-          y: obj.row * CELL + CELL,
+          x: (obj.col * CELL + CELL / 2) * GAME_SCALE,
+          y: (obj.row * CELL + CELL) * GAME_SCALE,
           orientation: obj.props.orientation || "up"
         });
       }
 
       if (obj.type === "redCircle") {
         level.redCircles.push({
-          x: obj.col * CELL + CELL / 2,
-          y: obj.row * CELL + CELL / 2,
+          x: (obj.col * CELL + CELL / 2) * GAME_SCALE,
+          y: (obj.row * CELL + CELL / 2) * GAME_SCALE,
           rise: obj.props.rise || 100,
           direction: obj.props.direction || "up"
         });
@@ -616,8 +626,8 @@ export class LevelEditorScene extends Phaser.Scene {
 
       if (obj.type === "redSquare") {
         level.redSquares.push({
-          x: obj.col * CELL + CELL / 2,
-          y: obj.row * CELL + CELL / 2,
+          x: (obj.col * CELL + CELL / 2) * GAME_SCALE,
+          y: (obj.row * CELL + CELL / 2) * GAME_SCALE,
           rise: obj.props.rise || 100,
           direction: obj.props.direction || "right"
         });
@@ -780,31 +790,35 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   // ── Importer un niveau dans l'éditeur ────────────────
+  // Les coordonnées du JSON sont en base 40px (jeu) ; on les divise
+  // par GAME_SCALE pour retrouver la grille fine de l'éditeur (20px).
   _importLevel(level) {
     // playerStart
     if (level.playerStart) {
-      const col = Math.floor(level.playerStart.x / CELL);
-      const row = Math.floor(level.playerStart.y / CELL);
+      const col = Math.floor((level.playerStart.x / GAME_SCALE) / CELL);
+      const row = Math.floor((level.playerStart.y / GAME_SCALE) / CELL);
       this.playerPos = { col, row };
       this._drawSpecial(col, row, 0xAA66CC, "P");
     }
 
     // blueCircle
     if (level.blueCircle) {
-      const col = Math.floor(level.blueCircle.x / CELL);
-      const row = Math.floor(level.blueCircle.y / CELL);
+      const col = Math.floor((level.blueCircle.x / GAME_SCALE) / CELL);
+      const row = Math.floor((level.blueCircle.y / GAME_SCALE) / CELL);
       this.exitPos = { col, row };
       this._drawSpecial(col, row, 0x0000FF, "O");
     }
 
     // platforms
     (level.platforms || []).forEach(p => {
-      const cols = Math.round(p.w / CELL) || 1;
-      const rows = Math.round((p.h || CELL) / CELL) || 1;
+      const px = p.x / GAME_SCALE, py = p.y / GAME_SCALE;
+      const pw = p.w / GAME_SCALE, ph = (p.h || CELL * GAME_SCALE) / GAME_SCALE;
+      const cols = Math.round(pw / CELL) || 1;
+      const rows = Math.round(ph / CELL) || 1;
       for (let dc = 0; dc < cols; dc++) {
         for (let dr = 0; dr < rows; dr++) {
-          const col = Math.floor(p.x / CELL) + dc;
-          const row = Math.floor(p.y / CELL) + dr;
+          const col = Math.floor(px / CELL) + dc;
+          const row = Math.floor(py / CELL) + dr;
           if (col >= COLS || row >= ROWS) continue;
           const key = cellKey(col, row);
           if (!this.objects.has(key)) {
@@ -821,12 +835,14 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // icePlatforms
     (level.icePlatforms || []).forEach(p => {
-      const cols = Math.round(p.w / CELL) || 1;
-      const rows = Math.round((p.h || CELL) / CELL) || 1;
+      const px = p.x / GAME_SCALE, py = p.y / GAME_SCALE;
+      const pw = p.w / GAME_SCALE, ph = (p.h || CELL * GAME_SCALE) / GAME_SCALE;
+      const cols = Math.round(pw / CELL) || 1;
+      const rows = Math.round(ph / CELL) || 1;
       for (let dc = 0; dc < cols; dc++) {
         for (let dr = 0; dr < rows; dr++) {
-          const col = Math.floor(p.x / CELL) + dc;
-          const row = Math.floor(p.y / CELL) + dr;
+          const col = Math.floor(px / CELL) + dc;
+          const row = Math.floor(py / CELL) + dr;
           if (col >= COLS || row >= ROWS) continue;
           const key = cellKey(col, row);
           if (!this.objects.has(key)) {
@@ -841,8 +857,9 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // spikes
     (level.spikes || []).forEach(s => {
-      const col = Math.floor(s.x / CELL);
-      const row = Math.floor((s.y - CELL) / CELL);  // origin bas → remonter
+      const sx = s.x / GAME_SCALE, sy = s.y / GAME_SCALE;
+      const col = Math.floor(sx / CELL);
+      const row = Math.floor((sy - CELL) / CELL);  // origin bas → remonter
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
       const key = cellKey(col, row);
       const props = { orientation: s.orientation || "up" };
@@ -853,8 +870,9 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // redCircles
     (level.redCircles || []).forEach(c => {
-      const col = Math.floor(c.x / CELL);
-      const row = Math.floor(c.y / CELL);
+      const cx = c.x / GAME_SCALE, cy = c.y / GAME_SCALE;
+      const col = Math.floor(cx / CELL);
+      const row = Math.floor(cy / CELL);
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
       const key = cellKey(col, row);
       const props = { rise: c.rise || 100, direction: c.direction || "up" };
@@ -865,8 +883,9 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // redSquares
     (level.redSquares || []).forEach(r => {
-      const col = Math.floor(r.x / CELL);
-      const row = Math.floor(r.y / CELL);
+      const rx = r.x / GAME_SCALE, ry = r.y / GAME_SCALE;
+      const col = Math.floor(rx / CELL);
+      const row = Math.floor(ry / CELL);
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
       const key = cellKey(col, row);
       const props = { rise: r.rise || 100, direction: r.direction || "right" };
