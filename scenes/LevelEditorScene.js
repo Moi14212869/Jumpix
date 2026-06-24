@@ -424,10 +424,20 @@ export class LevelEditorScene extends Phaser.Scene {
 
     if (type === "spike") {
       label("Orientation :", "#cccccc");
+      // Disposition en grille 2x2 fixe, sans superposition :
+      //   ▲ up      ▽ down
+      //   ◁ left    ▷ right
+      const positions = {
+        up:    { dx: -32, dy: 0  },
+        down:  { dx:  32, dy: 0  },
+        left:  { dx: -32, dy: 24 },
+        right: { dx:  32, dy: 24 },
+      };
       ["up","down","left","right"].forEach(ori => {
         const active = (props.orientation || "up") === ori;
         const icon   = { up:"▲", down:"▽", left:"◁", right:"▷" }[ori];
-        const btn = this.add.text(px + (["up","right"].includes(ori) ? 20 : -20), py,
+        const { dx, dy } = positions[ori];
+        const btn = this.add.text(px + dx, py + dy,
           `${icon} ${ori}`, {
             fontSize: "12px",
             color: active ? "#00FF99" : "#ffffff",
@@ -441,9 +451,8 @@ export class LevelEditorScene extends Phaser.Scene {
           this._saveToStorage();
         });
         this.propLabels.push(btn);
-        if (ori === "up" || ori === "left") py += 22;
       });
-      py += 8;
+      py += 48; // hauteur des 2 lignes de boutons
     }
 
     if (type === "redCircle" || type === "redSquare") {
