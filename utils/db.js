@@ -9,7 +9,7 @@
 import { db, getCurrentUser } from "./firebase.js";
 import {
   doc, getDoc, setDoc, updateDoc,
-  collection, getDocs, query, orderBy, limit
+  collection, getDocs, query, orderBy, limit, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export const DEFAULTS = {
@@ -39,16 +39,33 @@ export function isLoggedIn() {
   return getCurrentUser() !== null;
 }
 
+// ── Vérifie si un pseudo est déjà pris ────────────────────
+// Retourne true si un autre joueur utilise déjà ce pseudo.
+// La comparaison est insensible à la casse pour éviter "Mario" / "mario".
+export async function isPseudoTaken(pseudo) {
+  const normalized = pseudo.trim().toLowerCase();
+  const q = query(
+    collection(db, "players"),
+    where("pseudoLower", "==", normalized),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  // Exclure le joueur actuel (cas du changement de pseudo)
+  const currentUid = getCurrentUser()?.uid;
+  return snap.docs.some(d => d.id !== currentUid);
+}
+
 // ── Pseudonyme affiché ────────────────────────────────────
 export function getPseudo() {
   const user = getCurrentUser();
-  return user?.displayName || null;
+  if (!user) return null;
+  // Compte email : utiliser le displayName Firebase
+  if (!user.isAnonymous) return user.displayName || null;
+  // Compte anonyme : le pseudo est stocké dans localStorage
+  return localStorage.getItem("jumpix_pseudo") || null;
 }
 
 // ── Charger la progression depuis Firestore ───────────────
-// Retourne les données du joueur, ou les DEFAULTS si invité.
-// CORRECTION : le document initial inclut le pseudo Auth pour
-// que le pseudo Auth soit disponible immédiatement.
 export async function loadPlayerData() {
   const ref = playerRef();
   if (!ref) return { ...DEFAULTS }; // invité → défauts en mémoire
@@ -58,7 +75,8 @@ export async function loadPlayerData() {
     const user = getCurrentUser();
     const initialData = {
       ...DEFAULTS,
-      pseudo: user?.displayName || "" // ← préserve le pseudo Auth dès la création
+      pseudo: user?.displayName || "",
+      pseudoLower: (user?.displayName || "").toLowerCase()
     };
     await setDoc(ref, initialData);
     return { ...initialData };
@@ -82,7 +100,7 @@ export const save = {
   kill:          v      => saveFields({ kill: v }),
   party:         v      => saveFields({ party: v }),
   color:         v      => saveFields({ colorPlayer: v }),
-  pseudo:        v      => saveFields({ pseudo: v }),
+  pseudo:        v      => saveFields({ pseudo: v, pseudoLower: v.trim().toLowerCase() }),
   skin:   (key, v)      => saveFields({ [`skins.${key}`]: v }),
   level:     (key)       => saveFields({ [`completedLevels.${key}`]: true }),
   bestTime:  (key, ms)   => saveFields({ [`bestTimes.${key}`]: ms }),
@@ -94,9 +112,7 @@ export function skinOwned(playerData, key) {
   return !!(playerData.skins && playerData.skins[key]);
 }
 
-// ── Ghost run (meilleure trajectoire) ────────────────────
-// Structure Firestore : players/{uid}/ghostRuns/{levelKey}
-//   { timeMs, frames: [{x, y, angle}] }
+
 
 export async function saveGhostRun(levelKey, timeMs, frames) {
   const user = getCurrentUser();
@@ -179,9 +195,6 @@ export async function updateLeaderboardColor(colorPlayer) {
 }
 
 // ── Stats publiques d'un joueur (vue depuis le leaderboard) ──
-// Lit directement players/{uid}. Nécessite que les règles Firestore
-// autorisent la lecture de ce document par d'autres utilisateurs
-// connectés (voir note de sécurité fournie séparément).
 export async function loadPublicPlayerStats(uid) {
   const ref  = doc(db, "players", uid);
   const snap = await getDoc(ref);
