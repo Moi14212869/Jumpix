@@ -5,7 +5,7 @@ import {
   gameVolume, dead, kill, party,
   setPlayerCoins, playerCoins
 } from "../globals.js";
-import { save } from "./db.js";
+import { save, isLoggedIn } from "./db.js";
 
 // ── Hash (mot de passe dev) ───────────────────────────────
 export async function hashText(text) {
@@ -24,6 +24,8 @@ export async function checkObjectives(playerData) {
   if ((d.dead  ?? dead)  >= 1000) await save.skin("000000", true);
   if ((d.kill  ?? kill)  >=  500) await save.skin("FF0000", true);
   if ((d.party ?? party) >= 1000) await save.skin("A0522D", true);
+  // Skin gris fer : débloqué dès qu'on a un compte (email ou anonyme Firebase)
+  if (isLoggedIn()) await save.skin("7E7D82", true);
 }
 
 // ── Coins (mode dev) ──────────────────────────────────────
