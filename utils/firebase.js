@@ -1,15 +1,15 @@
 // =========================================================
 //               FIREBASE — CONFIG & INIT
 // =========================================================
-// Remplacez les valeurs ci-dessous par celles de votre
-// projet Firebase (Console → Project settings → Your apps)
-// =========================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInAnonymously,
+  linkWithCredential,
+  EmailAuthProvider,
   signOut,
   onAuthStateChanged,
   updateProfile
@@ -59,6 +59,32 @@ export async function registerWithEmail(email, password, pseudo) {
 export async function loginWithEmail(email, password) {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
+}
+
+// ── Connexion anonyme (invité avec uid Firebase) ──────────
+// Crée un compte anonyme Firebase qui permet de sauvegarder
+// la progression même sans email. Peut être lié à un email plus tard.
+export async function signInAsGuest() {
+  const cred = await signInAnonymously(auth);
+  return cred.user;
+}
+
+// ── Indique si l'utilisateur connecté est anonyme ─────────
+export function isAnonymousUser() {
+  return auth.currentUser?.isAnonymous ?? false;
+}
+
+// ── Lier un compte anonyme à un email/mot de passe ────────
+// Convertit le compte anonyme en compte permanent sans perte de données.
+// Retourne l'utilisateur lié (son uid reste le même).
+export async function linkGuestToEmail(email, password, pseudo) {
+  const user = auth.currentUser;
+  if (!user || !user.isAnonymous) throw new Error("no-anonymous-user");
+
+  const credential = EmailAuthProvider.credential(email, password);
+  const result = await linkWithCredential(user, credential);
+  await updateProfile(result.user, { displayName: pseudo });
+  return result.user;
 }
 
 // ── Déconnexion ───────────────────────────────────────────
