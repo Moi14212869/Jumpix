@@ -7,8 +7,8 @@
 // =========================================================
 
 import { gameVolume, applyPlayerData } from "../globals.js";
-import { waitForAuthReady, signInAsGuest, loginWithEmail, firebaseErrorMessageEN } from "../utils/firebase.js";
-import { loadPlayerData, save, isPseudoTaken } from "../utils/db.js";
+import { waitForAuthReady, signInAsGuest, loginWithEmail, firebaseErrorMessageEN, getStoredGuestUid } from "../utils/firebase.js";
+import { loadPlayerData, save, isPseudoTaken, migrateGuestData } from "../utils/db.js";
 
 export class LoadingScene extends Phaser.Scene {
   constructor() { super("LoadingScene"); }
@@ -68,10 +68,27 @@ export class LoadingScene extends Phaser.Scene {
         this.scene.start("MenuScene");
       } else {
         // Aucune session : vérifier si un pseudo local existe déjà
-        const savedPseudo = localStorage.getItem("jumpix_pseudo");
+        const savedPseudo  = localStorage.getItem("jumpix_pseudo");
+        const oldGuestUid  = getStoredGuestUid();
+
         if (savedPseudo) {
-          // Pseudo connu mais session expirée → recréer un compte anonyme
-          await signInAsGuest();
+          // Pseudo connu mais session expirée/perdue (ex : déconnexion
+          // après avoir utilisé un autre compte email) → recréer un
+          // compte anonyme. Firebase nous donne forcément un NOUVEL uid
+          // ici, donc on migre les anciennes données invité (si on en a
+          // la trace) vers ce nouveau compte avant de continuer.
+          const newUser = await signInAsGuest();
+
+          if (oldGuestUid && oldGuestUid !== newUser.uid) {
+            try {
+              await migrateGuestData(oldGuestUid, newUser.uid);
+            } catch (migrationErr) {
+              // Si la migration échoue (ex : règles Firestore), on continue
+              // quand même avec un profil neuf plutôt que de bloquer le jeu.
+              console.warn("Guest data migration failed:", migrationErr);
+            }
+          }
+
           // Charger/créer le document joueur AVANT d'écrire le pseudo
           // (save.pseudo utilise updateDoc, qui échoue si le doc n'existe pas).
           const data = await loadPlayerData();
