@@ -64,9 +64,18 @@ export async function loginWithEmail(email, password) {
 // ── Connexion anonyme (invité avec uid Firebase) ──────────
 // Crée un compte anonyme Firebase qui permet de sauvegarder
 // la progression même sans email. Peut être lié à un email plus tard.
+// On garde toujours une trace de l'uid invité en localStorage : c'est
+// ce qui permet de retrouver/migrer sa progression après une déconnexion
+// (voir logout() plus bas et migrateGuestData() dans db.js).
 export async function signInAsGuest() {
   const cred = await signInAnonymously(auth);
+  localStorage.setItem("jumpix_guest_uid", cred.user.uid);
   return cred.user;
+}
+
+// ── Récupère l'uid du dernier compte invité connu (ou null) ──
+export function getStoredGuestUid() {
+  return localStorage.getItem("jumpix_guest_uid") || null;
 }
 
 // ── Indique si l'utilisateur connecté est anonyme ─────────
@@ -88,6 +97,9 @@ export async function linkGuestToEmail(email, password, pseudo) {
 }
 
 // ── Déconnexion ───────────────────────────────────────────
+// Note : on NE supprime PAS jumpix_guest_uid ici. Il sert de point de
+// repère pour retrouver/migrer la progression invité au prochain
+// démarrage (voir LoadingScene.create()).
 export async function logout() {
   await signOut(auth);
 }
