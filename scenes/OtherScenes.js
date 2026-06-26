@@ -761,6 +761,10 @@ export class SettingsScene extends Phaser.Scene {
         await linkGuestToEmail(email, pwValue, pseudo);
         localStorage.setItem("jumpix_pseudo", pseudo);
         await save.pseudo(pseudo);
+        // Met à jour les entrées de classement existantes : tant que le
+        // compte était anonyme, elles avaient pu être enregistrées avec
+        // "Anonyme" comme pseudo (cf. saveLeaderboard avant correctif).
+        await updateLeaderboardPseudo(pseudo);
         const data = await loadPlayerData();
         applyPlayerData(data);
         destroy();
