@@ -72,8 +72,11 @@ export class LoadingScene extends Phaser.Scene {
         if (savedPseudo) {
           // Pseudo connu mais session expirée → recréer un compte anonyme
           await signInAsGuest();
-          await save.pseudo(savedPseudo);
+          // Charger/créer le document joueur AVANT d'écrire le pseudo
+          // (save.pseudo utilise updateDoc, qui échoue si le doc n'existe pas).
           const data = await loadPlayerData();
+          await save.pseudo(savedPseudo);
+          data.pseudo = savedPseudo;
           applyPlayerData(data);
           this.scene.start("MenuScene");
         } else {
@@ -230,11 +233,18 @@ export class LoadingScene extends Phaser.Scene {
           return;
         }
 
+        // The player document doesn't exist yet for a brand-new anonymous
+        // account — loadPlayerData() creates it (via setDoc) on first read.
+        // save.pseudo() uses updateDoc(), which fails if the doc doesn't
+        // exist yet, so we must load/create the doc FIRST, then save the
+        // username into it.
+        const data = await loadPlayerData();
+
         // Store the username in localStorage AND in Firestore
         localStorage.setItem("jumpix_pseudo", pseudo);
         await save.pseudo(pseudo);
+        data.pseudo = pseudo;
 
-        const data = await loadPlayerData();
         applyPlayerData(data);
         this.scene.start("MenuScene");
       } catch (err) {
