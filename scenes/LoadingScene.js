@@ -8,7 +8,7 @@
 
 import { gameVolume, applyPlayerData } from "../globals.js";
 import { waitForAuthReady, signInAsGuest, loginWithEmail, firebaseErrorMessageEN, getStoredGuestUid } from "../utils/firebase.js";
-import { loadPlayerData, save, isPseudoTaken, migrateGuestData } from "../utils/db.js";
+import { loadPlayerData, save, isPseudoTaken, migrateGuestData, updateLeaderboardPseudo } from "../utils/db.js";
 
 export class LoadingScene extends Phaser.Scene {
   constructor() { super("LoadingScene"); }
@@ -65,6 +65,21 @@ export class LoadingScene extends Phaser.Scene {
         // Utilisateur déjà connecté (email ou anonyme) → charger directement
         const data = await loadPlayerData();
         applyPlayerData(data);
+
+        // Correctif ponctuel : avant ce correctif, saveLeaderboard()
+        // enregistrait "Anonyme" comme pseudo pour les comptes invités
+        // (Firebase ne leur donne jamais de displayName). On répare les
+        // anciennes entrées une seule fois par appareil, sans bloquer le
+        // démarrage du jeu si ça échoue.
+        if (user.isAnonymous && !localStorage.getItem("jumpix_leaderboard_pseudo_fixed")) {
+          const pseudo = data.pseudo || localStorage.getItem("jumpix_pseudo");
+          if (pseudo) {
+            updateLeaderboardPseudo(pseudo)
+              .then(() => localStorage.setItem("jumpix_leaderboard_pseudo_fixed", "1"))
+              .catch(err => console.warn("Leaderboard pseudo fixup failed:", err));
+          }
+        }
+
         this.scene.start("MenuScene");
       } else {
         // Aucune session : vérifier si un pseudo local existe déjà
