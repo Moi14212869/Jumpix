@@ -91,6 +91,29 @@ export async function saveFields(fields) {
   await updateDoc(ref, fields);
 }
 
+// ── Migration des données d'un ancien compte invité ──────
+// Quand un joueur invité se connecte à un autre compte email puis se
+// déconnecte, Firebase ne peut pas "rouvrir" son ancien uid anonyme :
+// signInAnonymously() en créerait un tout nouveau, vide. Pour éviter de
+// perdre sa progression, on copie les données de l'ANCIEN uid invité
+// (stocké côté localStorage) vers le NOUVEAU uid invité, une seule fois.
+// Retourne true si une migration a eu lieu.
+export async function migrateGuestData(oldUid, newUid) {
+  if (!oldUid || oldUid === newUid) return false;
+
+  const oldRef = doc(db, "players", oldUid);
+  const oldSnap = await getDoc(oldRef);
+  if (!oldSnap.exists()) return false; // rien à migrer
+
+  const newRef = doc(db, "players", newUid);
+  const newSnap = await getDoc(newRef);
+  // Ne pas écraser des données déjà présentes sur le nouveau compte
+  if (newSnap.exists()) return false;
+
+  await setDoc(newRef, oldSnap.data());
+  return true;
+}
+
 // ── Raccourcis ────────────────────────────────────────────
 export const save = {
   volume:        v      => saveFields({ gameVolume: v }),
@@ -153,8 +176,12 @@ export async function saveLeaderboard(levelKey, timeMs) {
 
   // N'écrire que si c'est un nouveau record (ou première entrée)
   if (!snap.exists() || snap.data().timeMs > timeMs) {
+    // user.displayName n'existe que pour les comptes email : un compte
+    // anonyme Firebase n'a jamais de displayName. getPseudo() gère les
+    // deux cas correctement (displayName pour email, localStorage pour
+    // les invités), donc on s'en sert au lieu de lire user.displayName.
     await setDoc(entryRef, {
-      pseudo:      user.displayName || "Anonyme",
+      pseudo:      getPseudo() || "Anonyme",
       colorPlayer: (await getDoc(playerRef()))?.data()?.colorPlayer ?? 0xAA66CC,
       timeMs
     });
@@ -190,6 +217,23 @@ export async function updateLeaderboardColor(colorPlayer) {
     const snap     = await getDoc(entryRef);
     if (snap.exists()) {
       await updateDoc(entryRef, { colorPlayer });
+    }
+  }));
+}
+
+// ── Met à jour le pseudo dans toutes les entrées classement existantes ──
+// Utile quand un joueur anonyme dont les entrées disaient "Anonyme" (avant
+// correctif) ou un joueur ayant changé de pseudo veut voir ses anciennes
+// entrées de classement se mettre à jour sans attendre un nouveau record.
+export async function updateLeaderboardPseudo(pseudo) {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  await Promise.all(ALL_LEVELS.map(async levelKey => {
+    const entryRef = doc(db, "leaderboards", levelKey, "entries", user.uid);
+    const snap     = await getDoc(entryRef);
+    if (snap.exists()) {
+      await updateDoc(entryRef, { pseudo });
     }
   }));
 }
