@@ -106,3 +106,18 @@ export function firebaseErrorMessage(code) {
   };
   return messages[code] || "Une erreur est survenue. Réessayez.";
 }
+
+// ── English version, used by LoadingScene's login popup ──
+export function firebaseErrorMessageEN(code) {
+  const messages = {
+    "auth/email-already-in-use":   "This email address is already in use.",
+    "auth/invalid-email":          "Invalid email address.",
+    "auth/weak-password":          "Password too weak (6 characters min.).",
+    "auth/user-not-found":         "No account found with this email.",
+    "auth/wrong-password":         "Incorrect password.",
+    "auth/invalid-credential":     "Incorrect email or password.",
+    "auth/too-many-requests":      "Too many attempts. Please try again later.",
+    "auth/network-request-failed": "Network error. Please check your connection.",
+  };
+  return messages[code] || "An error occurred. Please try again.";
+}
