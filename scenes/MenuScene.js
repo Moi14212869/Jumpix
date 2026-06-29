@@ -19,7 +19,7 @@ export class MenuScene extends Phaser.Scene {
       { label: "🏆 Objectives", scene: "ObjectivesScene" },
       { label: "Statistics",    scene: "Stats"        },
       { label: "🛠 Level Editor", scene: "LevelEditorScene" },
-      { label: "⚔ Duel local", scene: "MinigameScene" },
+      { label: "⚔ Local Duel", scene: "MinigameScene" },
     ];
     let startY = 185;
     buttons.forEach((btn, i) => {
