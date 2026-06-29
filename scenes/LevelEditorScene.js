@@ -20,15 +20,15 @@ const GRID_PX_H  = ROWS * CELL; // 300 → hauteur de la grille affichée
 const GRID_TOP   = 600 - GRID_PX_H; // offset Y pour ancrer la grille en bas de la zone de jeu
 
 const TOOLS = [
-  { id: "platform",    label: "Plateforme",    color: 0xA0522D, icon: "▬" },
-  { id: "ice",         label: "Glace",         color: 0x9EE7FF, icon: "🧊" },
-  { id: "spike",       label: "Pique",         color: 0xFF0000, icon: "▲" },
-  { id: "redCircle",   label: "Balle",         color: 0xFF4444, icon: "●" },
-  { id: "redSquare",   label: "Carré ennemi",  color: 0xFF2222, icon: "■" },
-  { id: "snowstorm",   label: "Tempête neige", color: 0x9EE7FF, icon: "❄" },
-  { id: "player",      label: "Départ joueur", color: 0xAA66CC, icon: "P" },
-  { id: "exit",        label: "Sortie",        color: 0x0000FF, icon: "O" },
-  { id: "eraser",      label: "Gomme",         color: 0x888888, icon: "✕" },
+  { id: "platform",    label: "Platform",    color: 0xA0522D, icon: "▬" },
+  { id: "ice",         label: "Ice",         color: 0x9EE7FF, icon: "🧊" },
+  { id: "spike",       label: "Spike",         color: 0xFF0000, icon: "▲" },
+  { id: "redCircle",   label: "Ball",         color: 0xFF4444, icon: "●" },
+  { id: "redSquare",   label: "Enemy square",  color: 0xFF2222, icon: "■" },
+  { id: "snowstorm",   label: "Snowstorm", color: 0x9EE7FF, icon: "❄" },
+  { id: "player",      label: "Player start", color: 0xAA66CC, icon: "P" },
+  { id: "exit",        label: "Exit",        color: 0x0000FF, icon: "O" },
+  { id: "eraser",      label: "Eraser",         color: 0x888888, icon: "✕" },
 ];
 
 // Options par défaut pour chaque type
@@ -110,7 +110,7 @@ export class LevelEditorScene extends Phaser.Scene {
     const px = GRID_W + 10;
     let  py  = 40;
 
-    this.add.text(GRID_W + PANEL / 2, py, "OBJETS", {
+    this.add.text(GRID_W + PANEL / 2, py, "OBJECTS", {
       fontSize: "18px", color: "#00BFFF", fontStyle: "bold"
     }).setOrigin(0.5);
     py += 30;
@@ -149,14 +149,14 @@ export class LevelEditorScene extends Phaser.Scene {
     this.add.graphics().lineStyle(1, 0x00BFFF, 0.4).lineBetween(GRID_W + 8, 520, 798, 520);
 
     // JSON Export
-    const exportBtn = this.add.text(GRID_W + PANEL / 2, 540, "💾 Télécharger JSON", {
+    const exportBtn = this.add.text(GRID_W + PANEL / 2, 540, "💾 Download JSON", {
       fontSize: "13px", color: "#ffffff",
       backgroundColor: "#007700", padding: { x: 8, y: 6 }
     }).setOrigin(0.5).setInteractive();
     exportBtn.on("pointerdown", () => this._exportJSON());
 
     // Jouer le niveau
-    const playBtn = this.add.text(GRID_W + PANEL / 2, 572, "▶ Jouer", {
+    const playBtn = this.add.text(GRID_W + PANEL / 2, 572, "▶ Play", {
       fontSize: "13px", color: "#ffffff",
       backgroundColor: "#005599", padding: { x: 8, y: 6 }
     }).setOrigin(0.5).setInteractive();
@@ -175,19 +175,19 @@ export class LevelEditorScene extends Phaser.Scene {
       this.scene.start("MenuScene");
     });
 
-    this.add.text(GRID_W / 2, 10, "ÉDITEUR DE NIVEAU", {
+    this.add.text(GRID_W / 2, 10, "LEVEL EDITOR", {
       fontSize: "18px", color: "#00BFFF", fontStyle: "bold"
     }).setOrigin(0.5, 0);
 
     // Bouton Import JSON via DOM
-    const importBtn = this.add.text(GRID_W - 5, 5, "📂 Importer JSON", {
+    const importBtn = this.add.text(GRID_W - 5, 5, "📂 Import JSON", {
       fontSize: "13px", color: "#ffffff",
       backgroundColor: "#555500", padding: { x: 6, y: 4 }
     }).setOrigin(1, 0).setInteractive();
     importBtn.on("pointerdown", () => this._openImportDialog());
 
     // Bouton Clear
-    const clearBtn = this.add.text(GRID_W - 5, 32, "🗑 Effacer tout", {
+    const clearBtn = this.add.text(GRID_W - 5, 32, "🗑 Clear all", {
       fontSize: "13px", color: "#ffffff",
       backgroundColor: "#660000", padding: { x: 6, y: 4 }
     }).setOrigin(1, 0).setInteractive();
@@ -432,9 +432,9 @@ export class LevelEditorScene extends Phaser.Scene {
     };
 
     if (!key || !this.objects.has(key)) {
-      label("── Propriétés ──", "#556677");
-      label("Cliquez un objet", "#556677");
-      label("pour l'éditer.", "#556677");
+      label("── Properties ──", "#556677");
+      label("Click an object", "#556677");
+      label("to edit it.", "#556677");
       return;
     }
 
@@ -444,7 +444,7 @@ export class LevelEditorScene extends Phaser.Scene {
     label(`── ${TOOLS.find(t => t.id === type)?.label || type} ──`, "#00BFFF");
 
     if (type === "spike") {
-      label("Orientation :", "#cccccc");
+      label("Orientation:", "#cccccc");
       // Disposition en grille 2x2 fixe, sans superposition :
       //   ▲ up      ▽ down
       //   ◁ left    ▷ right
@@ -477,7 +477,7 @@ export class LevelEditorScene extends Phaser.Scene {
     }
 
     if (type === "redCircle" || type === "redSquare") {
-      label("Distance (px) :", "#cccccc");
+      label("Distance (px):", "#cccccc");
 
       const riseBtn = (delta) => {
         const b = this.add.text(px + (delta > 0 ? 30 : -30), py, delta > 0 ? "+" : "−", {
@@ -499,7 +499,7 @@ export class LevelEditorScene extends Phaser.Scene {
       this.propLabels.push(riseVal);
       py += 26;
 
-      label("Direction :", "#cccccc");
+      label("Direction:", "#cccccc");
       const dirs = type === "redCircle" ? ["up","down"] : ["right","left"];
       dirs.forEach(dir => {
         const active = (props.direction || dirs[0]) === dir;
@@ -522,7 +522,7 @@ export class LevelEditorScene extends Phaser.Scene {
     }
 
     if (type === "snowstorm") {
-      label("Hauteur (cellules) :", "#cccccc");
+      label("Height (cells):", "#cccccc");
 
       const minH = CELL;      // 1 cellule
       const maxH = CELL * 10; // 10 cellules max
@@ -551,13 +551,13 @@ export class LevelEditorScene extends Phaser.Scene {
     }
 
     if (type === "platform") {
-      label("Couleur :", "#cccccc");
+      label("Color:", "#cccccc");
       const colors = [
-        { hex: "0xA0522D", name: "Marron" },
-        { hex: "0x226546", name: "Vert" },
-        { hex: "0x555555", name: "Gris" },
-        { hex: "0x7A0000", name: "Rouge" },
-        { hex: "0x0B228A", name: "Bleu" },
+        { hex: "0xA0522D", name: "Brown" },
+        { hex: "0x226546", name: "Green" },
+        { hex: "0x555555", name: "Grey" },
+        { hex: "0x7A0000", name: "Red" },
+        { hex: "0x0B228A", name: "Blue" },
       ];
       colors.forEach((c, i) => {
         const xOff = (i - 2) * 34;
@@ -577,7 +577,7 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // Bouton supprimer
     py += 4;
-    const del = this.add.text(px, py, "🗑 Supprimer", {
+    const del = this.add.text(px, py, "🗑 Delete", {
       fontSize: "12px", color: "#ffffff",
       backgroundColor: "#660000", padding: { x: 8, y: 4 }
     }).setOrigin(0.5).setInteractive();
@@ -749,7 +749,7 @@ export class LevelEditorScene extends Phaser.Scene {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    this._toast("✅ JSON téléchargé !", "#00FF99");
+    this._toast("✅ JSON downloaded!", "#00FF99");
   }
 
   // ── Jouer le niveau ───────────────────────────────────
@@ -757,11 +757,11 @@ export class LevelEditorScene extends Phaser.Scene {
     const level = this._buildLevelJSON();
 
     if (!this.playerPos) {
-      this._toast("⚠ Placez d'abord le départ (P) !", "#FF4444");
+      this._toast("⚠ Place the start point (P) first!", "#FF4444");
       return;
     }
     if (!this.exitPos) {
-      this._toast("⚠ Placez d'abord la sortie (O) !", "#FF4444");
+      this._toast("⚠ Place the exit (O) first!", "#FF4444");
       return;
     }
 
@@ -796,7 +796,7 @@ export class LevelEditorScene extends Phaser.Scene {
           this._clearAll();
           this._importLevel(parsed);
           this._saveToStorage();
-          this._toast("✅ Niveau importé !", "#00FF99");
+          this._toast("✅ Level imported!", "#00FF99");
         } catch (e) {
           this._toast("❌ JSON invalide : " + e.message, "#FF4444");
         }
