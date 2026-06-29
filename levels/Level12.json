@@ -400,8 +400,8 @@
   "redCircles": [
     {
       "x": 620,
-      "y": 180,
-      "rise": 80,
+      "y": 170,
+      "rise": 100,
       "direction": "down"
     },
     {
