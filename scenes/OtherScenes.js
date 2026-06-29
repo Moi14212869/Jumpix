@@ -58,7 +58,7 @@ export class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // ── Onglets ─────────────────────────────────────────────
-    const TABS = ["Général", "Gameplay", "Crédits"];
+    const TABS = ["General", "Gameplay", "Credits"];
     this._activeTab = 0;
     this._tabContainer = null;
 
@@ -182,7 +182,7 @@ export class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive();
 
     const updateKeyboardBtn = () =>
-      keyboardBtn.setText(`Clavier : ${keyboardLayout.toUpperCase()}`);
+      keyboardBtn.setText(`Keyboard: ${keyboardLayout.toUpperCase()}`);
     updateKeyboardBtn();
 
     keyboardBtn.on("pointerover",  () => keyboardBtn.setStyle({ backgroundColor: "#00FFFF", color: "#000000" }));
@@ -207,12 +207,12 @@ export class SettingsScene extends Phaser.Scene {
     let tutoHidden = localStorage.getItem(LS_TUTO) === "true";
 
     // Titre de section
-    const sectionLabel = this.add.text(width / 2, startY, "Tutoriels", {
+    const sectionLabel = this.add.text(width / 2, startY, "Tutorials", {
       fontSize: "20px", color: "#aaaaaa"
     }).setOrigin(0.5);
 
     // Ligne descriptive
-    const desc = this.add.text(width / 2, startY + 36, "Double saut (Level 1)", {
+    const desc = this.add.text(width / 2, startY + 36, "Double jump (Level 1)", {
       fontSize: "16px", color: "#888888"
     }).setOrigin(0.5);
 
@@ -223,7 +223,7 @@ export class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive();
 
     const updateTutoBtn = () => {
-      tutoBtn.setText(tutoHidden ? "Activer" : "Désactiver");
+      tutoBtn.setText(tutoHidden ? "Enable" : "Disable");
       tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#226622" : "#882222" });
     };
     updateTutoBtn();
@@ -244,12 +244,12 @@ export class SettingsScene extends Phaser.Scene {
     const { width } = this.scale;
     const startY = 150;
 
-    const sectionLabel = this.add.text(width / 2, startY, "À propos", {
+    const sectionLabel = this.add.text(width / 2, startY, "About", {
       fontSize: "20px", color: "#aaaaaa"
     }).setOrigin(0.5);
 
     // Bouton "Voir les crédits"
-    const creditsBtn = this.add.text(width / 2, startY + 50, "🎬 Voir les crédits", {
+    const creditsBtn = this.add.text(width / 2, startY + 50, "🎬 View credits", {
       fontSize: "20px", color: "#ffffff",
       backgroundColor: "#00BFFF", padding: { x: 20, y: 10 }
     }).setOrigin(0.5).setInteractive();
@@ -262,7 +262,7 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     // Bouton lien vers le site du studio
-    const siteBtn = this.add.text(width / 2, startY + 110, "🌐 Site du studio", {
+    const siteBtn = this.add.text(width / 2, startY + 110, "🌐 Studio website", {
       fontSize: "20px", color: "#ffffff",
       backgroundColor: "#006633", padding: { x: 20, y: 10 }
     }).setOrigin(0.5).setInteractive();
@@ -288,9 +288,9 @@ export class SettingsScene extends Phaser.Scene {
 
     if (user && !user.isAnonymous) {
       // ── Vue connecté (compte email) ──────────────────────
-      const pseudo = getPseudo() || "Joueur";
+      const pseudo = getPseudo() || "Player";
 
-      const connectedLabel = this.add.text(width / 2, 255, "✅ Connecté en tant que", {
+      const connectedLabel = this.add.text(width / 2, 255, "✅ Logged in as", {
         fontSize: "18px", color: "#aaaaaa"
       }).setOrigin(0.5);
 
@@ -298,11 +298,11 @@ export class SettingsScene extends Phaser.Scene {
         fontSize: "28px", color: "#00FF99", fontStyle: "bold"
       }).setOrigin(0.5);
 
-      const infoLabel = this.add.text(width / 2, 318, "Votre progression est sauvegardée 🌐", {
+      const infoLabel = this.add.text(width / 2, 318, "Your progress is saved 🌐", {
         fontSize: "16px", color: "#88ff88"
       }).setOrigin(0.5);
 
-      const logoutBtn = this.add.text(width / 2, 365, "SE DÉCONNECTER", {
+      const logoutBtn = this.add.text(width / 2, 365, "LOG OUT", {
         fontSize: "20px", color: "#ffffff",
         backgroundColor: "#AA4400", padding: { x: 20, y: 10 }
       }).setOrigin(0.5).setInteractive();
@@ -320,21 +320,21 @@ export class SettingsScene extends Phaser.Scene {
 
     } else if (user && user.isAnonymous) {
       // ── Vue compte anonyme (pseudo localStorage) ─────────
-      const pseudo = getPseudo() || "Joueur";
+      const pseudo = getPseudo() || "Player";
 
-      const anonLabel = this.add.text(width / 2, 248, `👤 Joueur : ${pseudo}`, {
+      const anonLabel = this.add.text(width / 2, 248, `👤 Player: ${pseudo}`, {
         fontSize: "22px", color: "#00CCFF", fontStyle: "bold"
       }).setOrigin(0.5);
 
-      const infoLabel = this.add.text(width / 2, 280, "Progression sauvegardée sur cet appareil 💾", {
+      const infoLabel = this.add.text(width / 2, 280, "Progress saved on this device 💾", {
         fontSize: "15px", color: "#aaaaaa"
       }).setOrigin(0.5);
 
-      const hint = this.add.text(width / 2, 308, "Crée un compte pour jouer sur plusieurs appareils.", {
+      const hint = this.add.text(width / 2, 308, "Create an account to play on multiple devices.", {
         fontSize: "14px", color: "#666666"
       }).setOrigin(0.5);
 
-      const linkBtn = this.add.text(width / 2 - 110, 355, "CRÉER UN COMPTE", {
+      const linkBtn = this.add.text(width / 2 - 110, 355, "CREATE ACCOUNT", {
         fontSize: "18px", color: "#ffffff",
         backgroundColor: "#006633", padding: { x: 14, y: 10 }
       }).setOrigin(0.5).setInteractive();
@@ -345,7 +345,7 @@ export class SettingsScene extends Phaser.Scene {
         this._showLinkAccountPopup();
       });
 
-      const loginBtn = this.add.text(width / 2 + 110, 355, "SE CONNECTER", {
+      const loginBtn = this.add.text(width / 2 + 110, 355, "LOG IN", {
         fontSize: "18px", color: "#ffffff",
         backgroundColor: "#007ACC", padding: { x: 14, y: 10 }
       }).setOrigin(0.5).setInteractive();
@@ -360,11 +360,11 @@ export class SettingsScene extends Phaser.Scene {
 
     } else {
       // ── Vue invité pur (fallback) ─────────────────────────
-      const guestLabel = this.add.text(width / 2, 250, "Mode invité — progression non sauvegardée", {
+      const guestLabel = this.add.text(width / 2, 250, "Guest mode — progress not saved", {
         fontSize: "16px", color: "#ffaa44"
       }).setOrigin(0.5);
 
-      const loginBtn = this.add.text(width / 2 - 110, 295, "SE CONNECTER", {
+      const loginBtn = this.add.text(width / 2 - 110, 295, "LOG IN", {
         fontSize: "20px", color: "#ffffff",
         backgroundColor: "#007ACC", padding: { x: 16, y: 10 }
       }).setOrigin(0.5).setInteractive();
@@ -375,7 +375,7 @@ export class SettingsScene extends Phaser.Scene {
         this._showLoginPopup();
       });
 
-      const registerBtn = this.add.text(width / 2 + 110, 295, "S'INSCRIRE", {
+      const registerBtn = this.add.text(width / 2 + 110, 295, "SIGN UP", {
         fontSize: "20px", color: "#ffffff",
         backgroundColor: "#006633", padding: { x: 16, y: 10 }
       }).setOrigin(0.5).setInteractive();
@@ -386,7 +386,7 @@ export class SettingsScene extends Phaser.Scene {
         this._showRegisterPopup();
       });
 
-      const hint = this.add.text(width / 2, 350, "Créez un compte pour sauvegarder votre progression\net y accéder depuis n'importe quel appareil.", {
+      const hint = this.add.text(width / 2, 350, "Create an account to save your progress\nand access it from any device.", {
         fontSize: "15px", color: "#888888", align: "center"
       }).setOrigin(0.5);
 
@@ -403,7 +403,7 @@ export class SettingsScene extends Phaser.Scene {
 
     const overlay = this.add.rectangle(cx, cy, width, height, 0x000000, 0.75);
     const box     = this.add.rectangle(cx, cy, 460, 340, 0x1a1a2e).setStrokeStyle(2, 0x007ACC);
-    const title   = this.add.text(cx, cy - 140, "SE CONNECTER", {
+    const title   = this.add.text(cx, cy - 140, "LOG IN", {
       fontSize: "26px", color: "#007ACC", fontStyle: "bold"
     }).setOrigin(0.5);
 
@@ -415,7 +415,7 @@ export class SettingsScene extends Phaser.Scene {
     const emailText = this.add.text(cx - 172, cy - 86, "", { fontSize: "18px", color: "#ffffff" });
 
     // ── Champ Mot de passe ──
-    const pwLabel = this.add.text(cx - 190, cy - 30, "Mot de passe", {
+    const pwLabel = this.add.text(cx - 190, cy - 30, "Password", {
       fontSize: "16px", color: "#aaaaaa"
     });
     const pwBox  = this.add.rectangle(cx, cy - 2, 360, 38, 0x000000).setStrokeStyle(1, 0x555555);
@@ -427,12 +427,12 @@ export class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // ── Boutons ──
-    const confirmBtn = this.add.text(cx - 80, cy + 95, "CONNEXION", {
+    const confirmBtn = this.add.text(cx - 80, cy + 95, "LOG IN", {
       fontSize: "20px", color: "#ffffff",
       backgroundColor: "#007ACC", padding: { x: 18, y: 10 }
     }).setOrigin(0.5).setInteractive();
 
-    const cancelBtn = this.add.text(cx + 90, cy + 95, "ANNULER", {
+    const cancelBtn = this.add.text(cx + 90, cy + 95, "CANCEL", {
       fontSize: "20px", color: "#ffffff",
       backgroundColor: "#444444", padding: { x: 18, y: 10 }
     }).setOrigin(0.5).setInteractive();
@@ -482,7 +482,7 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     confirmBtn.on("pointerdown", async () => {
-      errorMsg.setText("Connexion en cours…").setColor("#aaaaaa");
+      errorMsg.setText("Logging in…").setColor("#aaaaaa");
       try {
         await loginWithEmail(emailValue.trim(), pwValue);
         // Charger la progression depuis Firebase
@@ -506,12 +506,12 @@ export class SettingsScene extends Phaser.Scene {
 
     const overlay = this.add.rectangle(cx, cy, width, height, 0x000000, 0.75);
     const box     = this.add.rectangle(cx, cy + 20, 460, 400, 0x1a1a2e).setStrokeStyle(2, 0x006633);
-    const title   = this.add.text(cx, cy - 170, "CRÉER UN COMPTE", {
+    const title   = this.add.text(cx, cy - 170, "CREATE ACCOUNT", {
       fontSize: "26px", color: "#00BB55", fontStyle: "bold"
     }).setOrigin(0.5);
 
     // ── Pseudo ──
-    const pseudoLabel = this.add.text(cx - 190, cy - 130, "Pseudo", { fontSize: "16px", color: "#aaaaaa" });
+    const pseudoLabel = this.add.text(cx - 190, cy - 130, "Username", { fontSize: "16px", color: "#aaaaaa" });
     const pseudoBox   = this.add.rectangle(cx, cy - 102, 360, 38, 0x000000).setStrokeStyle(1, 0x555555);
     const pseudoText  = this.add.text(cx - 172, cy - 116, "", { fontSize: "18px", color: "#ffffff" });
 
@@ -521,7 +521,7 @@ export class SettingsScene extends Phaser.Scene {
     const emailText  = this.add.text(cx - 172, cy - 44, "", { fontSize: "18px", color: "#ffffff" });
 
     // ── Mot de passe ──
-    const pwLabel = this.add.text(cx - 190, cy + 14, "Mot de passe (6 car. min.)", { fontSize: "16px", color: "#aaaaaa" });
+    const pwLabel = this.add.text(cx - 190, cy + 14, "Password (6 chars min.)", { fontSize: "16px", color: "#aaaaaa" });
     const pwBox   = this.add.rectangle(cx, cy + 42, 360, 38, 0x000000).setStrokeStyle(1, 0x555555);
     const pwText  = this.add.text(cx - 172, cy + 28, "", { fontSize: "18px", color: "#ffffff" });
 
@@ -531,12 +531,12 @@ export class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // ── Boutons ──
-    const confirmBtn = this.add.text(cx - 80, cy + 155, "S'INSCRIRE", {
+    const confirmBtn = this.add.text(cx - 80, cy + 155, "SIGN UP", {
       fontSize: "20px", color: "#ffffff",
       backgroundColor: "#006633", padding: { x: 18, y: 10 }
     }).setOrigin(0.5).setInteractive();
 
-    const cancelBtn = this.add.text(cx + 90, cy + 155, "ANNULER", {
+    const cancelBtn = this.add.text(cx + 90, cy + 155, "CANCEL", {
       fontSize: "20px", color: "#ffffff",
       backgroundColor: "#444444", padding: { x: 18, y: 10 }
     }).setOrigin(0.5).setInteractive();
@@ -604,27 +604,27 @@ export class SettingsScene extends Phaser.Scene {
       const email  = emailValue.trim();
 
       if (pseudo.length < 2) {
-        errorMsg.setText("Le pseudo doit faire au moins 2 caractères.").setColor("#ff5555");
+        errorMsg.setText("Username must be at least 2 characters.").setColor("#ff5555");
         return;
       }
 
       if (isBadPseudo(pseudo)) {
-        errorMsg.setText("Ce pseudo n'est pas autorisé.").setColor("#ff5555");
+        errorMsg.setText("This username is not allowed.").setColor("#ff5555");
         return;
       }
 
-      errorMsg.setText("Vérification du pseudo…").setColor("#aaaaaa");
+      errorMsg.setText("Checking username…").setColor("#aaaaaa");
       confirmBtn.disableInteractive();
 
       try {
         const taken = await isPseudoTaken(pseudo);
         if (taken) {
-          errorMsg.setText("Ce pseudo est déjà pris, choisis-en un autre.").setColor("#ff5555");
+          errorMsg.setText("This username is already taken, please choose another.").setColor("#ff5555");
           confirmBtn.setInteractive();
           return;
         }
 
-        errorMsg.setText("Création du compte…").setColor("#aaaaaa");
+        errorMsg.setText("Creating account…").setColor("#aaaaaa");
         await registerWithEmail(email, pwValue, pseudo);
         await save.pseudo(pseudo);
         const data = await loadPlayerData();
@@ -648,15 +648,15 @@ export class SettingsScene extends Phaser.Scene {
 
     const overlay = this.add.rectangle(cx, cy, width, height, 0x000000, 0.75);
     const box     = this.add.rectangle(cx, cy + 20, 460, 420, 0x1a1a2e).setStrokeStyle(2, 0x00BB55);
-    const title   = this.add.text(cx, cy - 178, "CRÉER UN COMPTE", {
+    const title   = this.add.text(cx, cy - 178, "CREATE ACCOUNT", {
       fontSize: "26px", color: "#00BB55", fontStyle: "bold"
     }).setOrigin(0.5);
-    const subtitle = this.add.text(cx, cy - 148, "Votre progression sera conservée ✅", {
+    const subtitle = this.add.text(cx, cy - 148, "Your progress will be kept ✅", {
       fontSize: "15px", color: "#88ff88"
     }).setOrigin(0.5);
 
     const savedPseudo = localStorage.getItem("jumpix_pseudo") || "";
-    const pseudoLabel = this.add.text(cx - 190, cy - 115, "Pseudo", { fontSize: "16px", color: "#aaaaaa" });
+    const pseudoLabel = this.add.text(cx - 190, cy - 115, "Username", { fontSize: "16px", color: "#aaaaaa" });
     const pseudoBox   = this.add.rectangle(cx, cy - 88, 360, 38, 0x000000).setStrokeStyle(1, 0x555555);
     const pseudoText  = this.add.text(cx - 172, cy - 102, savedPseudo, { fontSize: "18px", color: "#ffffff" });
 
@@ -664,7 +664,7 @@ export class SettingsScene extends Phaser.Scene {
     const emailBox   = this.add.rectangle(cx, cy - 16, 360, 38, 0x000000).setStrokeStyle(1, 0x555555);
     const emailText  = this.add.text(cx - 172, cy - 30, "", { fontSize: "18px", color: "#ffffff" });
 
-    const pwLabel = this.add.text(cx - 190, cy + 28, "Mot de passe (6 car. min.)", { fontSize: "16px", color: "#aaaaaa" });
+    const pwLabel = this.add.text(cx - 190, cy + 28, "Password (6 chars min.)", { fontSize: "16px", color: "#aaaaaa" });
     const pwBox   = this.add.rectangle(cx, cy + 56, 360, 38, 0x000000).setStrokeStyle(1, 0x555555);
     const pwText  = this.add.text(cx - 172, cy + 42, "", { fontSize: "18px", color: "#ffffff" });
 
@@ -672,12 +672,12 @@ export class SettingsScene extends Phaser.Scene {
       fontSize: "15px", color: "#ff5555", align: "center", wordWrap: { width: 380 }
     }).setOrigin(0.5);
 
-    const confirmBtn = this.add.text(cx - 80, cy + 165, "CRÉER", {
+    const confirmBtn = this.add.text(cx - 80, cy + 165, "CREATE", {
       fontSize: "20px", color: "#ffffff",
       backgroundColor: "#006633", padding: { x: 18, y: 10 }
     }).setOrigin(0.5).setInteractive();
 
-    const cancelBtn = this.add.text(cx + 90, cy + 165, "ANNULER", {
+    const cancelBtn = this.add.text(cx + 90, cy + 165, "CANCEL", {
       fontSize: "20px", color: "#ffffff",
       backgroundColor: "#444444", padding: { x: 18, y: 10 }
     }).setOrigin(0.5).setInteractive();
@@ -738,26 +738,26 @@ export class SettingsScene extends Phaser.Scene {
       const email  = emailValue.trim();
 
       if (pseudo.length < 2) {
-        errorMsg.setText("Le pseudo doit faire au moins 2 caractères.").setColor("#ff5555");
+        errorMsg.setText("Username must be at least 2 characters.").setColor("#ff5555");
         return;
       }
       if (isBadPseudo(pseudo)) {
-        errorMsg.setText("Ce pseudo n'est pas autorisé.").setColor("#ff5555");
+        errorMsg.setText("This username is not allowed.").setColor("#ff5555");
         return;
       }
 
-      errorMsg.setText("Vérification du pseudo…").setColor("#aaaaaa");
+      errorMsg.setText("Checking username…").setColor("#aaaaaa");
       confirmBtn.disableInteractive();
 
       try {
         const taken = await isPseudoTaken(pseudo);
         if (taken) {
-          errorMsg.setText("Ce pseudo est déjà pris, choisis-en un autre.").setColor("#ff5555");
+          errorMsg.setText("This username is already taken, please choose another.").setColor("#ff5555");
           confirmBtn.setInteractive();
           return;
         }
 
-        errorMsg.setText("Création du compte…").setColor("#aaaaaa");
+        errorMsg.setText("Creating account…").setColor("#aaaaaa");
         await linkGuestToEmail(email, pwValue, pseudo);
         localStorage.setItem("jumpix_pseudo", pseudo);
         await save.pseudo(pseudo);
@@ -773,7 +773,7 @@ export class SettingsScene extends Phaser.Scene {
       } catch (err) {
         confirmBtn.setInteractive();
         if (err.code === "auth/email-already-in-use") {
-          errorMsg.setText("Cet e-mail est déjà utilisé. Connectez-vous à la place.").setColor("#ff5555");
+          errorMsg.setText("This email is already in use. Please log in instead.").setColor("#ff5555");
         } else {
           errorMsg.setText(firebaseErrorMessage(err.code)).setColor("#ff5555");
         }
@@ -909,19 +909,19 @@ export class Stats extends Phaser.Scene {
     // ── Séparateur + badge compte ────────────────────────────
     this.add.rectangle(width / 2, 202, width - 40, 1, 0x555555);
     const badge = isLoggedIn()
-      ? `🌐 Connecté : ${getPseudo()}`
-      : "👤 Mode invité — progression non sauvegardée";
+      ? `🌐 Logged in: ${getPseudo()}`
+      : "👤 Guest mode — progress not saved";
     this.add.text(width / 2, 214, badge, {
       fontSize: "14px", color: isLoggedIn() ? "#88ff88" : "#ffaa44"
     }).setOrigin(0.5);
 
     // ── Meilleurs rangs atteints ─────────────────────────────
-    this.add.text(width / 2, 238, "🏆 Meilleurs rangs atteints", {
+    this.add.text(width / 2, 238, "🏆 Best ranks achieved", {
       fontSize: "18px", color: "#FFD700", fontStyle: "bold"
     }).setOrigin(0.5);
 
     if (!isLoggedIn()) {
-      this.add.text(width / 2, 268, "Connectez-vous pour enregistrer vos rangs.", {
+      this.add.text(width / 2, 268, "Log in to record your ranks.", {
         fontSize: "14px", color: "#888888"
       }).setOrigin(0.5);
     } else {
@@ -1172,7 +1172,7 @@ this.input.on("pointermove", pointer => {
 
       if (entries.length === 0) {
         this.listContainer.add(
-          this.add.text(width / 2, 300, "Aucun temps enregistré", {
+          this.add.text(width / 2, 300, "No times recorded", {
             fontSize: "20px", color: "#666666"
           }).setOrigin(0.5)
         );
@@ -1184,8 +1184,8 @@ this.input.on("pointermove", pointer => {
       this.listContainer.add([
         this.add.text(55,        headerY, "#",      { fontSize: "14px", color: "#888888" }).setOrigin(0.5),
         this.add.text(110,       headerY, "Skin",   { fontSize: "14px", color: "#888888" }).setOrigin(0.5),
-        this.add.text(310,       headerY, "Joueur", { fontSize: "14px", color: "#888888" }).setOrigin(0, 0.5),
-        this.add.text(width - 20, headerY, "Temps", { fontSize: "14px", color: "#888888" }).setOrigin(1, 0.5),
+        this.add.text(310,       headerY, "Player", { fontSize: "14px", color: "#888888" }).setOrigin(0, 0.5),
+        this.add.text(width - 20, headerY, "Time", { fontSize: "14px", color: "#888888" }).setOrigin(1, 0.5),
       ]);
       this.add.rectangle(width / 2, headerY + 16, width - 20, 1, 0x333333);
 
@@ -1225,7 +1225,7 @@ this.input.on("pointermove", pointer => {
         );
 
         // Pseudo
-        const pseudo = entry.pseudo || "Anonyme";
+        const pseudo = entry.pseudo || "Anonymous";
         this.listContainer.add(
           this.add.text(140, y + rowH / 2, pseudo, {
             fontSize: "18px", color: isMe ? "#FFD700" : rowCol, fontStyle: isMe ? "bold" : "normal"
@@ -1281,7 +1281,7 @@ this.listContainer.y = 0;
       this.add.rectangle(width / 2 - 80, height / 2 - 160, 30, 30, skinColor)
     );
     elements.push(
-      this.add.text(width / 2 - 50, height / 2 - 160, entry.pseudo || "Anonyme", {
+      this.add.text(width / 2 - 50, height / 2 - 160, entry.pseudo || "Anonymous", {
         fontSize: "26px", color: "#FFD700", fontStyle: "bold"
       }).setOrigin(0, 0.5)
     );
@@ -1329,7 +1329,7 @@ this.listContainer.y = 0;
       const sepY = statsBottom + 14;
       elements.push(this.add.rectangle(width / 2, sepY, width - 100, 1, 0x555555));
       elements.push(
-        this.add.text(width / 2, sepY + 26, "🏆 Meilleurs rangs atteints", {
+        this.add.text(width / 2, sepY + 26, "🏆 Best ranks achieved", {
           fontSize: "16px", color: "#FFD700", fontStyle: "bold"
         }).setOrigin(0.5)
       );
