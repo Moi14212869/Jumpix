@@ -27,6 +27,13 @@ export const DEFAULTS = {
   bestRanks:       {}
 };
 
+// ── Liste des niveaux (utilisée pour parcourir tous les
+//    classements lors d'une migration ou d'une mise à jour) ──
+const ALL_LEVELS = [
+  "Level1","Level2","Level3","Level4","Level5",
+  "Level6","Level7","Level8","Level9","Level10","Level11"
+];
+
 // ── Référence document du joueur connecté ────────────────
 function playerRef() {
   const user = getCurrentUser();
@@ -97,20 +104,64 @@ export async function saveFields(fields) {
 // signInAnonymously() en créerait un tout nouveau, vide. Pour éviter de
 // perdre sa progression, on copie les données de l'ANCIEN uid invité
 // (stocké côté localStorage) vers le NOUVEAU uid invité, une seule fois.
-// Retourne true si une migration a eu lieu.
+//
+// On migre :
+//   - le document players/{uid} (coins, skins, progression…)
+//   - les entrées leaderboards/{level}/entries/{uid} pour chaque niveau
+//     (sinon les anciens records restent associés à l'ancien uid et ne
+//     sont plus reconnus comme "les miens" → plus de surlignage doré)
+//   - les ghost runs players/{uid}/ghostRuns/{level}
+//
+// Retourne true si une migration du document principal a eu lieu.
 export async function migrateGuestData(oldUid, newUid) {
   if (!oldUid || oldUid === newUid) return false;
 
-  const oldRef = doc(db, "players", oldUid);
+  const oldRef  = doc(db, "players", oldUid);
   const oldSnap = await getDoc(oldRef);
   if (!oldSnap.exists()) return false; // rien à migrer
 
-  const newRef = doc(db, "players", newUid);
+  const newRef  = doc(db, "players", newUid);
   const newSnap = await getDoc(newRef);
   // Ne pas écraser des données déjà présentes sur le nouveau compte
   if (newSnap.exists()) return false;
 
   await setDoc(newRef, oldSnap.data());
+
+  // ── Migrer les entrées de classement (best-effort, ne bloque pas
+  //    la migration principale si ça échoue niveau par niveau) ──
+  await Promise.all(ALL_LEVELS.map(async levelKey => {
+    try {
+      const oldEntryRef = doc(db, "leaderboards", levelKey, "entries", oldUid);
+      const oldEntrySnap = await getDoc(oldEntryRef);
+      if (!oldEntrySnap.exists()) return;
+
+      const newEntryRef = doc(db, "leaderboards", levelKey, "entries", newUid);
+      const newEntrySnap = await getDoc(newEntryRef);
+      if (newEntrySnap.exists()) return; // ne pas écraser un record existant
+
+      await setDoc(newEntryRef, oldEntrySnap.data());
+    } catch (err) {
+      console.warn(`Leaderboard entry migration failed for ${levelKey}:`, err);
+    }
+  }));
+
+  // ── Migrer les ghost runs ──
+  await Promise.all(ALL_LEVELS.map(async levelKey => {
+    try {
+      const oldGhostRef = doc(db, "players", oldUid, "ghostRuns", levelKey);
+      const oldGhostSnap = await getDoc(oldGhostRef);
+      if (!oldGhostSnap.exists()) return;
+
+      const newGhostRef = doc(db, "players", newUid, "ghostRuns", levelKey);
+      const newGhostSnap = await getDoc(newGhostRef);
+      if (newGhostSnap.exists()) return;
+
+      await setDoc(newGhostRef, oldGhostSnap.data());
+    } catch (err) {
+      console.warn(`Ghost run migration failed for ${levelKey}:`, err);
+    }
+  }));
+
   return true;
 }
 
@@ -203,10 +254,6 @@ export async function loadLeaderboard(levelKey) {
 }
 
 // ── Met à jour la couleur du joueur dans toutes ses entrées classement ──
-const ALL_LEVELS = [
-  "Level1","Level2","Level3","Level4","Level5",
-  "Level6","Level7","Level8","Level9","Level10","Level11"
-];
 
 export async function updateLeaderboardColor(colorPlayer) {
   const user = getCurrentUser();
