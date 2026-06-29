@@ -386,7 +386,7 @@ export class SettingsScene extends Phaser.Scene {
         this._showRegisterPopup();
       });
 
-      const hint = this.add.text(width / 2, 350, "Create an account to save your progress\nand access it from any device.", {
+      const hint = this.add.text(width / 2, 350, "Créez un compte pour sauvegarder votre progression\net y accéder depuis n'importe quel appareil.", {
         fontSize: "15px", color: "#888888", align: "center"
       }).setOrigin(0.5);
 
@@ -869,7 +869,7 @@ export class CreditsScene extends Phaser.Scene {
 
 const STATS_ALL_LEVELS = [
   "Level1","Level2","Level3","Level4","Level5",
-  "Level6","Level7","Level8","Level9","Level10","Level11"
+  "Level6","Level7","Level8","Level9","Level10","Level11","Level12"
 ];
 
 export class Stats extends Phaser.Scene {
@@ -1053,7 +1053,7 @@ export class ObjectivesScene extends Phaser.Scene {
 
 const ALL_LEVELS = [
   "Level1","Level2","Level3","Level4","Level5",
-  "Level6","Level7","Level8","Level9","Level10","Level11"
+  "Level6","Level7","Level8","Level9","Level10","Level11","Level12"
 ];
 
 export class LeaderboardScene extends Phaser.Scene {
