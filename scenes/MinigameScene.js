@@ -46,12 +46,12 @@ export class MinigameScene extends Phaser.Scene {
     const elements = [];
 
     elements.push(
-      this.add.text(cx, cy - 160, "⚔ DUEL LOCAL", {
+      this.add.text(cx, cy - 160, "⚔ LOCAL DUEL", {
         fontSize: "40px", color: "#ffffff", fontStyle: "bold"
       }).setOrigin(0.5)
     );
     elements.push(
-      this.add.text(cx, cy - 110, "Choisis une map", {
+      this.add.text(cx, cy - 110, "Choose a map", {
         fontSize: "22px", color: "#cccccc"
       }).setOrigin(0.5)
     );
@@ -66,7 +66,7 @@ export class MinigameScene extends Phaser.Scene {
     elements.push(this.add.rectangle(emptyX, previewY + previewH / 2 - 14, previewW - 30, 14, 0xA0522D));
     elements.push(emptyBox);
     elements.push(
-      this.add.text(emptyX, previewY + previewH / 2 + 20, "Map vide", {
+      this.add.text(emptyX, previewY + previewH / 2 + 20, "Empty map", {
         fontSize: "18px", color: "#ffffff", fontStyle: "bold"
       }).setOrigin(0.5)
     );
@@ -79,7 +79,7 @@ export class MinigameScene extends Phaser.Scene {
     elements.push(this.add.rectangle(platX + 60, previewY - 25, 70, 10, 0xA0522D));
     elements.push(platBox);
     elements.push(
-      this.add.text(platX, previewY + previewH / 2 + 20, "Map avec plateformes", {
+      this.add.text(platX, previewY + previewH / 2 + 20, "Map with platforms", {
         fontSize: "16px", color: "#ffffff", fontStyle: "bold"
       }).setOrigin(0.5)
     );
@@ -213,10 +213,10 @@ export class MinigameScene extends Phaser.Scene {
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(10);
     this._tintText(this.score2Text, P2_COLOR);
 
-    this.add.text(20, 70, "J1 (clavier)", {
+    this.add.text(20, 70, "P1 (keyboard)", {
       fontSize: "13px", color: "#888888"
     }).setOrigin(0, 0).setScrollFactor(0).setDepth(10);
-    this.add.text(width - 20, 70, "J2 (flèches)", {
+    this.add.text(width - 20, 70, "P2 (arrows)", {
       fontSize: "13px", color: "#888888"
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(10);
 
