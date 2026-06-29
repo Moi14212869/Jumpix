@@ -1161,7 +1161,7 @@ this.input.on("pointermove", pointer => {
     this.scrollY = 0;
     this.listContainer.y = 0;
     // Indicateur de chargement
-    const loadTxt = this.add.text(width / 2, 300, "Chargement...", {
+    const loadTxt = this.add.text(width / 2, 300, "Loading...", {
       fontSize: "22px", color: "#888888"
     }).setOrigin(0.5);
     this.listContainer.add(loadTxt);
@@ -1249,7 +1249,7 @@ this.listContainer.y = 0;
     } catch (err) {
       this.listContainer.removeAll(true);
       this.listContainer.add(
-        this.add.text(width / 2, 300, "Erreur de chargement", {
+        this.add.text(width / 2, 300, "Loading error", {
           fontSize: "20px", color: "#ff4444"
         }).setOrigin(0.5)
       );
@@ -1286,7 +1286,7 @@ this.listContainer.y = 0;
       }).setOrigin(0, 0.5)
     );
 
-    const loadTxt = this.add.text(width / 2, height / 2 - 90, "Chargement...", {
+    const loadTxt = this.add.text(width / 2, height / 2 - 90, "Loading...", {
       fontSize: "18px", color: "#888888"
     }).setOrigin(0.5);
     elements.push(loadTxt);
@@ -1361,7 +1361,7 @@ this.listContainer.y = 0;
         );
       });
     } catch (err) {
-      loadTxt.setText("Erreur de chargement");
+      loadTxt.setText("Loading error");
       loadTxt.setColor("#ff4444");
       console.error("Player stats error:", err);
     }
