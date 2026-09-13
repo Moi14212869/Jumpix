@@ -15,7 +15,7 @@ import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
   createSnow, createMobileControls, createSnowstorm,
-  finalizeSnowLayer
+  finalizeSnowLayer, createLavaBlock, createExitPortalSpiral
 } from "../utils/gameObjects.js";
 
 
@@ -53,6 +53,7 @@ export class LevelScene extends Phaser.Scene {
     this.redSquares   = this.physics.add.group();
     this.icePlatforms = this.physics.add.staticGroup();
     this.snowstorms   = this.physics.add.staticGroup();
+    this.lavaBlocks   = this.physics.add.staticGroup();
 
     this.input.addPointer(2);
     this.cursors    = this.input.keyboard.createCursorKeys();
@@ -109,6 +110,10 @@ export class LevelScene extends Phaser.Scene {
       });
     }
 
+    if (level.lavaBlocks) {
+      level.lavaBlocks.forEach(l => createLavaBlock(this, l.x, l.y));
+    }
+
     // ── Joueur ──
     const size = 40;
     const gfx  = this.add.graphics();
@@ -122,6 +127,7 @@ export class LevelScene extends Phaser.Scene {
 
     // ── Sortie ──
     this.blueCircle = createBlueCircle(this, level.blueCircle.x, level.blueCircle.y);
+    createExitPortalSpiral(this, level.blueCircle.x, level.blueCircle.y);
 
     // ── Bouton retour ──
     const backButton = this.add.text(5, 5, "←", {
@@ -146,6 +152,7 @@ export class LevelScene extends Phaser.Scene {
     );
     this.physics.add.collider(this.redSquares, this.platforms);
     this.physics.add.collider(this.player, this.spikes, () => this.die());
+    this.physics.add.collider(this.player, this.lavaBlocks, () => this.die());
     this.physics.add.overlap(this.player, this.redCircles, () => this.die());
 
     // ── Tempêtes de neige : éjection vers le haut ──
