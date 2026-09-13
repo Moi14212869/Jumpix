@@ -14,7 +14,8 @@ import { save, saveLeaderboard } from "../utils/db.js";
 import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
-  createSnow, createMobileControls, createSnowstorm
+  createSnow, createMobileControls, createSnowstorm,
+  finalizeSnowLayer
 } from "../utils/gameObjects.js";
 
 
@@ -72,6 +73,12 @@ export class LevelScene extends Phaser.Scene {
       const color = typeof p.color === "string" ? parseInt(p.color) : (p.color || 0xA0522D);
       createPlatform(this, p.x, p.y, p.w, p.h || 40, color);
     });
+
+    // Une fois TOUTES les plateformes du niveau créées, on décide, bloc par
+    // bloc, si la couche de neige doit s'afficher (rangée du haut, non
+    // recouverte par une autre plateforme). Doit rester après la boucle
+    // ci-dessus, quel que soit l'ordre des plateformes dans le JSON.
+    finalizeSnowLayer(this);
 
     level.spikes.forEach(s =>
       createRedTriangle(this, s.x, s.y, s.orientation || "up")
