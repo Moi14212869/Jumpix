@@ -409,7 +409,7 @@ export class SettingsScene extends Phaser.Scene {
     if (user && !user.isAnonymous) {
       // ── Vue connecté (compte email) ──────────────────────
       const pseudo = getPseudo() || "Player";
-      const cardY = 300, cardW = 420, cardH = 150;
+      const cardY = 325, cardW = 420, cardH = 150;
 
       const card = this.add.graphics()
         .fillStyle(UI.trackBg, 0.7).lineStyle(1, UI.success, 0.4)
