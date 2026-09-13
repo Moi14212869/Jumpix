@@ -3,7 +3,7 @@
 // =========================================================
 // Éditeur de niveaux visuel.
 // JSON produit : { playerStart, blueCircle, platforms,
-//                  icePlatforms, spikes, redCircles, redSquares }
+//                  icePlatforms, spikes, lavaBlocks, redCircles, redSquares }
 // =========================================================
 
 import { gameVolume, colorPlayer } from "../globals.js";
@@ -23,6 +23,7 @@ const TOOLS = [
   { id: "platform",    label: "Platform",    color: 0xA0522D, icon: "▬" },
   { id: "ice",         label: "Ice",         color: 0x9EE7FF, icon: "🧊" },
   { id: "spike",       label: "Spike",         color: 0xFF0000, icon: "▲" },
+  { id: "lava",        label: "Lava",          color: 0xFF4500, icon: "🔥" },
   { id: "redCircle",   label: "Ball",         color: 0xFF4444, icon: "●" },
   { id: "redSquare",   label: "Enemy square",  color: 0xFF2222, icon: "■" },
   { id: "snowstorm",   label: "Snowstorm", color: 0x9EE7FF, icon: "❄" },
@@ -36,6 +37,7 @@ const DEFAULTS = {
   platform:   { w: CELL, h: CELL, color: "0xA0522D" },
   ice:        { w: CELL, h: CELL },
   spike:      { orientation: "up" },
+  lava:       {},
   redCircle:  { rise: 100, direction: "up" },
   redSquare:  { rise: 100, direction: "right" },
   snowstorm:  { h: CELL * 2 }, // hauteur par défaut : 2 cellules (80px en jeu)
@@ -330,6 +332,14 @@ export class LevelEditorScene extends Phaser.Scene {
         gfx.closePath(); gfx.fillPath();
         break;
       }
+      case "lava": {
+        gfx.fillStyle(0x8B1A00, 1).fillRect(x, y, CELL, CELL);
+        gfx.fillStyle(0xFF4500, 1).fillRect(x, y, CELL, 3);
+        gfx.fillStyle(0xFFA500, 0.9);
+        gfx.fillCircle(x + CELL * 0.3, y + CELL * 0.65, 2);
+        gfx.fillCircle(x + CELL * 0.7, y + CELL * 0.35, 1.6);
+        break;
+      }
       case "redCircle":
         gfx.fillStyle(0xFF0000, 1).fillCircle(x + CELL / 2, y + CELL / 2, CELL / 2);
         gfx.lineStyle(2, 0xFFAAAA).strokeCircle(x + CELL / 2, y + CELL / 2, CELL / 2);
@@ -614,6 +624,7 @@ export class LevelEditorScene extends Phaser.Scene {
       platforms:    [],
       icePlatforms: [],
       spikes:       [],
+      lavaBlocks:   [],
       redCircles:   [],
       redSquares:   [],
       snowstorms:   [],
@@ -700,6 +711,13 @@ export class LevelEditorScene extends Phaser.Scene {
           x: anchor.x * GAME_SCALE,
           y: anchor.y * GAME_SCALE,
           orientation: ori
+        });
+      }
+
+      if (obj.type === "lava") {
+        level.lavaBlocks.push({
+          x: obj.col * CELL * GAME_SCALE,
+          y: obj.row * CELL * GAME_SCALE
         });
       }
 
@@ -902,6 +920,20 @@ export class LevelEditorScene extends Phaser.Scene {
       const gfx = this.add.graphics();
       this._renderObject(gfx, col, row, "spike", props);
       this.objects.set(key, { type: "spike", col, row, props, gfx });
+    });
+
+    // lavaBlocks
+    (level.lavaBlocks || []).forEach(l => {
+      const lx = l.x / GAME_SCALE, ly = l.y / GAME_SCALE;
+      const col = Math.floor(lx / CELL);
+      const row = Math.floor(ly / CELL);
+      if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+      const key = cellKey(col, row);
+      if (this.objects.has(key)) return;
+      const props = {};
+      const gfx = this.add.graphics();
+      this._renderObject(gfx, col, row, "lava", props);
+      this.objects.set(key, { type: "lava", col, row, props, gfx });
     });
 
     // redCircles
