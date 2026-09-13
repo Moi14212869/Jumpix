@@ -45,6 +45,7 @@ export class LoadingScene extends Phaser.Scene {
     this.load.audio("kill",    "asset/kill.mp3");
     this.load.audio("buy",     "asset/buy.mp3");
     this.load.audio("slide",   "asset/slide.mp3");
+    this.load.audio("lava",     "asset/lava.mp3");
 
     this.load.on("complete", () => {
       progressBar.destroy();
