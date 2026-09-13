@@ -43,6 +43,7 @@ export class LevelScene extends Phaser.Scene {
     this.inheritedSlideDir = 0;
     this.isWorld2          = (level.nextScene === "World2");
     this.transitioning     = false;
+    this.dyingInLava       = false;   // true pendant l'enfoncement dans la lave (3s)
     this.startTime         = null;   // ⏱ démarre à la première action du joueur
     this.finalTime         = null;   // ⏱ figé au contact du cercle bleu
 
@@ -152,7 +153,7 @@ export class LevelScene extends Phaser.Scene {
     );
     this.physics.add.collider(this.redSquares, this.platforms);
     this.physics.add.collider(this.player, this.spikes, () => this.die());
-    this.physics.add.collider(this.player, this.lavaBlocks, () => this.die());
+    this.physics.add.collider(this.player, this.lavaBlocks, () => this.sinkInLava());
     this.physics.add.overlap(this.player, this.redCircles, () => this.die());
 
     // ── Tempêtes de neige : éjection vers le haut ──
@@ -444,6 +445,35 @@ export class LevelScene extends Phaser.Scene {
   // ── Mort ──────────────────────────────────────────────
   die() {
     this.sound.play("dead", { volume: gameVolume });
+    this._recordDeath();
+  }
+
+  // ── Mort par lave : le joueur s'enfonce dedans pendant 3s ──
+  // avant que la mort ne soit réellement comptabilisée. Pendant ce temps,
+  // les contrôles et la physique du joueur sont coupés (même principe que
+  // la séquence de victoire : body.enable = false, puis un tween pilote
+  // la position à la main).
+  sinkInLava() {
+    if (this.dyingInLava || this.transitioning) return;
+    this.dyingInLava = true;
+
+    this.player.body.enable = false;
+    this.sound.play("lava", { volume: gameVolume });
+
+    this.tweens.add({
+      targets: this.player,
+      y: this.player.y + 46,  // s'enfonce dans le bloc, un peu plus qu'un bloc entier
+      angle: 20,
+      alpha: 0.15,
+      duration: 3000,
+      ease: "Sine.easeIn",
+      onComplete: () => this._recordDeath()
+    });
+  }
+
+  // Comptabilise la mort et relance le niveau. Séparé de die() car
+  // sinkInLava() joue déjà le son "lava" et ne doit pas rejouer "dead".
+  _recordDeath() {
     const newDead = dead + 1;
     setDead(newDead);
     save.dead(newDead);
