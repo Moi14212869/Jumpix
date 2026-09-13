@@ -7,6 +7,8 @@
     "x": 740,
     "y": 500
   },
+  "reward": 37,
+  "nextScene": "World2",
   "platforms": [
     {
       "x": 0,
