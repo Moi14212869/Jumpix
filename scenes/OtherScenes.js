@@ -1231,6 +1231,15 @@ export class ObjectivesScene extends Phaser.Scene {
     const cardH = 84, cardGap = 14;
     let y = 90;
 
+    const selectButtons = []; // { label, drawSel, color }
+    const refreshSelectButtons = (activeColor) => {
+      selectButtons.forEach(btn => {
+        const sel = btn.color === activeColor;
+        btn.label.setText(sel ? "Selected" : "Select");
+        btn.drawSel(sel);
+      });
+    };
+
     objectives.forEach(obj => {
       const unlocked = !!(pd.skins && pd.skins[obj.skin]);
 
@@ -1307,6 +1316,8 @@ export class ObjectivesScene extends Phaser.Scene {
         const selHit = this.add.rectangle(btnX - btnW / 2, btnY, btnW, btnH, 0x000000, 0)
           .setInteractive({ useHandCursor: true });
 
+        selectButtons.push({ label: selLabel, drawSel, color: obj.color });
+
         selHit.on("pointerdown", async () => {
           if (selLabel.text === "Selected") return;
           this.sound.play("select", { volume: gameVolume });
@@ -1314,8 +1325,7 @@ export class ObjectivesScene extends Phaser.Scene {
           pd.colorPlayer = obj.color;
           await save.color(obj.color);
           await updateLeaderboardColor(obj.color);
-          selLabel.setText("Selected");
-          drawSel(true);
+          refreshSelectButtons(obj.color);
         });
       } else {
         this.add.text(btnX - btnW / 2, btnY, "🔒 Locked", {
