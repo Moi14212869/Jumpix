@@ -38,6 +38,13 @@ export const SHOP_PAGES = [
     { key: "A0A45B", label: "Olive Green",  price: 700 },
     { key: "2AF42D", label: "Light Green",  price: 800 },
     { key: "015246", label: "Petrol",       price: 900 }
+  ],
+  [
+    { key: "F5F5F0", label: "Off-White",  price: 1000 },
+    { key: "C0C0C0", label: "Silver",     price: 1100 },
+    { key: "FFD700", label: "Gold",       price: 1200 },
+    { key: "4B0082", label: "Indigo",     price: 1300 },
+    { key: "FF1493", label: "Neon Pink",  price: 1400 }
   ]
 ];
 
