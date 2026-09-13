@@ -47,40 +47,87 @@ function isBadPseudo(pseudo) {
   });
 }
 
+// ── Palette visuelle ──────────────────────────────────────
+const UI = {
+  accent:       0x00BFFF,
+  accentHover:  0x33D6FF,
+  accentSoft:   0x0F3A52,
+  cardBg:       0x141C2E,
+  cardBorder:   0x27344A,
+  trackBg:      0x223046,
+  pillInactive: 0x1B2438,
+  pillHover:    0x24314A,
+  textMain:     "#F2F5FA",
+  textMuted:    "#8592A8",
+  textFaint:    "#5D6980",
+  danger:       0xFF4D4D,
+  dangerHover:  0xFF6B6B,
+  success:      0x00D68A,
+};
+
 export class SettingsScene extends Phaser.Scene {
   constructor() { super("SettingsScene"); }
 
   create() {
-    const { width } = this.scale;
+    const { width, height } = this.scale;
 
-    this.add.text(width / 2, 36, "Settings", {
-      fontSize: "36px", color: "#ffffff"
+    // ── Fond dégradé + vignette ─────────────────────────────
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x0A101C, 0x0A101C, 0x141C30, 0x141C30, 1);
+    bg.fillRect(0, 0, width, height);
+    bg.setDepth(-20);
+
+    const glow = this.add.graphics();
+    glow.fillStyle(UI.accent, 0.05);
+    glow.fillCircle(width / 2, -40, width * 0.7);
+    glow.setDepth(-19);
+
+    // ── Titre ────────────────────────────────────────────────
+    this.add.text(width / 2, 34, "SETTINGS", {
+      fontSize: "30px", color: UI.textMain, fontStyle: "bold",
+      letterSpacing: 2
     }).setOrigin(0.5);
+    this.add.rectangle(width / 2, 54, 46, 3, UI.accent).setOrigin(0.5);
 
-    // ── Onglets ─────────────────────────────────────────────
+    // ── Onglets (segmented control arrondi) ──────────────────
     const TABS = ["General", "Gameplay", "Credits"];
     this._activeTab = 0;
     this._tabContainer = null;
 
-    const TAB_Y = 75;
-    const TAB_W = 160, TAB_H = 34;
-    const totalTabW = TABS.length * TAB_W + (TABS.length - 1) * 8;
+    const TAB_Y = 88;
+    const TAB_W = 150, TAB_H = 40, TAB_GAP = 6, TAB_R = 12;
+    const totalTabW = TABS.length * TAB_W + (TABS.length - 1) * TAB_GAP;
     const tabStartX = width / 2 - totalTabW / 2;
+
+    // Piste de fond du segmented control
+    const trackPad = 5;
+    this.add.graphics()
+      .fillStyle(UI.cardBg, 1)
+      .fillRoundedRect(tabStartX - trackPad, TAB_Y - TAB_H / 2 - trackPad,
+                        totalTabW + trackPad * 2, TAB_H + trackPad * 2, TAB_R + trackPad)
+      .lineStyle(1, UI.cardBorder, 1)
+      .strokeRoundedRect(tabStartX - trackPad, TAB_Y - TAB_H / 2 - trackPad,
+                          totalTabW + trackPad * 2, TAB_H + trackPad * 2, TAB_R + trackPad);
 
     this._tabBgs = [];
     this._tabLabels = [];
+    this._tabPills = [];
+    this._tabRects = [];
 
     TABS.forEach((label, i) => {
-      const tx = tabStartX + i * (TAB_W + 8) + TAB_W / 2;
-      const bg = this.add.rectangle(tx, TAB_Y, TAB_W, TAB_H, 0x223344)
-        .setStrokeStyle(1, 0x00BFFF).setInteractive();
+      const tx = tabStartX + i * (TAB_W + TAB_GAP) + TAB_W / 2;
+      const rect = { x: tx - TAB_W / 2, y: TAB_Y - TAB_H / 2, w: TAB_W, h: TAB_H };
+
+      const pill = this.add.graphics();
+      const bg = this.add.rectangle(tx, TAB_Y, TAB_W, TAB_H, 0x000000, 0)
+        .setInteractive({ useHandCursor: true });
       const txt = this.add.text(tx, TAB_Y, label, {
-        fontSize: "17px", color: "#aaaaaa"
+        fontSize: "16px", color: UI.textMuted, fontStyle: "normal"
       }).setOrigin(0.5);
 
-      bg.on("pointerover",  () => { if (i !== this._activeTab) bg.setFillStyle(0x335566); });
-      bg.on("pointerout",   () => { if (i !== this._activeTab) bg.setFillStyle(0x223344); });
-      bg.on("pointerdown",  () => {
+      bg.on("pointerover", () => { if (i !== this._activeTab) this._drawTabPill(pill, rect, UI.pillHover, TAB_R); });
+      bg.on("pointerout",  () => { if (i !== this._activeTab) this._drawTabPill(pill, rect, UI.pillInactive, TAB_R); });
+      bg.on("pointerdown", () => {
         if (i === this._activeTab) return;
         this.sound.play("menu", { volume: gameVolume });
         this._activeTab = i;
@@ -90,10 +137,18 @@ export class SettingsScene extends Phaser.Scene {
 
       this._tabBgs.push(bg);
       this._tabLabels.push(txt);
+      this._tabPills.push(pill);
+      this._tabRects.push(rect);
     });
 
-    // ── Ligne sous les onglets ───────────────────────────────
-    this.add.rectangle(width / 2, TAB_Y + TAB_H / 2 + 1, width - 40, 1, 0x444444);
+    // ── Carte de fond pour le contenu ─────────────────────────
+    const cardTop = TAB_Y + TAB_H / 2 + 16;
+    const cardBottom = height - 88;
+    this.add.graphics()
+      .fillStyle(UI.cardBg, 0.85)
+      .fillRoundedRect(30, cardTop, width - 60, cardBottom - cardTop, 16)
+      .lineStyle(1, UI.cardBorder, 1)
+      .strokeRoundedRect(30, cardTop, width - 60, cardBottom - cardTop, 16);
 
     // ── Contenu dynamique ────────────────────────────────────
     this._tabContainer = this.add.container(0, 0);
@@ -103,34 +158,47 @@ export class SettingsScene extends Phaser.Scene {
     // ── Bloc compte (commun aux deux onglets) ────────────────
     this._buildAccountBlock();
 
-    const resetBtn = this.add.text(220, 530, "RESET ACCOUNT", {
-      fontSize: "18px", color: "#ffffff",
-      backgroundColor: "#FF4444", padding: { x: 14, y: 8 }
-    }).setOrigin(0.5).setInteractive();
+    // ── Reset account ─────────────────────────────────────────
+    const resetBtn = this.add.text(width / 2, height - 58, "⚠  RESET ACCOUNT", {
+      fontSize: "15px", color: "#ffffff", fontStyle: "bold",
+      backgroundColor: "#B93030", padding: { x: 16, y: 9 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    resetBtn.on("pointerover", () => resetBtn.setStyle({ backgroundColor: "#D63E3E" }));
+    resetBtn.on("pointerout",  () => resetBtn.setStyle({ backgroundColor: "#B93030" }));
     resetBtn.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
       this._showResetConfirm();
     });
 
     // ── Retour ──────────────────────────────────────────────
-    const back = this.add.text(5, 5, "\u2190", {
-      fontSize: "24px", color: "#ffffff",
-      backgroundColor: "#00BFFF", padding: { x: 7, y: 4 }
-    }).setInteractive();
+    const back = this.add.text(18, 18, "←", {
+      fontSize: "22px", color: "#ffffff", fontStyle: "bold",
+      backgroundColor: "#182338", padding: { x: 11, y: 5 }
+    }).setOrigin(0, 0).setInteractive({ useHandCursor: true });
+    back.setStroke("#27344A", 1);
+    back.on("pointerover", () => back.setStyle({ backgroundColor: "#22314A" }));
+    back.on("pointerout",  () => back.setStyle({ backgroundColor: "#182338" }));
     back.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
       this.scene.start("MenuScene");
     });
   }
 
+  // ── Dessine une pilule d'onglet arrondie ─────────────────
+  _drawTabPill(pill, rect, color, radius) {
+    pill.clear();
+    pill.fillStyle(color, 1);
+    pill.fillRoundedRect(rect.x, rect.y, rect.w, rect.h, radius);
+  }
+
   // ── Met à jour l'apparence des onglets ───────────────────
   _refreshTabs() {
-    this._tabBgs.forEach((bg, i) => {
+    this._tabPills.forEach((pill, i) => {
       const active = i === this._activeTab;
-      bg.setFillStyle(active ? 0x00BFFF : 0x223344);
+      this._drawTabPill(pill, this._tabRects[i], active ? UI.accent : UI.pillInactive, 12);
     });
     this._tabLabels.forEach((txt, i) => {
-      txt.setStyle({ color: i === this._activeTab ? "#000000" : "#aaaaaa",
+      txt.setStyle({ color: i === this._activeTab ? "#04202B" : UI.textMuted,
                      fontStyle: i === this._activeTab ? "bold" : "normal" });
     });
   }
@@ -156,37 +224,64 @@ export class SettingsScene extends Phaser.Scene {
   // ── Onglet "Général" : volume + clavier ──────────────────
   _buildTabGeneral() {
     const { width } = this.scale;
-    const startY = 130;
+    const startY = 128;
+    const sliderW = 300;
+    const minX = width / 2 - sliderW / 2, maxX = width / 2 + sliderW / 2;
 
     // Volume
-    const volLabel = this.add.text(width / 2, startY, "Volume", {
-      fontSize: "22px", color: "#aaaaaa"
-    }).setOrigin(0.5);
-    const track = this.add.rectangle(width / 2, startY + 35, 300, 8, 0x555555);
-    const knob = this.add.circle(width / 2 - 150 + gameVolume * 300, startY + 35, 11, 0xffffff)
-      .setInteractive({ draggable: true });
+    const volLabel = this.add.text(width / 2 - sliderW / 2, startY, "🔊  Volume", {
+      fontSize: "18px", color: UI.textMuted, fontStyle: "500"
+    }).setOrigin(0, 0.5);
+    const volPct = this.add.text(width / 2 + sliderW / 2, startY, `${Math.round(gameVolume * 100)}%`, {
+      fontSize: "16px", color: UI.textFaint
+    }).setOrigin(1, 0.5);
+
+    const trackY = startY + 32;
+    const track = this.add.graphics()
+      .fillStyle(UI.trackBg, 1)
+      .fillRoundedRect(minX, trackY - 4, sliderW, 8, 4);
+    const fill = this.add.graphics();
+    const drawFill = (vol) => {
+      fill.clear();
+      fill.fillStyle(UI.accent, 1);
+      fill.fillRoundedRect(minX, trackY - 4, Math.max(8, sliderW * vol), 8, 4);
+    };
+    drawFill(gameVolume);
+
+    const knob = this.add.circle(minX + gameVolume * sliderW, trackY, 10, 0xffffff)
+      .setStrokeStyle(3, UI.accent)
+      .setInteractive({ draggable: true, useHandCursor: true });
     this.input.setDraggable(knob);
     this.input.on("drag", (pointer, obj, dragX) => {
-      const minX = width / 2 - 150, maxX = width / 2 + 150;
+      if (obj !== knob) return;
       obj.x = Phaser.Math.Clamp(dragX, minX, maxX);
-      const newVol = Phaser.Math.Clamp((obj.x - minX) / 300, 0, 1);
+      const newVol = Phaser.Math.Clamp((obj.x - minX) / sliderW, 0, 1);
       setGameVolume(newVol);
       this.sound.volume = newVol;
       save.volume(newVol);
+      drawFill(newVol);
+      volPct.setText(`${Math.round(newVol * 100)}%`);
     });
 
+    // Séparateur
+    const sep = this.add.rectangle(width / 2, startY + 70, width - 100, 1, UI.cardBorder);
+
     // Clavier
-    const keyboardBtn = this.add.text(width / 2, startY + 90, "", {
-      fontSize: "20px", color: "#ffffff",
-      backgroundColor: "#00BFFF", padding: { x: 18, y: 8 }
-    }).setOrigin(0.5).setInteractive();
+    const kbLabel = this.add.text(width / 2 - sliderW / 2, startY + 95, "⌨  Layout", {
+      fontSize: "18px", color: UI.textMuted
+    }).setOrigin(0, 0.5);
+
+    const keyboardBtn = this.add.text(width / 2 + sliderW / 2, startY + 95, "", {
+      fontSize: "17px", color: "#04202B", fontStyle: "bold",
+      backgroundColor: "#00BFFF", padding: { x: 18, y: 9 }
+    }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
 
     const updateKeyboardBtn = () =>
-      keyboardBtn.setText(`Keyboard: ${keyboardLayout.toUpperCase()}`);
+      keyboardBtn.setText(`${keyboardLayout.toUpperCase()}  ⇄`);
     updateKeyboardBtn();
 
-    keyboardBtn.on("pointerover",  () => keyboardBtn.setStyle({ backgroundColor: "#00FFFF", color: "#000000" }));
-    keyboardBtn.on("pointerout",   () => keyboardBtn.setStyle({ backgroundColor: "#00BFFF", color: "#ffffff" }));
+    keyboardBtn.on("pointerover",  () => keyboardBtn.setStyle({ backgroundColor: "#33D6FF" }));
+    keyboardBtn.on("pointerout",   () => keyboardBtn.setStyle({ backgroundColor: "#00BFFF" }));
     keyboardBtn.on("pointerdown",  () => {
       const newLayout = keyboardLayout === "zqsd" ? "wasd" : "zqsd";
       setKeyboardLayout(newLayout);
@@ -195,7 +290,7 @@ export class SettingsScene extends Phaser.Scene {
       updateKeyboardBtn();
     });
 
-    this._tabContainer.add([volLabel, track, knob, keyboardBtn]);
+    this._tabContainer.add([volLabel, volPct, track, fill, knob, sep, kbLabel, keyboardBtn]);
   }
 
   // ── Onglet "Gameplay" : tutoriel + mode ghost ────────────
@@ -207,24 +302,33 @@ export class SettingsScene extends Phaser.Scene {
     let tutoHidden = localStorage.getItem(LS_TUTO) === "true";
 
     // Titre de section
-    const sectionLabel = this.add.text(width / 2, startY, "Tutorials", {
-      fontSize: "20px", color: "#aaaaaa"
-    }).setOrigin(0.5);
+    const sectionLabel = this.add.text(width / 2 - 220, startY, "TUTORIALS", {
+      fontSize: "14px", color: UI.textFaint, fontStyle: "bold", letterSpacing: 1
+    }).setOrigin(0, 0.5);
 
-    // Ligne descriptive
-    const desc = this.add.text(width / 2, startY + 36, "Double jump (Level 1)", {
-      fontSize: "16px", color: "#888888"
-    }).setOrigin(0.5);
+    // Ligne "carte" pour le tutoriel
+    const rowY = startY + 46;
+    const rowW = 440, rowH = 64;
+    const rowBg = this.add.graphics()
+      .fillStyle(UI.trackBg, 0.6)
+      .fillRoundedRect(width / 2 - rowW / 2, rowY - rowH / 2, rowW, rowH, 10);
 
-    // Toggle bouton
-    const tutoBtn = this.add.text(width / 2, startY + 80, "", {
-      fontSize: "18px", color: "#ffffff",
-      backgroundColor: "#00BFFF", padding: { x: 20, y: 10 }
-    }).setOrigin(0.5).setInteractive();
+    const title = this.add.text(width / 2 - rowW / 2 + 18, rowY - 12, "Double Jump", {
+      fontSize: "17px", color: UI.textMain, fontStyle: "bold"
+    }).setOrigin(0, 0.5);
+    const desc = this.add.text(width / 2 - rowW / 2 + 18, rowY + 14, "Shown once, on Level 1", {
+      fontSize: "13px", color: UI.textFaint
+    }).setOrigin(0, 0.5);
+
+    // Toggle bouton (pill on/off)
+    const tutoBtn = this.add.text(width / 2 + rowW / 2 - 18, rowY, "", {
+      fontSize: "15px", color: "#ffffff", fontStyle: "bold",
+      backgroundColor: "#226622", padding: { x: 16, y: 8 }
+    }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
 
     const updateTutoBtn = () => {
-      tutoBtn.setText(tutoHidden ? "Enable" : "Disable");
-      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#226622" : "#882222" });
+      tutoBtn.setText(tutoHidden ? "✓  Hidden" : "●  Visible");
+      tutoBtn.setStyle({ backgroundColor: tutoHidden ? "#2E7D46" : "#B93030" });
     };
     updateTutoBtn();
 
@@ -236,7 +340,7 @@ export class SettingsScene extends Phaser.Scene {
       updateTutoBtn();
     });
 
-    this._tabContainer.add([sectionLabel, desc, tutoBtn]);
+    this._tabContainer.add([sectionLabel, rowBg, title, desc, tutoBtn]);
   }
 
   // ── Onglet "Crédits" : voir les crédits + lien site du studio ──
@@ -244,37 +348,53 @@ export class SettingsScene extends Phaser.Scene {
     const { width } = this.scale;
     const startY = 150;
 
-    const sectionLabel = this.add.text(width / 2, startY, "About", {
-      fontSize: "20px", color: "#aaaaaa"
+    const sectionLabel = this.add.text(width / 2, startY, "ABOUT", {
+      fontSize: "14px", color: UI.textFaint, fontStyle: "bold", letterSpacing: 1
     }).setOrigin(0.5);
 
-    // Bouton "Voir les crédits"
-    const creditsBtn = this.add.text(width / 2, startY + 50, "🎬 View credits", {
-      fontSize: "20px", color: "#ffffff",
-      backgroundColor: "#00BFFF", padding: { x: 20, y: 10 }
-    }).setOrigin(0.5).setInteractive();
+    const btnW = 280, btnH = 52;
 
-    creditsBtn.on("pointerover", () => creditsBtn.setStyle({ backgroundColor: "#00DDFF" }));
-    creditsBtn.on("pointerout",  () => creditsBtn.setStyle({ backgroundColor: "#00BFFF" }));
-    creditsBtn.on("pointerdown", () => {
+    // Bouton "Voir les crédits"
+    const creditsY = startY + 34;
+    const creditsBg = this.add.graphics()
+      .fillStyle(UI.accent, 1)
+      .fillRoundedRect(width / 2 - btnW / 2, creditsY - btnH / 2, btnW, btnH, 12);
+    const creditsLabel = this.add.text(width / 2, creditsY, "🎬  View Credits", {
+      fontSize: "18px", color: "#04202B", fontStyle: "bold"
+    }).setOrigin(0.5);
+    const creditsHit = this.add.rectangle(width / 2, creditsY, btnW, btnH, 0x000000, 0)
+      .setInteractive({ useHandCursor: true });
+
+    creditsHit.on("pointerover", () => creditsBg.clear().fillStyle(0x33D6FF, 1).fillRoundedRect(width / 2 - btnW / 2, creditsY - btnH / 2, btnW, btnH, 12));
+    creditsHit.on("pointerout",  () => creditsBg.clear().fillStyle(UI.accent, 1).fillRoundedRect(width / 2 - btnW / 2, creditsY - btnH / 2, btnW, btnH, 12));
+    creditsHit.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
       this.scene.start("CreditsScene");
     });
 
     // Bouton lien vers le site du studio
-    const siteBtn = this.add.text(width / 2, startY + 110, "🌐 Studio website", {
-      fontSize: "20px", color: "#ffffff",
-      backgroundColor: "#006633", padding: { x: 20, y: 10 }
-    }).setOrigin(0.5).setInteractive();
+    const siteY = startY + 104;
+    const siteRect = { x: width / 2 - btnW / 2, y: siteY - btnH / 2, w: btnW, h: btnH };
+    const redrawSite = (fill) => siteBg.clear()
+      .fillStyle(fill, 1).lineStyle(1, UI.success, 0.6)
+      .fillRoundedRect(siteRect.x, siteRect.y, siteRect.w, siteRect.h, 12)
+      .strokeRoundedRect(siteRect.x, siteRect.y, siteRect.w, siteRect.h, 12);
+    const siteBg = this.add.graphics();
+    redrawSite(0x1E2E27);
+    const siteLabel = this.add.text(width / 2, siteY, "🌐  Studio Website", {
+      fontSize: "18px", color: "#7CFFC4", fontStyle: "bold"
+    }).setOrigin(0.5);
+    const siteHit = this.add.rectangle(width / 2, siteY, btnW, btnH, 0x000000, 0)
+      .setInteractive({ useHandCursor: true });
 
-    siteBtn.on("pointerover", () => siteBtn.setStyle({ backgroundColor: "#008844" }));
-    siteBtn.on("pointerout",  () => siteBtn.setStyle({ backgroundColor: "#006633" }));
-    siteBtn.on("pointerdown", () => {
+    siteHit.on("pointerover", () => redrawSite(0x27402F));
+    siteHit.on("pointerout",  () => redrawSite(0x1E2E27));
+    siteHit.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
       window.open("https://moi14212869.github.io/onelevel/", "_blank");
     });
 
-    this._tabContainer.add([sectionLabel, creditsBtn, siteBtn]);
+    this._tabContainer.add([sectionLabel, creditsBg, creditsLabel, creditsHit, siteBg, siteLabel, siteHit]);
   }
 
   // ── Bloc compte dynamique ───────────────────────────────
@@ -289,23 +409,29 @@ export class SettingsScene extends Phaser.Scene {
     if (user && !user.isAnonymous) {
       // ── Vue connecté (compte email) ──────────────────────
       const pseudo = getPseudo() || "Player";
+      const cardY = 300, cardW = 420, cardH = 150;
 
-      const connectedLabel = this.add.text(width / 2, 255, "✅ Logged in as", {
-        fontSize: "18px", color: "#aaaaaa"
+      const card = this.add.graphics()
+        .fillStyle(UI.trackBg, 0.7).lineStyle(1, UI.success, 0.4)
+        .fillRoundedRect(width / 2 - cardW / 2, cardY - cardH / 2, cardW, cardH, 14)
+        .strokeRoundedRect(width / 2 - cardW / 2, cardY - cardH / 2, cardW, cardH, 14);
+
+      const badge = this.add.text(width / 2, cardY - 48, "✅  LOGGED IN", {
+        fontSize: "12px", color: "#7CFFC4", fontStyle: "bold", letterSpacing: 1
       }).setOrigin(0.5);
 
-      const pseudoLabel = this.add.text(width / 2, 285, pseudo, {
-        fontSize: "28px", color: "#00FF99", fontStyle: "bold"
+      const pseudoLabel = this.add.text(width / 2, cardY - 18, pseudo, {
+        fontSize: "26px", color: UI.textMain, fontStyle: "bold"
       }).setOrigin(0.5);
 
-      const infoLabel = this.add.text(width / 2, 318, "Your progress is saved 🌐", {
-        fontSize: "16px", color: "#88ff88"
+      const infoLabel = this.add.text(width / 2, cardY + 12, "Progress saved to the cloud 🌐", {
+        fontSize: "14px", color: UI.textFaint
       }).setOrigin(0.5);
 
-      const logoutBtn = this.add.text(width / 2, 365, "LOG OUT", {
-        fontSize: "20px", color: "#ffffff",
-        backgroundColor: "#AA4400", padding: { x: 20, y: 10 }
-      }).setOrigin(0.5).setInteractive();
+      const logoutBtn = this.add.text(width / 2, cardY + 52, "LOG OUT", {
+        fontSize: "16px", color: "#ffffff", fontStyle: "bold",
+        backgroundColor: "#AA4400", padding: { x: 18, y: 9 }
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
       logoutBtn.on("pointerover", () => logoutBtn.setStyle({ backgroundColor: "#CC5500" }));
       logoutBtn.on("pointerout",  () => logoutBtn.setStyle({ backgroundColor: "#AA4400" }));
@@ -316,28 +442,34 @@ export class SettingsScene extends Phaser.Scene {
         this._buildAccountBlock();
       });
 
-      this._accountContainer.add([connectedLabel, pseudoLabel, infoLabel, logoutBtn]);
+      this._accountContainer.add([card, badge, pseudoLabel, infoLabel, logoutBtn]);
 
     } else if (user && user.isAnonymous) {
       // ── Vue compte anonyme (pseudo localStorage) ─────────
       const pseudo = getPseudo() || "Player";
+      const cardY = 300, cardW = 460, cardH = 158;
 
-      const anonLabel = this.add.text(width / 2, 248, `👤 Player: ${pseudo}`, {
-        fontSize: "22px", color: "#00CCFF", fontStyle: "bold"
+      const card = this.add.graphics()
+        .fillStyle(UI.trackBg, 0.7).lineStyle(1, UI.cardBorder, 1)
+        .fillRoundedRect(width / 2 - cardW / 2, cardY - cardH / 2, cardW, cardH, 14)
+        .strokeRoundedRect(width / 2 - cardW / 2, cardY - cardH / 2, cardW, cardH, 14);
+
+      const anonLabel = this.add.text(width / 2, cardY - 52, `👤  ${pseudo}`, {
+        fontSize: "22px", color: "#33D6FF", fontStyle: "bold"
       }).setOrigin(0.5);
 
-      const infoLabel = this.add.text(width / 2, 280, "Progress saved on this device 💾", {
-        fontSize: "15px", color: "#aaaaaa"
+      const infoLabel = this.add.text(width / 2, cardY - 22, "Progress saved on this device 💾", {
+        fontSize: "14px", color: UI.textMuted
       }).setOrigin(0.5);
 
-      const hint = this.add.text(width / 2, 308, "Create an account to play on multiple devices.", {
-        fontSize: "14px", color: "#666666"
+      const hint = this.add.text(width / 2, cardY + 2, "Create an account to play on multiple devices.", {
+        fontSize: "13px", color: UI.textFaint
       }).setOrigin(0.5);
 
-      const linkBtn = this.add.text(width / 2 - 110, 355, "CREATE ACCOUNT", {
-        fontSize: "18px", color: "#ffffff",
+      const linkBtn = this.add.text(width / 2 - 108, cardY + 46, "CREATE ACCOUNT", {
+        fontSize: "16px", color: "#ffffff", fontStyle: "bold",
         backgroundColor: "#006633", padding: { x: 14, y: 10 }
-      }).setOrigin(0.5).setInteractive();
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
       linkBtn.on("pointerover", () => linkBtn.setStyle({ backgroundColor: "#008844" }));
       linkBtn.on("pointerout",  () => linkBtn.setStyle({ backgroundColor: "#006633" }));
       linkBtn.on("pointerdown", () => {
@@ -345,10 +477,10 @@ export class SettingsScene extends Phaser.Scene {
         this._showLinkAccountPopup();
       });
 
-      const loginBtn = this.add.text(width / 2 + 110, 355, "LOG IN", {
-        fontSize: "18px", color: "#ffffff",
+      const loginBtn = this.add.text(width / 2 + 108, cardY + 46, "LOG IN", {
+        fontSize: "16px", color: "#ffffff", fontStyle: "bold",
         backgroundColor: "#007ACC", padding: { x: 14, y: 10 }
-      }).setOrigin(0.5).setInteractive();
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
       loginBtn.on("pointerover", () => loginBtn.setStyle({ backgroundColor: "#0099FF" }));
       loginBtn.on("pointerout",  () => loginBtn.setStyle({ backgroundColor: "#007ACC" }));
       loginBtn.on("pointerdown", () => {
@@ -356,18 +488,25 @@ export class SettingsScene extends Phaser.Scene {
         this._showLoginPopup();
       });
 
-      this._accountContainer.add([anonLabel, infoLabel, hint, linkBtn, loginBtn]);
+      this._accountContainer.add([card, anonLabel, infoLabel, hint, linkBtn, loginBtn]);
 
     } else {
       // ── Vue invité pur (fallback) ─────────────────────────
-      const guestLabel = this.add.text(width / 2, 250, "Guest mode — progress not saved", {
-        fontSize: "16px", color: "#ffaa44"
+      const cardY = 300, cardW = 460, cardH = 150;
+
+      const card = this.add.graphics()
+        .fillStyle(UI.trackBg, 0.7).lineStyle(1, 0x5A4420, 1)
+        .fillRoundedRect(width / 2 - cardW / 2, cardY - cardH / 2, cardW, cardH, 14)
+        .strokeRoundedRect(width / 2 - cardW / 2, cardY - cardH / 2, cardW, cardH, 14);
+
+      const guestLabel = this.add.text(width / 2, cardY - 48, "⚠  Guest mode — progress not saved", {
+        fontSize: "15px", color: "#FFB454", fontStyle: "bold"
       }).setOrigin(0.5);
 
-      const loginBtn = this.add.text(width / 2 - 110, 295, "LOG IN", {
-        fontSize: "20px", color: "#ffffff",
+      const loginBtn = this.add.text(width / 2 - 108, cardY - 4, "LOG IN", {
+        fontSize: "18px", color: "#ffffff", fontStyle: "bold",
         backgroundColor: "#007ACC", padding: { x: 16, y: 10 }
-      }).setOrigin(0.5).setInteractive();
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
       loginBtn.on("pointerover", () => loginBtn.setStyle({ backgroundColor: "#0099FF" }));
       loginBtn.on("pointerout",  () => loginBtn.setStyle({ backgroundColor: "#007ACC" }));
       loginBtn.on("pointerdown", () => {
@@ -375,10 +514,10 @@ export class SettingsScene extends Phaser.Scene {
         this._showLoginPopup();
       });
 
-      const registerBtn = this.add.text(width / 2 + 110, 295, "SIGN UP", {
-        fontSize: "20px", color: "#ffffff",
+      const registerBtn = this.add.text(width / 2 + 108, cardY - 4, "SIGN UP", {
+        fontSize: "18px", color: "#ffffff", fontStyle: "bold",
         backgroundColor: "#006633", padding: { x: 16, y: 10 }
-      }).setOrigin(0.5).setInteractive();
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
       registerBtn.on("pointerover", () => registerBtn.setStyle({ backgroundColor: "#008844" }));
       registerBtn.on("pointerout",  () => registerBtn.setStyle({ backgroundColor: "#006633" }));
       registerBtn.on("pointerdown", () => {
@@ -386,11 +525,11 @@ export class SettingsScene extends Phaser.Scene {
         this._showRegisterPopup();
       });
 
-      const hint = this.add.text(width / 2, 350, "Créez un compte pour sauvegarder votre progression\net y accéder depuis n'importe quel appareil.", {
-        fontSize: "15px", color: "#888888", align: "center"
+      const hint = this.add.text(width / 2, cardY + 44, "Créez un compte pour sauvegarder votre progression\net y accéder depuis n'importe quel appareil.", {
+        fontSize: "13px", color: UI.textFaint, align: "center"
       }).setOrigin(0.5);
 
-      this._accountContainer.add([guestLabel, loginBtn, registerBtn, hint]);
+      this._accountContainer.add([card, guestLabel, loginBtn, registerBtn, hint]);
     }
   }
 
