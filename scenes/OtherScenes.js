@@ -1193,7 +1193,17 @@ export class ObjectivesScene extends Phaser.Scene {
   constructor() { super("ObjectivesScene"); }
 
   async create() {
-    const { width } = this.scale;
+    const { width, height } = this.scale;
+
+    // ── Fond assorti au thème général ────────────────────────
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x0A101C, 0x0A101C, 0x141C30, 0x141C30, 1);
+    bg.fillRect(0, 0, width, height);
+    bg.setDepth(-20);
+    const glow = this.add.graphics();
+    glow.fillStyle(0x00BFFF, 0.05);
+    glow.fillCircle(width / 2, -20, width * 0.65);
+    glow.setDepth(-19);
 
     let pd;
     try {
@@ -1204,62 +1214,124 @@ export class ObjectivesScene extends Phaser.Scene {
 
     await checkObjectives(pd);
 
-    this.add.text(width / 2, 60, "OBJECTIVES", { fontSize: "40px", color: "#ffffff" }).setOrigin(0.5);
+    this.add.text(width / 2, 40, "OBJECTIVES", {
+      fontSize: "30px", color: "#F2F5FA", fontStyle: "bold", letterSpacing: 2
+    }).setOrigin(0.5);
+    this.add.rectangle(width / 2, 60, 46, 3, 0x00BFFF).setOrigin(0.5);
 
     const objectives = [
-      { label: "☠️ Die 1000 times",      progress: pd.dead  ?? 0, goal: 1000, skin: "000000", color: 0x000000 },
-      { label: "🔪 Make 500 kills",       progress: pd.kill  ?? 0, goal:  500, skin: "FF0000", color: 0xFF0000 },
-      { label: "🎮 Complete 1000 levels", progress: pd.party ?? 0, goal: 1000, skin: "A0522D", color: 0xA0522D },
-      { label: "🔗 Create an account",    progress: null,           goal: null, skin: "7E7D82", color: 0x7E7D82 }
+      { label: "☠️  Die 1000 times",      progress: pd.dead  ?? 0, goal: 1000, skin: "000000", color: 0x000000 },
+      { label: "🔪  Make 500 kills",       progress: pd.kill  ?? 0, goal:  500, skin: "FF0000", color: 0xFF0000 },
+      { label: "🎮  Complete 1000 levels", progress: pd.party ?? 0, goal: 1000, skin: "A0522D", color: 0xA0522D },
+      { label: "🔗  Create an account",    progress: null,           goal: null, skin: "7E7D82", color: 0x7E7D82 }
     ];
 
-    let y = 150;
+    const cardW = Math.min(width - 60, 640);
+    const cardX = width / 2 - cardW / 2;
+    const cardH = 84, cardGap = 14;
+    let y = 90;
+
     objectives.forEach(obj => {
       const unlocked = !!(pd.skins && pd.skins[obj.skin]);
 
-      this.add.text(100, y, obj.label, { fontSize: "22px", color: "#ffffff" });
+      // ── Carte ─────────────────────────────────────────────
+      this.add.graphics()
+        .fillStyle(0x141C2E, 0.85)
+        .lineStyle(1, unlocked ? 0x1E4D3A : 0x27344A, 1)
+        .fillRoundedRect(cardX, y, cardW, cardH, 14)
+        .strokeRoundedRect(cardX, y, cardW, cardH, 14);
+
+      const textX = cardX + 22;
+
+      this.add.text(textX, y + 16, obj.label, {
+        fontSize: "17px", color: "#F2F5FA", fontStyle: "bold"
+      }).setOrigin(0, 0.5);
 
       if (obj.goal !== null) {
-        // Objectif à progression
+        // ── Objectif à progression ───────────────────────────
         const percent = Math.min(obj.progress / obj.goal, 1);
-        this.add.rectangle(100, y + 30, 300, 12, 0x444444).setOrigin(0);
-        this.add.rectangle(100, y + 30, 300 * percent, 12, unlocked ? 0x00FF66 : 0xFFD700).setOrigin(0);
-        this.add.text(420, y + 20, `${obj.progress}/${obj.goal}`, { fontSize: "18px", color: "#ffffff" });
+        const barW = cardW - 190;
+        const barY = y + 44;
+
+        this.add.graphics()
+          .fillStyle(0x223046, 1)
+          .fillRoundedRect(textX, barY - 5, barW, 10, 5);
+
+        if (percent > 0) {
+          this.add.graphics()
+            .fillStyle(unlocked ? 0x00D68A : 0x00BFFF, 1)
+            .fillRoundedRect(textX, barY - 5, Math.max(10, barW * percent), 10, 5);
+        }
+
+        this.add.text(textX + barW + 12, barY, `${obj.progress}/${obj.goal}`, {
+          fontSize: "14px", color: "#8592A8"
+        }).setOrigin(0, 0.5);
       } else {
-        // Objectif binaire (créer un compte)
-        const statusTxt = unlocked ? "✅ Completed!" : "➡ Sign in or create an account";
-        this.add.text(100, y + 28, statusTxt, {
-          fontSize: "16px", color: unlocked ? "#00FF66" : "#aaaaaa"
-        });
+        // ── Objectif binaire (créer un compte) ───────────────
+        const statusTxt = unlocked ? "✅  Completed!" : "➡  Sign in or create an account";
+        this.add.text(textX, y + 46, statusTxt, {
+          fontSize: "14px", color: unlocked ? "#00D68A" : "#8592A8"
+        }).setOrigin(0, 0.5);
       }
 
-      this.add.rectangle(600, y + 20, 40, 40, obj.color);
+      // ── Skin swatch ───────────────────────────────────────
+      const swatchX = cardX + cardW - 150, swatchY = y + cardH / 2;
+      this.add.graphics()
+        .fillStyle(0x0A101C, 1)
+        .lineStyle(2, unlocked ? 0x00D68A : 0x27344A, 1)
+        .fillRoundedRect(swatchX - 20, swatchY - 20, 40, 40, 10)
+        .strokeRoundedRect(swatchX - 20, swatchY - 20, 40, 40, 10);
+      this.add.graphics()
+        .fillStyle(obj.color, unlocked ? 1 : 0.35)
+        .fillRoundedRect(swatchX - 15, swatchY - 15, 30, 30, 7);
+      if (!unlocked) {
+        this.add.text(swatchX, swatchY, "🔒", { fontSize: "16px" }).setOrigin(0.5);
+      }
 
+      // ── Bouton Select / Locked ────────────────────────────
+      const btnX = cardX + cardW - 34, btnY = y + cardH / 2, btnW = 96, btnH = 34;
       if (unlocked) {
         const currentColor = pd.colorPlayer ?? colorPlayer;
         const isSelected   = currentColor === obj.color;
-        const select = this.add.text(660, y + 10, isSelected ? "Selected" : "Select", {
-          fontSize: "18px", color: isSelected ? "#00FF66" : "#ffffff",
-          backgroundColor: "#ADD8E6", padding: { x: 10, y: 5 }
-        }).setInteractive();
 
-        select.on("pointerdown", async () => {
+        const selBg = this.add.graphics();
+        const drawSel = (sel) => selBg.clear()
+          .fillStyle(sel ? 0x00D68A : 0x00BFFF, 1)
+          .fillRoundedRect(btnX - btnW, btnY - btnH / 2, btnW, btnH, 10);
+        drawSel(isSelected);
+
+        const selLabel = this.add.text(btnX - btnW / 2, btnY, isSelected ? "Selected" : "Select", {
+          fontSize: "14px", color: "#04202B", fontStyle: "bold"
+        }).setOrigin(0.5);
+
+        const selHit = this.add.rectangle(btnX - btnW / 2, btnY, btnW, btnH, 0x000000, 0)
+          .setInteractive({ useHandCursor: true });
+
+        selHit.on("pointerdown", async () => {
+          if (selLabel.text === "Selected") return;
           this.sound.play("select", { volume: gameVolume });
           setColorPlayer(obj.color);
           pd.colorPlayer = obj.color;
           await save.color(obj.color);
           await updateLeaderboardColor(obj.color);
-          select.setText("Selected").setColor("#00FF66");
+          selLabel.setText("Selected");
+          drawSel(true);
         });
       } else {
-        this.add.text(660, y + 10, "🔒", { fontSize: "22px" });
+        this.add.text(btnX - btnW / 2, btnY, "🔒 Locked", {
+          fontSize: "14px", color: "#5D6980"
+        }).setOrigin(0.5);
       }
-      y += 100;
+
+      y += cardH + cardGap;
     });
 
-    const back = this.add.text(10, 10, "←", {
-      fontSize: "24px", backgroundColor: "#00BFFF", padding: { x: 10, y: 5 }
-    }).setInteractive();
+    const back = this.add.text(18, 18, "←", {
+      fontSize: "22px", color: "#ffffff", fontStyle: "bold",
+      backgroundColor: "#182338", padding: { x: 11, y: 5 }
+    }).setOrigin(0, 0).setInteractive({ useHandCursor: true });
+    back.on("pointerover", () => back.setStyle({ backgroundColor: "#22314A" }));
+    back.on("pointerout",  () => back.setStyle({ backgroundColor: "#182338" }));
     back.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
       this.scene.start("MenuScene");
