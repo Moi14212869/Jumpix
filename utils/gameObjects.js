@@ -268,6 +268,20 @@ function ensureLavaAnimation(scene) {
   });
 }
 
+function getLavaBubbleParticleTexture(scene) {
+  const key = "lava-bubble-particle";
+  if (!scene.textures.exists(key)) {
+    const gfx = scene.add.graphics();
+    gfx.fillStyle(0xFFA500, 1);
+    gfx.fillCircle(3, 3, 3);
+    gfx.fillStyle(0xFFFF66, 0.85);
+    gfx.fillCircle(3, 3, 1.3);
+    gfx.generateTexture(key, 6, 6);
+    gfx.destroy();
+  }
+  return key;
+}
+
 export function createLavaBlock(scene, x, y) {
   ensureLavaAnimation(scene);
 
@@ -278,6 +292,34 @@ export function createLavaBlock(scene, x, y) {
   // Décale le point de départ de l'animation au hasard pour que plusieurs
   // blocs de lave côte à côte ne pulsent pas tous en même temps.
   block.anims.setProgress(Math.random());
+
+  // ── Bulles décoratives qui s'échappent de temps en temps ──
+  // Purement visuel (pas de collision) : une petite bulle orange qui
+  // s'élève depuis la surface et s'estompe, à intervalle irrégulier,
+  // pour donner l'impression que la lave "crache" de temps en temps.
+  const size      = 40;
+  const bubbleKey = getLavaBubbleParticleTexture(scene);
+  const emitter = scene.add.particles(0, 0, bubbleKey, {
+    x:        { min: x + 6, max: x + size - 6 },
+    y:        y + 2,
+    lifespan: { min: 500, max: 900 },
+    speedY:   { min: -55, max: -95 },
+    speedX:   { min: -12, max: 12 },
+    scale:    { start: 1, end: 0 },
+    alpha:    { start: 0.9, end: 0 },
+    quantity: 1,
+    emitting: false, // pas de flux continu, on déclenche nous-mêmes chaque bulle
+  });
+
+  const scheduleNextBubble = () => {
+    const delay = Phaser.Math.Between(600, 2400); // intervalle irrégulier
+    scene.time.delayedCall(delay, () => {
+      if (!block.active) { emitter.destroy(); return; } // bloc détruit entretemps
+      emitter.explode(1);
+      scheduleNextBubble();
+    });
+  };
+  scheduleNextBubble();
 
   return block;
 }
