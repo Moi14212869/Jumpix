@@ -126,14 +126,21 @@ export class World2 extends Phaser.Scene {
     });
 
     // Level9 débloqué si Level8 terminé, puis déblocage 1 par 1
-    const allW2 = ["Level8", "Level9", "Level10", "Level11", "Level12"];
+    const allW2 = [
+      "Level8", "Level9", "Level10", "Level11", "Level12",
+      "Level13", "Level14", "Level15", "Level16"
+    ];
     const col1W2 = [
       { nom: "➡ Level 9",  scene: "Level9"  },
       { nom: "➡ Level 10", scene: "Level10" },
-    ];
-    const col2W2 = [
       { nom: "➡ Level 11", scene: "Level11" },
       { nom: "➡ Level 12", scene: "Level12" }
+    ];
+    const col2W2 = [
+      { nom: "➡ Level 13", scene: "Level13" },
+      { nom: "➡ Level 14", scene: "Level14" },
+      { nom: "➡ Level 15", scene: "Level15" },
+      { nom: "➡ Level 16", scene: "Level16" }
     ];
     renderLevelList(this, col1W2, 200, 260, allW2);
     renderLevelList(this, col2W2, 550, 260, allW2);
