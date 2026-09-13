@@ -31,7 +31,8 @@ export const DEFAULTS = {
 //    classements lors d'une migration ou d'une mise à jour) ──
 const ALL_LEVELS = [
   "Level1","Level2","Level3","Level4","Level5",
-  "Level6","Level7","Level8","Level9","Level10","Level11","Level12"
+  "Level6","Level7","Level8","Level9","Level10","Level11","Level12",
+  "Level13","Level14","Level15","Level16"
 ];
 
 // ── Référence document du joueur connecté ────────────────
@@ -284,7 +285,6 @@ export async function updateLeaderboardPseudo(pseudo) {
     }
   }));
 }
-
 // ── Stats publiques d'un joueur (vue depuis le leaderboard) ──
 export async function loadPublicPlayerStats(uid) {
   const ref  = doc(db, "players", uid);
