@@ -298,9 +298,9 @@ export function createExitPortalSpiral(scene, x, y) {
 
   if (!scene.textures.exists(key)) {
     const gfx = scene.add.graphics();
-    gfx.fillStyle(0x3399FF, 1);
+    gfx.fillStyle(0x0000FF, 1);
     gfx.fillCircle(3, 3, 3);
-    gfx.fillStyle(0xBFEFFF, 0.9);
+    gfx.fillStyle(0x9999FF, 0.9);
     gfx.fillCircle(3, 3, 1.3);
     gfx.generateTexture(key, 6, 6);
     gfx.destroy();
@@ -313,7 +313,6 @@ export function createExitPortalSpiral(scene, x, y) {
 
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const sprite = scene.add.image(x, y, key);
-    sprite.setBlendMode(Phaser.BlendModes.ADD);
     particles.push({
       sprite,
       baseAngle:    (i / PARTICLE_COUNT) * Math.PI * 2,
