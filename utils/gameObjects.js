@@ -169,6 +169,48 @@ export function createRedTriangle(scene, x, y, orientation = "up") {
 
   return triangle;
 }
+
+// ── Lave ──────────────────────────────────────────────────
+// Bloc statique 40x40. Contrairement aux plateformes, il est toujours
+// mortel au contact (voir le collider ajouté dans LevelScene). L'origine
+// est (0,0) — comme les plateformes — donc (x, y) désigne le coin
+// haut-gauche du bloc.
+function getLavaBlockTexture(scene) {
+  const size = 40;
+  const key  = "lava-block";
+
+  if (!scene.textures.exists(key)) {
+    const gfx = scene.add.graphics();
+    // Base sombre
+    gfx.fillStyle(0x8B1A00, 1);
+    gfx.fillRect(0, 0, size, size);
+    // Croûte incandescente sur le dessus
+    gfx.fillStyle(0xFF4500, 1);
+    gfx.fillRect(0, 0, size, 6);
+    // Bulles de lave
+    gfx.fillStyle(0xFFA500, 0.9);
+    gfx.fillCircle(10, 22, 4);
+    gfx.fillCircle(29, 14, 3);
+    gfx.fillCircle(19, 31, 3.5);
+    gfx.fillStyle(0xFFFF66, 0.85);
+    gfx.fillCircle(10, 22, 1.5);
+    gfx.fillCircle(29, 14, 1.2);
+    gfx.fillCircle(19, 31, 1.3);
+    gfx.generateTexture(key, size, size);
+    gfx.destroy();
+  }
+
+  return key;
+}
+
+export function createLavaBlock(scene, x, y) {
+  const key   = getLavaBlockTexture(scene);
+  const block = scene.lavaBlocks.create(x, y, key);
+  block.setOrigin(0, 0);
+  block.refreshBody();
+  return block;
+}
+
 // ── Ennemis mobiles ───────────────────────────────────────
 export function createRedCircle(scene, x, y, riseAmount = 100, direction = "up") {
   const radius = 10;
@@ -243,6 +285,70 @@ export function createBlueCircle(scene, x, y) {
   });
 
   return circle;
+}
+
+// ── Particules en spirale autour de la sortie ─────────────
+// Effet purement visuel : un halo de petites particules bleues qui
+// tournent en continu autour du portail, avec un rayon qui oscille
+// pour donner une impression de spirale vivante (aucune interaction
+// physique avec le joueur, c'est le cercle bleu lui-même qui déclenche
+// la sortie).
+export function createExitPortalSpiral(scene, x, y) {
+  const key = "portal-spark";
+
+  if (!scene.textures.exists(key)) {
+    const gfx = scene.add.graphics();
+    gfx.fillStyle(0x3399FF, 1);
+    gfx.fillCircle(3, 3, 3);
+    gfx.fillStyle(0xBFEFFF, 0.9);
+    gfx.fillCircle(3, 3, 1.3);
+    gfx.generateTexture(key, 6, 6);
+    gfx.destroy();
+  }
+
+  const PARTICLE_COUNT = 10;
+  const MIN_RADIUS = 14;
+  const MAX_RADIUS = 34;
+  const particles = [];
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const sprite = scene.add.image(x, y, key);
+    sprite.setBlendMode(Phaser.BlendModes.ADD);
+    particles.push({
+      sprite,
+      baseAngle:    (i / PARTICLE_COUNT) * Math.PI * 2,
+      speed:        1.2 + (i % 3) * 0.2,   // vitesses légèrement différentes → effet de spirale
+      radiusOffset: (i % 4) * 5,           // rayons échelonnés
+      phase:        Math.random() * Math.PI * 2,
+    });
+  }
+
+  // Un seul minuteur pilote toutes les particules pour rester léger.
+  const timer = scene.time.addEvent({
+    delay: 16,
+    loop: true,
+    callback: () => {
+      const t = scene.time.now / 1000;
+      particles.forEach(p => {
+        const angle  = p.baseAngle + t * p.speed;
+        const pulse  = (Math.sin(t * 0.9 + p.phase) + 1) / 2; // 0..1
+        const radius = MIN_RADIUS + p.radiusOffset + pulse * (MAX_RADIUS - MIN_RADIUS - p.radiusOffset);
+        p.sprite.x = x + Math.cos(angle) * radius;
+        p.sprite.y = y + Math.sin(angle) * radius * 0.6; // légèrement aplati pour un effet de profondeur
+        p.sprite.setAlpha(0.35 + pulse * 0.65);
+        p.sprite.setScale(0.6 + pulse * 0.8);
+      });
+    }
+  });
+
+  // Nettoyage si la scène est stoppée/redémarrée avant la fin (ex : mort
+  // ou "retry" sur un niveau contenant plusieurs sorties, s'il y en a).
+  scene.events.once("shutdown", () => {
+    timer.remove();
+    particles.forEach(p => p.sprite.destroy());
+  });
+
+  return particles.map(p => p.sprite);
 }
 
 // ── Effets visuels ────────────────────────────────────────
