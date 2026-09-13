@@ -151,9 +151,18 @@ export class LevelScene extends Phaser.Scene {
       this.sound.play("jump", { volume: gameVolume });
     }, null, this);
 
-    this.physics.add.overlap(this.player, this.redSquares, (player, square) => {      const verticalDiff = (player.y + player.displayHeight / 2) - (square.y - square.displayHeight / 2);
-
-      if (verticalDiff < 10 && player.body.velocity.y > 0) {
+    // Collision avec les carrés rouges : on utilise un vrai collider (avec séparation
+    // physique) plutôt qu'un simple overlap. Avec overlap(), la détection ne se faisait
+    // qu'une fois par frame *après* que le joueur ait déjà pénétré dans le carré — et un
+    // seuil fixe de 10px pour dire "atterrissage" ne suffisait plus dès que le joueur
+    // tombait vite (après un double saut, ou une longue chute qui accélère la vélocité) :
+    // en un seul pas de physique, le joueur pouvait s'enfoncer de bien plus de 10px avant
+    // que la vérification ne se déclenche, ce qui faisait basculer par erreur sur la
+    // branche "collision latérale" → mort, alors qu'il s'agissait bien d'un atterrissage.
+    // Le collider calcule une vraie séparation et expose body.touching, qui reste fiable
+    // quelle que soit la vitesse du joueur.
+    this.physics.add.collider(this.player, this.redSquares, (player, square) => {
+      if (player.body.touching.down && !player.body.touching.left && !player.body.touching.right) {
         // Saut sur le carré — enregistre un kill
         const newKill = kill + 1;
         setKill(newKill);
