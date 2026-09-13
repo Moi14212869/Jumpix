@@ -3,7 +3,9 @@
 // =========================================================
 
 // ── Plateformes ───────────────────────────────────────────
-export function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = 0xA0522D) {
+const DEFAULT_PLATFORM_COLOR = 0xA0522D;
+
+export function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = DEFAULT_PLATFORM_COLOR) {
   const tileSize    = 40;
   const blocksPerRow = Math.floor(widthInPx  / tileSize);
   const blocksPerCol = Math.floor(heightInPx / tileSize);
@@ -15,12 +17,24 @@ export function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = 
       gfx.fillStyle(color, 1);
       gfx.fillRect(0, 0, tileSize, tileSize);
 
-      if (isWorld2 && row === 0) {
+      // La fine couche de neige (niveaux dont nextScene === "World2") ne
+      // s'applique qu'aux plateformes qui gardent leur couleur par défaut.
+      // Une plateforme avec une couleur personnalisée dans le JSON du niveau
+      // garde son apparence d'origine, même dans un niveau du World 2.
+      const hasSnow = isWorld2 && row === 0 && color === DEFAULT_PLATFORM_COLOR;
+      if (hasSnow) {
         gfx.fillStyle(0xffffff, 1);
         gfx.fillRect(0, 0, tileSize, 8);
       }
 
-      const key = `block-${x + col * tileSize}-${y + row * tileSize}-${isWorld2 ? "snow" : "normal"}`;
+      // La couleur fait partie de la clé : le gestionnaire de textures de
+      // Phaser est partagé entre toutes les scènes/niveaux de la partie, donc
+      // sans ça, une plateforme par défaut (avec neige) générée à une
+      // coordonnée donnée pourrait voir sa texture réutilisée par erreur pour
+      // une plateforme de couleur personnalisée placée au même endroit dans
+      // un autre niveau (et inversement).
+      const colorTag = color.toString(16).padStart(6, "0");
+      const key = `block-${x + col * tileSize}-${y + row * tileSize}-${hasSnow ? "snow" : "normal"}-${colorTag}`;
       gfx.generateTexture(key, tileSize, tileSize);
       gfx.destroy();
 
