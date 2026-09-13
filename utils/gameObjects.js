@@ -5,6 +5,41 @@
 // ── Plateformes ───────────────────────────────────────────
 const DEFAULT_PLATFORM_COLOR = 0xA0522D;
 
+// Vérifie s'il existe déjà un bloc de plateforme dont le coin haut-gauche
+// se trouve exactement à (blockX, blockY - 40), c'est-à-dire juste au-dessus
+// du bloc situé à (blockX, blockY).
+function hasPlatformAbove(scene, blockX, blockY) {
+  let found = false;
+  scene.platforms.children.iterate((child) => {
+    if (child && child.x === blockX && child.y === blockY - 40) {
+      found = true;
+    }
+  });
+  return found;
+}
+
+// Génère (ou réutilise) la texture d'un bloc de plateforme, avec ou sans
+// couche de neige, et renvoie sa clé.
+function getPlatformBlockTexture(scene, color, hasSnow) {
+  const tileSize = 40;
+  const colorTag = color.toString(16).padStart(6, "0");
+  const key = `block-${hasSnow ? "snow" : "normal"}-${colorTag}`;
+
+  if (!scene.textures.exists(key)) {
+    const gfx = scene.add.graphics();
+    gfx.fillStyle(color, 1);
+    gfx.fillRect(0, 0, tileSize, tileSize);
+    if (hasSnow) {
+      gfx.fillStyle(0xffffff, 1);
+      gfx.fillRect(0, 0, tileSize, 8);
+    }
+    gfx.generateTexture(key, tileSize, tileSize);
+    gfx.destroy();
+  }
+
+  return key;
+}
+
 export function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = DEFAULT_PLATFORM_COLOR) {
   const tileSize    = 40;
   const blocksPerRow = Math.floor(widthInPx  / tileSize);
@@ -13,36 +48,48 @@ export function createPlatform(scene, x, y, widthInPx, heightInPx = 40, color = 
 
   for (let row = 0; row < blocksPerCol; row++) {
     for (let col = 0; col < blocksPerRow; col++) {
-      const gfx = scene.add.graphics();
-      gfx.fillStyle(color, 1);
-      gfx.fillRect(0, 0, tileSize, tileSize);
+      const blockX = x + col * tileSize;
+      const blockY = y + row * tileSize;
 
-      // La fine couche de neige (niveaux dont nextScene === "World2") ne
-      // s'applique qu'aux plateformes qui gardent leur couleur par défaut.
-      // Une plateforme avec une couleur personnalisée dans le JSON du niveau
-      // garde son apparence d'origine, même dans un niveau du World 2.
-      const hasSnow = isWorld2 && row === 0 && color === DEFAULT_PLATFORM_COLOR;
-      if (hasSnow) {
-        gfx.fillStyle(0xffffff, 1);
-        gfx.fillRect(0, 0, tileSize, 8);
-      }
+      // On crée d'abord le bloc SANS neige. La décision définitive d'ajouter
+      // (ou non) la couche de neige est reportée à finalizeSnowLayer(scene),
+      // appelée une fois que TOUTES les plateformes du niveau ont été créées.
+      // Cela évite tout problème lié à l'ordre de création des plateformes
+      // dans le JSON du niveau (une plateforme créée avant celle qui la
+      // recouvre ne doit pas afficher de neige, même si, au moment de sa
+      // propre création, la plateforme du dessus n'existait pas encore).
+      const key = getPlatformBlockTexture(scene, color, false);
 
-      // La couleur fait partie de la clé : le gestionnaire de textures de
-      // Phaser est partagé entre toutes les scènes/niveaux de la partie, donc
-      // sans ça, une plateforme par défaut (avec neige) générée à une
-      // coordonnée donnée pourrait voir sa texture réutilisée par erreur pour
-      // une plateforme de couleur personnalisée placée au même endroit dans
-      // un autre niveau (et inversement).
-      const colorTag = color.toString(16).padStart(6, "0");
-      const key = `block-${x + col * tileSize}-${y + row * tileSize}-${hasSnow ? "snow" : "normal"}-${colorTag}`;
-      gfx.generateTexture(key, tileSize, tileSize);
-      gfx.destroy();
-
-      const block = scene.platforms.create(x + col * tileSize, y + row * tileSize, key);
+      const block = scene.platforms.create(blockX, blockY, key);
       block.setOrigin(0, 0);
       block.refreshBody();
+
+      // Un bloc n'est "candidat" à la neige que s'il est sur la rangée du
+      // haut de SA plateforme, dans un niveau du World 2, avec la couleur
+      // par défaut, et pas complètement en haut de l'écran.
+      block.isSnowCandidate = isWorld2 && row === 0 && blockY !== 0 && color === DEFAULT_PLATFORM_COLOR;
+      block.platformColor   = color;
     }
   }
+}
+
+// À appeler UNE FOIS que toutes les plateformes d'un niveau ont été créées
+// (donc après tous les appels à createPlatform pour ce niveau). Parcourt les
+// blocs candidats à la neige et leur applique la couche blanche seulement
+// s'ils ne sont pas recouverts par une autre plateforme juste au-dessus.
+export function finalizeSnowLayer(scene) {
+  scene.platforms.children.iterate((block) => {
+    if (!block || !block.isSnowCandidate) return;
+
+    const isExposed = !hasPlatformAbove(scene, block.x, block.y);
+    if (isExposed) {
+      const key = getPlatformBlockTexture(scene, block.platformColor, true);
+      block.setTexture(key);
+    }
+
+    // Le tag n'est plus utile une fois la décision prise.
+    block.isSnowCandidate = false;
+  });
 }
 
 export function createIcePlatform(scene, x, y, widthInPx, heightInPx = 40) {
