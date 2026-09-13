@@ -210,12 +210,31 @@ function buildLavaFrames(scene) {
     gfx.fillTriangle(4, size, 16, 20, 24, size);
     gfx.fillTriangle(26, size, 34, 18, 40, size);
 
-    // Croûte incandescente sur le dessus, hauteur qui pulse légèrement
-    const crustH = 5 + Math.sin(t) * 1.5;
+    // Croûte incandescente : bord irrégulier et mouvant plutôt qu'une
+    // bande rectiligne, pour un rendu plus organique.
+    const CRUST_SAMPLES = 9;
+    const crustPoints = [];
+    for (let s = 0; s <= CRUST_SAMPLES; s++) {
+      const sx = (s / CRUST_SAMPLES) * size;
+      const h = 6
+        + Math.sin(sx * 0.35 + t) * 2.2
+        + Math.sin(sx * 0.13 - t * 1.6 + 1.7) * 1.4;
+      crustPoints.push({ x: sx, y: Math.max(2, h) });
+    }
+
     gfx.fillStyle(0xFF4500, 1);
-    gfx.fillRect(0, 0, size, crustH);
-    gfx.fillStyle(0xFF7A00, 0.6);
-    gfx.fillRect(0, crustH - 2, size, 2);
+    gfx.beginPath();
+    gfx.moveTo(0, 0);
+    crustPoints.forEach(p => gfx.lineTo(p.x, p.y));
+    gfx.lineTo(size, 0);
+    gfx.closePath();
+    gfx.fillPath();
+
+    // Liseré plus clair sur la crête pour accentuer le relief
+    gfx.lineStyle(1, 0xFF7A00, 0.8);
+    gfx.beginPath();
+    crustPoints.forEach((p, i) => i === 0 ? gfx.moveTo(p.x, p.y) : gfx.lineTo(p.x, p.y));
+    gfx.strokePath();
 
     // Bulles qui remontent et respirent (rayon + luminosité qui varient)
     bubbles.forEach(b => {
