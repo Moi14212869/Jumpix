@@ -181,7 +181,7 @@ export function createRedTriangle(scene, x, y, orientation = "up") {
 // pré-génère quelques images fixes où la croûte et les bulles sont
 // légèrement décalées, puis on les enchaîne avec une animation Phaser
 // classique (comme un sprite-sheet, mais avec des textures séparées).
-const LAVA_FRAME_COUNT = 6;
+const LAVA_FRAME_COUNT = 16;
 
 function buildLavaFrames(scene) {
   const size = 40;
@@ -244,7 +244,7 @@ function ensureLavaAnimation(scene) {
   scene.anims.create({
     key: "lava-bubble",
     frames: frameKeys.map(key => ({ key })),
-    frameRate: 6,
+    frameRate: 10,
     repeat: -1
   });
 }
