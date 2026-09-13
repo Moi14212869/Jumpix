@@ -966,27 +966,107 @@ export class CreditsScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
+    // ── Fond assorti au thème des Settings ───────────────────
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x0A101C, 0x0A101C, 0x141C30, 0x141C30, 1);
+    bg.fillRect(0, 0, width, height);
+    bg.setDepth(-20);
+
+    const glow = this.add.graphics();
+    glow.fillStyle(0x00BFFF, 0.06);
+    glow.fillCircle(width / 2, height / 2, width * 0.6);
+    glow.setDepth(-19);
+
+    // ── Contenu défilant, avec des types pour varier le style ──
+    const L = (text, type = "name") => ({ text, type });
     const credits = [
-      "Credits", "",
-      "A game by", "OneLevel Studio", "",
-      "Producer & Lead Programmer", "Eliott MORBIDELLI", "",
-      "Visual Designer", "Leonie MORBIDELLI", "",
-      "Lead Level Designer", "Eliott MORBIDELLI", "",
-      "Level Designers", "A. MORBIDELLI", "Alix MORBIDELLI", "",
-      "QA Testers", "Maxence ROOS", "", "Communication", "Théodore_68", "",
-      "Sound", "Music :", "\"8bit Music for Game\"", "freesound_community", "",
-      "Thanks for playing!", "", "For Inna"
+      L("CREDITS", "title"),
+      L("", "space"),
+      L("A game by", "header"),
+      L("OneLevel Studio", "studio"),
+      L("", "gap"),
+
+      L("Producer & Lead Programmer", "header"),
+      L("Eliott MORBIDELLI", "name"),
+      L("", "gap"),
+
+      L("Visual Designer", "header"),
+      L("Leonie MORBIDELLI", "name"),
+      L("", "gap"),
+
+      L("Lead Level Designer", "header"),
+      L("Eliott MORBIDELLI", "name"),
+      L("", "gap"),
+
+      L("Level Designers", "header"),
+      L("A. MORBIDELLI", "name"),
+      L("Alix MORBIDELLI", "name"),
+      L("", "gap"),
+
+      L("QA Testers", "header"),
+      L("Maxence ROOS", "name"),
+      L("", "gap"),
+
+      L("Communication", "header"),
+      L("Théodore_68", "name"),
+      L("", "gap"),
+
+      L("Sound", "header"),
+      L("Music :", "small"),
+      L("\"8bit Music for Game\"", "smallItalic"),
+      L("freesound_community", "small"),
+      L("", "space"),
+
+      L("Thanks for playing! 💙", "thanks"),
+      L("", "gap"),
+      L("For Inna", "dedication"),
     ];
+
+    const STYLES = {
+      title:       { fontSize: "40px", color: "#F2F5FA", fontStyle: "bold",   h: 60, letterSpacing: 3 },
+      header:      { fontSize: "14px", color: "#8592A8", fontStyle: "bold",   h: 30, letterSpacing: 2 },
+      studio:      { fontSize: "26px", color: "#33D6FF", fontStyle: "bold",   h: 50 },
+      name:        { fontSize: "24px", color: "#F2F5FA", fontStyle: "normal", h: 44 },
+      small:       { fontSize: "16px", color: "#5D6980", fontStyle: "normal", h: 26 },
+      smallItalic: { fontSize: "16px", color: "#8592A8", fontStyle: "italic", h: 26 },
+      thanks:      { fontSize: "26px", color: "#00D68A", fontStyle: "bold",   h: 46 },
+      dedication:  { fontSize: "18px", color: "#8592A8", fontStyle: "italic", h: 40 },
+      space:       { h: 24 },
+      gap:         { h: 10 },
+    };
 
     this.creditContainer = this.add.container(width / 2, height + 50);
     let offsetY = 0;
-    credits.forEach(line => {
-      const text = this.add.text(0, offsetY, line, {
-        fontSize: "28px", color: "#ffffff"
-      }).setOrigin(0.5);
-      this.creditContainer.add(text);
-      offsetY += 50;
+    credits.forEach(({ text, type }) => {
+      const s = STYLES[type];
+      if (text) {
+        const t = this.add.text(0, offsetY, text, {
+          fontSize: s.fontSize, color: s.color, fontStyle: s.fontStyle,
+          letterSpacing: s.letterSpacing ?? 0, align: "center"
+        }).setOrigin(0.5);
+        this.creditContainer.add(t);
+        if (type === "header") {
+          // petite ligne d'accent sous les titres de section
+          const uw = t.width + 20;
+          this.creditContainer.add(this.add.rectangle(0, offsetY + 18, uw, 1, 0x27344A));
+        }
+      }
+      offsetY += s.h;
     });
+
+    // ── Fondus haut/bas pour masquer l'entrée/sortie du défilement ──
+    const fadeH = 90;
+    const topFade = this.add.graphics().setDepth(5);
+    topFade.fillGradientStyle(0x0A101C, 0x0A101C, 0x0A101C, 0x0A101C, 1, 1, 0, 0);
+    topFade.fillRect(0, 0, width, fadeH);
+    const bottomFade = this.add.graphics().setDepth(5);
+    bottomFade.fillGradientStyle(0x0A101C, 0x0A101C, 0x0A101C, 0x0A101C, 0, 0, 1, 1);
+    bottomFade.fillRect(0, height - fadeH, width, fadeH);
+
+    // ── Indication discrète ──────────────────────────────────
+    this.add.text(width / 2, height - 22, "tap to skip", {
+      fontSize: "13px", color: "#5D6980"
+    }).setOrigin(0.5).setDepth(6);
 
     this.scrollSpeed = 50;
     this.input.once("pointerdown", () => {
