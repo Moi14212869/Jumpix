@@ -175,39 +175,91 @@ export function createRedTriangle(scene, x, y, orientation = "up") {
 // mortel au contact (voir le collider ajouté dans LevelScene). L'origine
 // est (0,0) — comme les plateformes — donc (x, y) désigne le coin
 // haut-gauche du bloc.
-function getLavaBlockTexture(scene) {
-  const size = 40;
-  const key  = "lava-block";
+//
+// Pour donner une impression de lave vivante sans repeindre un Graphics
+// à chaque frame (coûteux si le niveau contient plusieurs blocs), on
+// pré-génère quelques images fixes où la croûte et les bulles sont
+// légèrement décalées, puis on les enchaîne avec une animation Phaser
+// classique (comme un sprite-sheet, mais avec des textures séparées).
+const LAVA_FRAME_COUNT = 6;
 
-  if (!scene.textures.exists(key)) {
+function buildLavaFrames(scene) {
+  const size = 40;
+  const frameKeys = [];
+
+  // Bulles de lave : position de base + un décalage sinusoïdal propre
+  // à chacune, pour qu'elles ne bougent pas toutes en même temps.
+  const bubbles = [
+    { bx: 10, by: 22, r: 4,   phase: 0.0 },
+    { bx: 29, by: 14, r: 3,   phase: 2.1 },
+    { bx: 19, by: 31, r: 3.5, phase: 4.2 },
+    { bx: 33, by: 27, r: 2,   phase: 1.3 },
+  ];
+
+  for (let i = 0; i < LAVA_FRAME_COUNT; i++) {
+    const key = `lava-block-f${i}`;
+    if (scene.textures.exists(key)) { frameKeys.push(key); continue; }
+
+    const t = (i / LAVA_FRAME_COUNT) * Math.PI * 2; // position dans le cycle (boucle parfaite)
     const gfx = scene.add.graphics();
-    // Base sombre
+
+    // Base sombre, craquelée par endroits
     gfx.fillStyle(0x8B1A00, 1);
     gfx.fillRect(0, 0, size, size);
-    // Croûte incandescente sur le dessus
+    gfx.fillStyle(0x6E1200, 0.7);
+    gfx.fillTriangle(4, size, 16, 20, 24, size);
+    gfx.fillTriangle(26, size, 34, 18, 40, size);
+
+    // Croûte incandescente sur le dessus, hauteur qui pulse légèrement
+    const crustH = 5 + Math.sin(t) * 1.5;
     gfx.fillStyle(0xFF4500, 1);
-    gfx.fillRect(0, 0, size, 6);
-    // Bulles de lave
-    gfx.fillStyle(0xFFA500, 0.9);
-    gfx.fillCircle(10, 22, 4);
-    gfx.fillCircle(29, 14, 3);
-    gfx.fillCircle(19, 31, 3.5);
-    gfx.fillStyle(0xFFFF66, 0.85);
-    gfx.fillCircle(10, 22, 1.5);
-    gfx.fillCircle(29, 14, 1.2);
-    gfx.fillCircle(19, 31, 1.3);
+    gfx.fillRect(0, 0, size, crustH);
+    gfx.fillStyle(0xFF7A00, 0.6);
+    gfx.fillRect(0, crustH - 2, size, 2);
+
+    // Bulles qui remontent et respirent (rayon + luminosité qui varient)
+    bubbles.forEach(b => {
+      const wobbleY = Math.sin(t + b.phase) * 2.5;
+      const wobbleX = Math.cos(t + b.phase) * 1.2;
+      const pulse   = (Math.sin(t + b.phase) + 1) / 2; // 0..1
+      const r       = b.r * (0.8 + pulse * 0.4);
+
+      gfx.fillStyle(0xFFA500, 0.85 + pulse * 0.15);
+      gfx.fillCircle(b.bx + wobbleX, b.by + wobbleY, r);
+      gfx.fillStyle(0xFFFF66, 0.7 + pulse * 0.3);
+      gfx.fillCircle(b.bx + wobbleX, b.by + wobbleY, r * 0.4);
+    });
+
     gfx.generateTexture(key, size, size);
     gfx.destroy();
+    frameKeys.push(key);
   }
 
-  return key;
+  return frameKeys;
+}
+
+function ensureLavaAnimation(scene) {
+  if (scene.anims.exists("lava-bubble")) return;
+  const frameKeys = buildLavaFrames(scene);
+  scene.anims.create({
+    key: "lava-bubble",
+    frames: frameKeys.map(key => ({ key })),
+    frameRate: 6,
+    repeat: -1
+  });
 }
 
 export function createLavaBlock(scene, x, y) {
-  const key   = getLavaBlockTexture(scene);
-  const block = scene.lavaBlocks.create(x, y, key);
+  ensureLavaAnimation(scene);
+
+  const block = scene.lavaBlocks.create(x, y, "lava-block-f0");
   block.setOrigin(0, 0);
   block.refreshBody();
+  block.play("lava-bubble");
+  // Décale le point de départ de l'animation au hasard pour que plusieurs
+  // blocs de lave côte à côte ne pulsent pas tous en même temps.
+  block.anims.setProgress(Math.random());
+
   return block;
 }
 
