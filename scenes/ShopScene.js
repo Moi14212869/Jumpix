@@ -81,6 +81,7 @@ export class ShopScene extends Phaser.Scene {
         }).setInteractive();
 
         buyText.on("pointerdown", () => {
+          // changer ça et ajouter un son quand pas assez d'argents
           this.sound.play("buy", { volume: gameVolume });
           this.buySkin(hexKey, item.price, pd);
         });
