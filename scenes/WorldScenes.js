@@ -166,7 +166,7 @@ export class World2 extends Phaser.Scene {
 // =========================================================
 //                       WORLD 3
 // =========================================================
-export class World4 extends Phaser.Scene {
+export class World3 extends Phaser.Scene {
   constructor() { super("World3"); }
 
   create() {
