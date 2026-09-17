@@ -193,11 +193,13 @@ export class World3 extends Phaser.Scene {
       this.scene.start("World2");
     });
 
-    const allW3 = [
-    ];
+    // Level17 débloqué si Level16 terminé, puis déblocage 1 par 1
+    const allW3 = ["Level16", "Level17", "Level18"];
     const col1W3 = [
+      { nom: "➡ Level 17", scene: "Level17" }
     ];
     const col2W3 = [
+      { nom: "➡ Level 18", scene: "Level18" }
     ];
     renderLevelList(this, col1W3, 200, 260, allW3);
     renderLevelList(this, col2W3, 550, 260, allW3);
