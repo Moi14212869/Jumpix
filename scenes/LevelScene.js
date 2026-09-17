@@ -465,7 +465,7 @@ export class LevelScene extends Phaser.Scene {
       y: this.player.y + 46,  // s'enfonce dans le bloc, un peu plus qu'un bloc entier
       angle: 20,
       alpha: 0.15,
-      duration: 3000,
+      duration: 1500,
       ease: "Sine.easeIn",
       onComplete: () => this._recordDeath()
     });
