@@ -6,7 +6,7 @@ import { LoadingScene }      from "./scenes/LoadingScene.js";
 import { MenuScene }         from "./scenes/MenuScene.js";
 import { LevelScene }        from "./scenes/LevelScene.js";
 import { ShopScene }         from "./scenes/ShopScene.js";
-import { World1, World2 }    from "./scenes/WorldScenes.js";
+import { World1, World2, World3 }    from "./scenes/WorldScenes.js";
 import { LevelEditorScene }  from "./scenes/LevelEditorScene.js";
 import { MinigameScene }     from "./scenes/MinigameScene.js";
 import {
@@ -44,6 +44,7 @@ const config = {
     LeaderboardScene,
     LevelEditorScene,
     MinigameScene,
+    World3
   ]
 };
 
