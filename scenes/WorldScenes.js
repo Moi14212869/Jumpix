@@ -125,6 +125,21 @@ export class World2 extends Phaser.Scene {
       this.scene.start("World1");
     });
 
+    const w3Unlocked = !!completedLevels["Level16"];
+    const next = this.add.text(700, 280, "▶", {
+      fontSize: "24px",
+      color: w3Unlocked ? "#ffffff" : "#888888",
+      backgroundColor: w3Unlocked ? "#00BFFF" : "#444444",
+      padding: { x: 7, y: 4 }
+    });
+    if (w3Unlocked) {
+      next.setInteractive();
+      next.on("pointerdown", () => {
+        this.sound.play("menu", { volume: gameVolume });
+        this.scene.start("World3");
+      });
+    }
+
     // Level9 débloqué si Level8 terminé, puis déblocage 1 par 1
     const allW2 = [
       "Level8", "Level9", "Level10", "Level11", "Level12",
@@ -144,5 +159,47 @@ export class World2 extends Phaser.Scene {
     ];
     renderLevelList(this, col1W2, 200, 260, allW2);
     renderLevelList(this, col2W2, 550, 260, allW2);
+  }
+}
+
+
+// =========================================================
+//                       WORLD 3
+// =========================================================
+export class World4 extends Phaser.Scene {
+  constructor() { super("World3"); }
+
+  create() {
+    this.add.text(400, 80, "World 3", { fontSize: "50px", color: "#ffffff" }).setOrigin(0.5);
+    this.add.text(780, 20, `💰 ${playerCoins}`, {
+      fontSize: "28px", color: "#ffff00"
+    }).setOrigin(1, 0);
+
+    const menuBtn = this.add.text(5, 5, "←", {
+      fontSize: "24px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 7, y: 4 }
+    }).setInteractive();
+    menuBtn.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this.scene.start("MenuScene");
+    });
+
+    const prec = this.add.text(10, 280, "◀", {
+      fontSize: "24px", color: "#ffffff",
+      backgroundColor: "#00BFFF", padding: { x: 7, y: 4 }
+    }).setInteractive();
+    prec.on("pointerdown", () => {
+      this.sound.play("menu", { volume: gameVolume });
+      this.scene.start("World2");
+    });
+
+    const allW3 = [
+    ];
+    const col1W3 = [
+    ];
+    const col2W3 = [
+    ];
+    renderLevelList(this, col1W3, 200, 260, allW3);
+    renderLevelList(this, col2W3, 550, 260, allW3);
   }
 }
