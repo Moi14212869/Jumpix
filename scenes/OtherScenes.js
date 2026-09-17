@@ -1089,7 +1089,7 @@ export class CreditsScene extends Phaser.Scene {
 const STATS_ALL_LEVELS = [
   "Level1","Level2","Level3","Level4","Level5",
   "Level6","Level7","Level8","Level9","Level10","Level11","Level12",
-  "Level13","Level14","Level15","Level16"
+  "Level13","Level14","Level15","Level16","Level17","Level18"
 ];
 
 export class Stats extends Phaser.Scene {
@@ -1356,7 +1356,7 @@ export class ObjectivesScene extends Phaser.Scene {
 const ALL_LEVELS = [
   "Level1","Level2","Level3","Level4","Level5",
   "Level6","Level7","Level8","Level9","Level10","Level11","Level12",
-  "Level13","Level14","Level15","Level16"
+  "Level13","Level14","Level15","Level16","Level17","Level18"
 ];
 
 export class LeaderboardScene extends Phaser.Scene {
@@ -1437,7 +1437,7 @@ this.input.on("pointermove", pointer => {
         active ? 0x00BFFF : 0x223344
       ).setInteractive();
 
-      // Avec 16 onglets, les libellés doivent rester compacts pour tenir dans la largeur.
+      // Avec 18 onglets, les libellés doivent rester compacts pour tenir dans la largeur.
       const label = this.add.text(x, tabY, lvl.replace("Level", ""), {
         fontSize: "13px", color: active ? "#000000" : "#aaaaaa", fontStyle: active ? "bold" : "normal"
       }).setOrigin(0.5);
