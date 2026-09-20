@@ -14,6 +14,7 @@ import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage,
   getCurrentUser, isAnonymousUser, linkGuestToEmail
 } from "../utils/firebase.js";
+import { createTextForm } from "../utils/mobile.js";
 
 // =========================================================
 //  FILTRE PSEUDO INAPPROPRIÉ
@@ -579,51 +580,27 @@ export class SettingsScene extends Phaser.Scene {
     const all = [overlay, box, title, emailLabel, emailBox, emailText,
                  pwLabel, pwBox, pwText, errorMsg, confirmBtn, cancelBtn];
     const destroy = () => {
-      this.input.keyboard.removeAllListeners();
+      form.destroy();
       all.forEach(o => o.destroy());
     };
 
     cancelBtn.on("pointerdown", () => { this.sound.play("menu", { volume: gameVolume }); destroy(); });
 
-    // ── Saisie clavier ──
-    let emailValue = "", pwValue = "", activeField = "email";
-
-    // Clic pour changer de champ
-    emailBox.setInteractive();
-    pwBox.setInteractive();
-    emailBox.on("pointerdown", () => { activeField = "email"; this._highlightField(emailBox, pwBox); });
-    pwBox.on("pointerdown",    () => { activeField = "pw";    this._highlightField(pwBox, emailBox); });
-    this._highlightField(emailBox, pwBox); // focus initial sur email
-
-    this.input.keyboard.on("keydown", e => {
-      if (e.key === "Tab") {
-        activeField = activeField === "email" ? "pw" : "email";
-        this._highlightField(
-          activeField === "email" ? emailBox : pwBox,
-          activeField === "email" ? pwBox    : emailBox
-        );
-        e.preventDefault?.();
-        return;
-      }
-      if (e.key === "Escape") { destroy(); return; }
-
-      if (activeField === "email") {
-        if (e.key === "Backspace") emailValue = emailValue.slice(0, -1);
-        else if (e.key.length === 1) emailValue += e.key;
-        emailText.setText(emailValue);
-      } else {
-        if (e.key === "Backspace") pwValue = pwValue.slice(0, -1);
-        else if (e.key.length === 1) pwValue += e.key;
-        pwText.setText("•".repeat(pwValue.length));
-      }
-
-      if (e.key === "Enter") confirmBtn.emit("pointerdown");
+    // ── Saisie (clavier physique sur PC, <input> natif sur mobile) ──
+    const form = createTextForm(this, [
+      { id: "email", box: emailBox, text: emailText, type: "email",
+        autocomplete: "username", label: "E-mail" },
+      { id: "pw", box: pwBox, text: pwText, password: true,
+        autocomplete: "current-password", label: "Password" }
+    ], {
+      onSubmit: () => confirmBtn.emit("pointerdown"),
+      onCancel: () => destroy()
     });
 
     confirmBtn.on("pointerdown", async () => {
       errorMsg.setText("Logging in…").setColor("#aaaaaa");
       try {
-        await loginWithEmail(emailValue.trim(), pwValue);
+        await loginWithEmail(form.get("email").trim(), form.get("pw"));
         // Charger la progression depuis Firebase
         const data = await loadPlayerData();
         applyPlayerData(data);
@@ -686,61 +663,28 @@ export class SettingsScene extends Phaser.Scene {
                  pwLabel, pwBox, pwText,
                  errorMsg, confirmBtn, cancelBtn];
     const destroy = () => {
-      this.input.keyboard.removeAllListeners();
+      form.destroy();
       all.forEach(o => o.destroy());
     };
 
     cancelBtn.on("pointerdown", () => { this.sound.play("menu", { volume: gameVolume }); destroy(); });
 
-    // ── Saisie clavier ──
-    let pseudoValue = "", emailValue = "", pwValue = "";
-    let activeField = "pseudo";
-    const fields = ["pseudo", "email", "pw"];
-
-    const boxes  = { pseudo: pseudoBox, email: emailBox, pw: pwBox };
-    const others = (active) => fields.filter(f => f !== active).map(f => boxes[f]);
-
-    pseudoBox.setInteractive();
-    emailBox.setInteractive();
-    pwBox.setInteractive();
-    pseudoBox.on("pointerdown", () => { activeField = "pseudo"; this._highlightField(pseudoBox, emailBox, pwBox); });
-    emailBox.on("pointerdown",  () => { activeField = "email";  this._highlightField(emailBox, pseudoBox, pwBox); });
-    pwBox.on("pointerdown",     () => { activeField = "pw";     this._highlightField(pwBox, pseudoBox, emailBox); });
-    this._highlightField(pseudoBox, emailBox, pwBox);
-
-    this.input.keyboard.on("keydown", e => {
-      if (e.key === "Tab") {
-        const idx = fields.indexOf(activeField);
-        activeField = fields[(idx + 1) % fields.length];
-        this._highlightField(boxes[activeField], ...others(activeField));
-        e.preventDefault?.();
-        return;
-      }
-      if (e.key === "Escape") { destroy(); return; }
-
-      const isBackspace = e.key === "Backspace";
-      const isChar      = e.key.length === 1;
-
-      if (activeField === "pseudo") {
-        if (isBackspace) pseudoValue = pseudoValue.slice(0, -1);
-        else if (isChar && pseudoValue.length < 20) pseudoValue += e.key;
-        pseudoText.setText(pseudoValue);
-      } else if (activeField === "email") {
-        if (isBackspace) emailValue = emailValue.slice(0, -1);
-        else if (isChar) emailValue += e.key;
-        emailText.setText(emailValue);
-      } else {
-        if (isBackspace) pwValue = pwValue.slice(0, -1);
-        else if (isChar) pwValue += e.key;
-        pwText.setText("•".repeat(pwValue.length));
-      }
-
-      if (e.key === "Enter") confirmBtn.emit("pointerdown");
+    // ── Saisie (clavier physique sur PC, <input> natif sur mobile) ──
+    const form = createTextForm(this, [
+      { id: "pseudo", box: pseudoBox, text: pseudoText, maxLength: 20,
+        autocomplete: "username", label: "Username" },
+      { id: "email", box: emailBox, text: emailText, type: "email",
+        autocomplete: "email", label: "E-mail" },
+      { id: "pw", box: pwBox, text: pwText, password: true,
+        autocomplete: "new-password", label: "Password" }
+    ], {
+      onSubmit: () => { if (confirmBtn.input?.enabled !== false) confirmBtn.emit("pointerdown"); },
+      onCancel: () => destroy()
     });
 
     confirmBtn.on("pointerdown", async () => {
-      const pseudo = pseudoValue.trim();
-      const email  = emailValue.trim();
+      const pseudo = form.get("pseudo").trim();
+      const email  = form.get("email").trim();
 
       if (pseudo.length < 2) {
         errorMsg.setText("Username must be at least 2 characters.").setColor("#ff5555");
@@ -764,7 +708,7 @@ export class SettingsScene extends Phaser.Scene {
         }
 
         errorMsg.setText("Creating account…").setColor("#aaaaaa");
-        await registerWithEmail(email, pwValue, pseudo);
+        await registerWithEmail(email, form.get("pw"), pseudo);
         await save.pseudo(pseudo);
         const data = await loadPlayerData();
         applyPlayerData(data);
@@ -827,54 +771,29 @@ export class SettingsScene extends Phaser.Scene {
                  pwLabel, pwBox, pwText,
                  errorMsg, confirmBtn, cancelBtn];
     const destroy = () => {
-      this.input.keyboard.removeAllListeners();
+      form.destroy();
       all.forEach(o => o.destroy());
     };
 
     cancelBtn.on("pointerdown", () => { this.sound.play("menu", { volume: gameVolume }); destroy(); });
 
-    let pseudoValue = savedPseudo, emailValue = "", pwValue = "";
-    let activeField = savedPseudo ? "email" : "pseudo";
-    const fields = ["pseudo", "email", "pw"];
-    const boxes  = { pseudo: pseudoBox, email: emailBox, pw: pwBox };
-
-    pseudoBox.setInteractive();
-    emailBox.setInteractive();
-    pwBox.setInteractive();
-    pseudoBox.on("pointerdown", () => { activeField = "pseudo"; this._highlightField(pseudoBox, emailBox, pwBox); });
-    emailBox.on("pointerdown",  () => { activeField = "email";  this._highlightField(emailBox, pseudoBox, pwBox); });
-    pwBox.on("pointerdown",     () => { activeField = "pw";     this._highlightField(pwBox, pseudoBox, emailBox); });
-    this._highlightField(boxes[activeField], ...fields.filter(f => f !== activeField).map(f => boxes[f]));
-
-    this.input.keyboard.on("keydown", e => {
-      if (e.key === "Tab") {
-        const idx = fields.indexOf(activeField);
-        activeField = fields[(idx + 1) % fields.length];
-        this._highlightField(boxes[activeField], ...fields.filter(f => f !== activeField).map(f => boxes[f]));
-        e.preventDefault?.();
-        return;
-      }
-      if (e.key === "Escape") { destroy(); return; }
-
-      if (activeField === "pseudo") {
-        if (e.key === "Backspace") pseudoValue = pseudoValue.slice(0, -1);
-        else if (e.key.length === 1 && pseudoValue.length < 20) pseudoValue += e.key;
-        pseudoText.setText(pseudoValue);
-      } else if (activeField === "email") {
-        if (e.key === "Backspace") emailValue = emailValue.slice(0, -1);
-        else if (e.key.length === 1) emailValue += e.key;
-        emailText.setText(emailValue);
-      } else {
-        if (e.key === "Backspace") pwValue = pwValue.slice(0, -1);
-        else if (e.key.length === 1) pwValue += e.key;
-        pwText.setText("•".repeat(pwValue.length));
-      }
-      if (e.key === "Enter") confirmBtn.emit("pointerdown");
+    // ── Saisie (clavier physique sur PC, <input> natif sur mobile) ──
+    const form = createTextForm(this, [
+      { id: "pseudo", box: pseudoBox, text: pseudoText, value: savedPseudo, maxLength: 20,
+        autocomplete: "username", label: "Username" },
+      { id: "email", box: emailBox, text: emailText, type: "email",
+        autocomplete: "email", label: "E-mail" },
+      { id: "pw", box: pwBox, text: pwText, password: true,
+        autocomplete: "new-password", label: "Password" }
+    ], {
+      initialFocus: savedPseudo ? "email" : "pseudo",
+      onSubmit: () => { if (confirmBtn.input?.enabled !== false) confirmBtn.emit("pointerdown"); },
+      onCancel: () => destroy()
     });
 
     confirmBtn.on("pointerdown", async () => {
-      const pseudo = pseudoValue.trim();
-      const email  = emailValue.trim();
+      const pseudo = form.get("pseudo").trim();
+      const email  = form.get("email").trim();
 
       if (pseudo.length < 2) {
         errorMsg.setText("Username must be at least 2 characters.").setColor("#ff5555");
@@ -897,7 +816,7 @@ export class SettingsScene extends Phaser.Scene {
         }
 
         errorMsg.setText("Creating account…").setColor("#aaaaaa");
-        await linkGuestToEmail(email, pwValue, pseudo);
+        await linkGuestToEmail(email, form.get("pw"), pseudo);
         localStorage.setItem("jumpix_pseudo", pseudo);
         await save.pseudo(pseudo);
         // Met à jour les entrées de classement existantes : tant que le
@@ -918,12 +837,6 @@ export class SettingsScene extends Phaser.Scene {
         }
       }
     });
-  }
-
-  // ── Utilitaire : highlight du champ actif ───────────────
-  _highlightField(active, ...inactives) {
-    active.setStrokeStyle(2, 0x00BFFF);
-    inactives.forEach(b => b.setStrokeStyle(1, 0x555555));
   }
 
   // ── Reset compte ────────────────────────────────────────
@@ -999,6 +912,7 @@ export class CreditsScene extends Phaser.Scene {
       L("", "gap"),
 
       L("Level Designers", "header"),
+      L("Maxence ROOS", "name"),
       L("A. MORBIDELLI", "name"),
       L("Alix MORBIDELLI", "name"),
       L("", "gap"),
@@ -1403,9 +1317,10 @@ this.input.on("wheel", (_, __, ___, deltaY) => {
   this._scrollLeaderboard(-deltaY);
 });
 
+// Glisser le doigt (ou la souris) fait défiler la liste 1:1
 this.input.on("pointermove", pointer => {
   if (pointer.isDown) {
-    this._scrollLeaderboard(pointer.velocity.y * 0.02);
+    this._scrollLeaderboard(pointer.y - pointer.prevPosition.y);
   }
 });
 
@@ -1508,7 +1423,10 @@ this.input.on("pointermove", pointer => {
           .setInteractive({ useHandCursor: true });
         rowBg.on("pointerover", () => rowBg.setFillStyle(isMe ? 0x3a2a00 : 0x223344));
         rowBg.on("pointerout",  () => rowBg.setFillStyle(bgCol));
-        rowBg.on("pointerdown", () => {
+        // pointerup + test de distance : sur mobile, poser le doigt pour faire
+        // défiler la liste ne doit pas ouvrir la popup du joueur.
+        rowBg.on("pointerup", pointer => {
+          if (pointer.getDistance() > 10) return;
           this.sound.play("select", { volume: gameVolume });
           this._showPlayerStatsPopup(entry);
         });
