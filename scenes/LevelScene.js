@@ -70,6 +70,7 @@ export class LevelScene extends Phaser.Scene {
     );
 
     this.jumpCount = 0;
+    this.mobileJumpQueued = false;
 
     // ── Construction du niveau ──
     level.platforms.forEach(p => {
@@ -533,9 +534,14 @@ export class LevelScene extends Phaser.Scene {
 
     if (p.body.touching.down) this.jumpCount = 0;
 
+    // Saut demandé par le bouton tactile (mis en file par createMobileControls)
+    const mobileJump = this.mobileJumpQueued;
+    this.mobileJumpQueued = false;
+
     if (
       Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
-      Phaser.Input.Keyboard.JustDown(this.keys.up)
+      Phaser.Input.Keyboard.JustDown(this.keys.up) ||
+      mobileJump
     ) {
       this.jumpPlayer();
     }
