@@ -40,6 +40,7 @@ export function isMobile() {
 //  RÉGLAGES DE LA PAGE (à appeler une fois, avant new Phaser.Game)
 // =========================================================
 export function setupMobile() {
+  installDebugOverlay();   // ?debug=1 → affiche les erreurs à l'écran (PC ou mobile)
   if (!isMobile()) return;
 
   // ── Viewport : pas de zoom, plein écran (encoche comprise).
@@ -109,6 +110,36 @@ export function setupMobile() {
 }
 
 // =========================================================
+//  MODE DEBUG : ajouter ?debug=1 à l'URL
+// =========================================================
+// Sur un téléphone il n'y a pas de console. Avec ?debug=1, chaque erreur
+// JavaScript s'affiche dans un bandeau rouge en haut de l'écran (toucher
+// le bandeau pour le fermer) : il suffit d'en faire une capture d'écran.
+function installDebugOverlay() {
+  if (new URLSearchParams(window.location.search).get("debug") !== "1") return;
+
+  let box = null;
+  const show = msg => {
+    if (!box) {
+      box = document.createElement("div");
+      box.style.cssText =
+        "position:fixed;top:0;left:0;right:0;max-height:45%;overflow:auto;z-index:100001;" +
+        "background:rgba(170,0,0,.94);color:#fff;font:12px/1.35 monospace;padding:6px 8px;" +
+        "white-space:pre-wrap;word-break:break-word;";
+      box.addEventListener("click", () => { box.remove(); box = null; });
+      document.body.appendChild(box);
+    }
+    box.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+  };
+  window.addEventListener("error", e =>
+    show(`${e.message}  (${(e.filename || "").split("/").pop()}:${e.lineno})`));
+  window.addEventListener("unhandledrejection", e =>
+    show(`Promise rejetée : ${e.reason?.stack || e.reason?.message || e.reason}`));
+  const origError = console.error;
+  console.error = (...args) => { show("console.error : " + args.map(String).join(" ")); origError(...args); };
+}
+
+// =========================================================
 //  CHAMPS DE TEXTE
 // =========================================================
 // createTextForm(scene, fields, options)
@@ -162,6 +193,28 @@ export function createTextForm(scene, fieldDefs, options = {}) {
   let reposition = () => {};
   let onPointerDown = null;
   let onWinResize   = null;
+  let onViewport    = null;
+  const scale = scene.game.scale;
+
+  // Quand le clavier s'ouvre/se ferme, le navigateur peut décaler ou
+  // faire défiler la page (surtout iOS) et ne pas la remettre en place.
+  // Phaser garde alors en mémoire l'ANCIENNE position du canvas et
+  // calcule mal l'endroit touché : l'écran s'affiche encore mais plus
+  // aucun bouton ne répond. On remet donc la page à zéro et on
+  // demande à Phaser de relire la position du canvas.
+  const syncBounds = () => {
+    scale.updateBounds();
+    reposition();
+  };
+  const restorePage = () => {
+    window.scrollTo(0, 0);
+    syncBounds();
+  };
+  // Le clavier se ferme avec une animation : on recommence plusieurs fois.
+  const restorePageSoon = () => {
+    restorePage();
+    [120, 350, 800].forEach(ms => setTimeout(restorePage, ms));
+  };
 
   if (native) {
     reposition = () => {
@@ -232,7 +285,7 @@ export function createTextForm(scene, fieldDefs, options = {}) {
         onChange?.(f.id, f.value);
       });
       el.addEventListener("focus", () => { activeId = f.id; paint(); reposition(); });
-      el.addEventListener("blur", paint);
+      el.addEventListener("blur", () => { paint(); restorePageSoon(); });
 
       // Les <input> remplacent l'affichage Phaser (vrai curseur, sélection,
       // correcteur, etc.) → on masque le texte Phaser correspondant.
@@ -255,7 +308,10 @@ export function createTextForm(scene, fieldDefs, options = {}) {
     onWinResize = () => { reposition(); setTimeout(reposition, 300); };
     window.addEventListener("resize", onWinResize);
     window.addEventListener("orientationchange", onWinResize);
-    window.addEventListener("scroll", reposition);
+    window.addEventListener("scroll", syncBounds);
+    onViewport = syncBounds;
+    window.visualViewport?.addEventListener("resize", onViewport);
+    window.visualViewport?.addEventListener("scroll", onViewport);
 
     reposition();
     paint();
@@ -308,7 +364,9 @@ export function createTextForm(scene, fieldDefs, options = {}) {
   const form = {
     native,
 
-    get: id => byId[id].value,
+    // Sur mobile on lit directement le <input> : le remplissage automatique du
+    // navigateur ou un collage peut changer la valeur sans qu'on l'ait vue passer.
+    get: id => (byId[id].el ? byId[id].el.value : byId[id].value),
 
     set(id, value) {
       const f = byId[id];
@@ -347,9 +405,13 @@ export function createTextForm(scene, fieldDefs, options = {}) {
         scene.scale?.off("resize", reposition);
         window.removeEventListener("resize", onWinResize);
         window.removeEventListener("orientationchange", onWinResize);
-        window.removeEventListener("scroll", reposition);
+        window.removeEventListener("scroll", syncBounds);
+        window.visualViewport?.removeEventListener("resize", onViewport);
+        window.visualViewport?.removeEventListener("scroll", onViewport);
       }
       fields.forEach(f => f.el?.remove());
+      // Retirer un champ encore ouvert referme le clavier : on remet la page en place.
+      if (native) restorePageSoon();
     }
   };
 
