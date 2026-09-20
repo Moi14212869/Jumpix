@@ -9,6 +9,7 @@ import { ShopScene }         from "./scenes/ShopScene.js";
 import { World1, World2, World3 }    from "./scenes/WorldScenes.js";
 import { LevelEditorScene }  from "./scenes/LevelEditorScene.js";
 import { MinigameScene }     from "./scenes/MinigameScene.js";
+import { setupMobile }       from "./utils/mobile.js";
 import {
   SettingsScene,
   CreditsScene,
@@ -17,11 +18,14 @@ import {
   LeaderboardScene
 } from "./scenes/OtherScenes.js";
 
+setupMobile();
+
 const config = {
   type: Phaser.AUTO,
   width: 800,
   height: 600,
   backgroundColor: "#ADD8E6",
+  input: { activePointers: 4 },
   physics: {
     default: "arcade",
     arcade: { gravity: { y: 650 }, debug: false }
