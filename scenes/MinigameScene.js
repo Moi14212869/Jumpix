@@ -31,6 +31,8 @@ export class MinigameScene extends Phaser.Scene {
     this.player1 = null;
     this.player2 = null;
     this.touchPad = null;
+    this.jumpQueued1 = false;
+    this.jumpQueued2 = false;
   }
 
   create() {
@@ -236,9 +238,11 @@ export class MinigameScene extends Phaser.Scene {
         ...row(M, "p1"),
         ...row(width - M - rowW, "p2")
       ], {
+        // Sauts mis en file d'attente puis exécutés dans update() (après la
+        // remise à zéro de jumpCount) : sinon le 1er saut ne compte pas.
         onPress: id => {
-          if (id === "p1-up")      this._jump(this.player1);
-          else if (id === "p2-up") this._jump(this.player2);
+          if (id === "p1-up")      this.jumpQueued1 = true;
+          else if (id === "p2-up") this.jumpQueued2 = true;
         }
       });
     }
@@ -359,7 +363,8 @@ export class MinigameScene extends Phaser.Scene {
     else if (right1) p1.setVelocityX(MOVE_SPEED);
     else              p1.setVelocityX(0);
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys1.up)) this._jump(p1);
+    const jump1 = this.jumpQueued1; this.jumpQueued1 = false;
+    if (Phaser.Input.Keyboard.JustDown(this.keys1.up) || jump1) this._jump(p1);
 
     // ── Joueur 2 : flèches (ou pavé tactile droit) ──
     const left2  = this.cursors.left.isDown  || touch["p2-left"];
@@ -368,6 +373,7 @@ export class MinigameScene extends Phaser.Scene {
     else if (right2) p2.setVelocityX(MOVE_SPEED);
     else              p2.setVelocityX(0);
 
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) this._jump(p2);
+    const jump2 = this.jumpQueued2; this.jumpQueued2 = false;
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || jump2) this._jump(p2);
   }
 }
