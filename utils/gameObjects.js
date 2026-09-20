@@ -2,6 +2,8 @@
 //               FABRIQUES D'OBJETS DE JEU
 // =========================================================
 
+import { isMobile } from "./mobile.js";
+
 // ── Plateformes ───────────────────────────────────────────
 const DEFAULT_PLATFORM_COLOR = 0xA0522D;
 
@@ -584,54 +586,102 @@ export function createSnowstorm(scene, x, y, heightInPx = 80) {
   return zone;
 }
 
-// ── Contrôles mobiles ─────────────────────────────────────
+// ── Pavé tactile générique ────────────────────────────────
+// buttons : [{ id, dir: "left" | "right" | "up", x, y, size }]  (coordonnées jeu)
+// options : { onPress(id)  → appelé quand un doigt se pose sur un bouton,
+//             onFrame(state) → appelé à chaque frame, state[id] = bouton tenu ?,
+//             depth }
+//
+// Les boutons ne sont PAS des objets interactifs Phaser : à chaque frame on
+// regarde où se trouvent tous les doigts posés sur l'écran. Du coup :
+//  - on peut glisser le doigt d'un bouton à l'autre sans le lever ;
+//  - un bouton ne reste jamais "coincé" si le doigt est relevé ailleurs ;
+//  - ils ne bloquent pas les boutons Phaser situés en dessous.
+// Retourne null si l'appareil n'est pas un mobile (rien n'est affiché).
+export function createTouchPad(scene, buttons, { onPress, onFrame, depth = 12 } = {}) {
+  if (!isMobile()) return null;
+
+  const IDLE_ALPHA = 0.45, DOWN_ALPHA = 0.9, HIT_PAD = 6;
+  const pointers = scene.input.manager.pointers;
+  const state    = {};
+  let visible    = true;
+
+  const items = buttons.map(b => {
+    const g = scene.add.graphics().setScrollFactor(0).setDepth(depth).setAlpha(IDLE_ALPHA);
+    g.fillStyle(0x00BFFF, 1).fillRoundedRect(b.x, b.y, b.size, b.size, 16);
+    g.lineStyle(3, 0xFFFFFF, 1).strokeRoundedRect(b.x, b.y, b.size, b.size, 16);
+
+    // Flèche dessinée à la main (pas de dépendance à une police)
+    const cx = b.x + b.size / 2, cy = b.y + b.size / 2, r = b.size * 0.2;
+    g.fillStyle(0xFFFFFF, 1);
+    if (b.dir === "left")       g.fillTriangle(cx - r, cy, cx + r, cy - r * 1.3, cx + r, cy + r * 1.3);
+    else if (b.dir === "right") g.fillTriangle(cx + r, cy, cx - r, cy - r * 1.3, cx - r, cy + r * 1.3);
+    else                        g.fillTriangle(cx, cy - r, cx - r * 1.3, cy + r, cx + r * 1.3, cy + r);
+
+    state[b.id] = false;
+    return { ...b, g, down: false };
+  });
+
+  const inside = (it, p) =>
+    p.x >= it.x - HIT_PAD && p.x <= it.x + it.size + HIT_PAD &&
+    p.y >= it.y - HIT_PAD && p.y <= it.y + it.size + HIT_PAD;
+
+  const update = () => {
+    items.forEach(it => {
+      const down = visible && pointers.some(p => p && p.isDown && inside(it, p));
+      if (down && !it.down) onPress?.(it.id);
+      it.down = down;
+      state[it.id] = down;
+      it.g.setAlpha(down ? DOWN_ALPHA : IDLE_ALPHA);
+    });
+    onFrame?.(state);
+  };
+
+  // Les listeners de scene.events survivent à un scene.restart() :
+  // on les retire explicitement à la fermeture de la scène.
+  scene.events.on("update", update);
+  const destroy = () => {
+    scene.events.off("update", update);
+    scene.events.off("shutdown", destroy);
+    items.forEach(it => it.g.destroy());
+  };
+  scene.events.once("shutdown", destroy);
+
+  return {
+    state,
+    setVisible(v) {
+      visible = v;
+      items.forEach(it => it.g.setVisible(v));
+    },
+    destroy
+  };
+}
+
+// ── Contrôles mobiles d'un niveau (◀ ▶ à gauche, ⬆ à droite) ──
+// Alimente scene.movingLeft / scene.movingRight (lus par LevelScene.update)
+// et déclenche scene.jumpPlayer() sur le bouton de saut.
+// Retourne le pavé (pour pouvoir le masquer) ou null hors mobile.
 export function createMobileControls(scene) {
-  if (!scene.sys.game.device.input.touch) return;
+  if (!isMobile()) return null;
 
   scene.movingLeft  = false;
   scene.movingRight = false;
 
-  const createButtons = () => {
-    const { width, height } = scene.scale;
+  const { width, height } = scene.scale;
+  const S = 84, GAP = 14, M = 14, Y = height - S - M;
 
-    if (scene.leftBtn) {
-      scene.leftBtn.destroy();
-      scene.rightBtn.destroy();
-      scene.jumpBtn.destroy();
+  return createTouchPad(scene, [
+    { id: "left",  dir: "left",  x: M,               y: Y, size: S },
+    { id: "right", dir: "right", x: M + S + GAP,     y: Y, size: S },
+    { id: "jump",  dir: "up",    x: width - M - S,   y: Y, size: S },
+  ], {
+    onPress: id => {
+      // Pas de saut pendant l'animation de victoire / d'enfoncement dans la lave
+      if (id === "jump" && !scene.transitioning && !scene.dyingInLava) scene.jumpPlayer();
+    },
+    onFrame: s => {
+      scene.movingLeft  = s.left;
+      scene.movingRight = s.right;
     }
-
-    const btnSize = Math.max(48, width * 0.08);
-    const padding = btnSize * 0.4;
-    const margin  = width * 0.05;
-
-    const btnStyle = {
-      fontSize: `${btnSize}px`, color: "#ffffff",
-      backgroundColor: "#00BFFF",
-      padding: { x: padding, y: padding * 0.6 }, borderRadius: 20
-    };
-
-    scene.leftBtn  = scene.add.text(margin,                    height - btnSize * 2, "◀", btnStyle).setInteractive();
-    scene.rightBtn = scene.add.text(margin + btnSize * 1.4,    height - btnSize * 2, "▶", btnStyle).setInteractive();
-    scene.jumpBtn  = scene.add.text(width - margin - btnSize,  height - btnSize * 2, "⬆", btnStyle).setInteractive();
-
-    [scene.leftBtn, scene.rightBtn, scene.jumpBtn].forEach(btn => {
-      btn.setAlpha(0.6).setScrollFactor(0);
-      btn.on("pointerdown", () => btn.setAlpha(0.9));
-      btn.on("pointerup",   () => btn.setAlpha(0.6));
-      btn.on("pointerout",  () => btn.setAlpha(0.6));
-    });
-
-    scene.leftBtn.on("pointerdown", () => scene.movingLeft  = true);
-    scene.leftBtn.on("pointerup",   () => scene.movingLeft  = false);
-    scene.leftBtn.on("pointerout",  () => scene.movingLeft  = false);
-
-    scene.rightBtn.on("pointerdown", () => scene.movingRight = true);
-    scene.rightBtn.on("pointerup",   () => scene.movingRight = false);
-    scene.rightBtn.on("pointerout",  () => scene.movingRight = false);
-
-    scene.jumpBtn.on("pointerdown", () => scene.jumpPlayer());
-  };
-
-  createButtons();
-  scene.scale.on("resize", createButtons);
+  });
 }
