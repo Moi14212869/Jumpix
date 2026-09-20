@@ -7,10 +7,13 @@
 // les niveaux classiques. Atterrir sur la tête de l'adversaire
 // marque un point. Score libre, affiché à gauche (J1) et à
 // droite (J2). Un écran de sélection de map précède la partie.
+// Sur mobile, chaque joueur a son propre pavé tactile (◀ ▶ ⬆) :
+// J1 en bas à gauche, J2 en bas à droite.
 // =========================================================
 
 import { gameVolume, keyboardLayout, colorPlayer } from "../globals.js";
-import { createPlatform } from "../utils/gameObjects.js";
+import { createPlatform, createTouchPad } from "../utils/gameObjects.js";
+import { isMobile } from "../utils/mobile.js";
 
 const PLAYER_SIZE   = 40;
 const JUMP_VELOCITY = -330;
@@ -27,6 +30,7 @@ export class MinigameScene extends Phaser.Scene {
     this._resolvingStomp = false;
     this.player1 = null;
     this.player2 = null;
+    this.touchPad = null;
   }
 
   create() {
@@ -128,13 +132,19 @@ export class MinigameScene extends Phaser.Scene {
     // sur les coordonnées (block-x-y-normal). Comme ce mini-jeu utilise
     // toujours les mêmes positions, on supprime les textures résiduelles
     // d'une éventuelle partie précédente avant de les régénérer.
-    const groundY = height - 20;
-    const platformSpecs = [{ x: 0, y: groundY, w: width, h: 40 }];
+    // Sur mobile, on remonte tout le décor pour que les joueurs ne soient pas
+    // cachés derrière les boutons tactiles (posés en bas de l'écran). Les
+    // distances entre plateformes restent identiques ; le sol devient plus
+    // épais pour continuer à descendre jusqu'en bas de l'écran.
+    const lift    = isMobile() ? 90 : 0;
+    const groundY = height - 20 - lift;
+    const groundH = lift ? 120 : 40;
+    const platformSpecs = [{ x: 0, y: groundY, w: width, h: groundH }];
     if (this.mapChoice === "platforms") {
       platformSpecs.push(
-        { x: 100, y: height - 180, w: 160, h: 40 },
-        { x: width - 260, y: height - 180, w: 160, h: 40 },
-        { x: width / 2 - 80, y: height - 320, w: 160, h: 40 }
+        { x: 100, y: height - 180 - lift, w: 160, h: 40 },
+        { x: width - 260, y: height - 180 - lift, w: 160, h: 40 },
+        { x: width / 2 - 80, y: height - 320 - lift, w: 160, h: 40 }
       );
     }
 
@@ -150,12 +160,7 @@ export class MinigameScene extends Phaser.Scene {
       }
     });
 
-    createPlatform(this, 0, groundY, width, 40, 0xA0522D);
-    if (this.mapChoice === "platforms") {
-      createPlatform(this, 100, height - 180, 160, 40, 0xA0522D);
-      createPlatform(this, width - 260, height - 180, 160, 40, 0xA0522D);
-      createPlatform(this, width / 2 - 80, height - 320, 160, 40, 0xA0522D);
-    }
+    platformSpecs.forEach(({ x, y, w, h }) => createPlatform(this, x, y, w, h, 0xA0522D));
 
     // ── Points de départ ──
     this.start1 = { x: width * 0.25, y: groundY - 100 };
@@ -213,12 +218,30 @@ export class MinigameScene extends Phaser.Scene {
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(10);
     this._tintText(this.score2Text, P2_COLOR);
 
-    this.add.text(20, 70, "P1 (keyboard)", {
+    this.add.text(20, 70, isMobile() ? "P1" : "P1 (keyboard)", {
       fontSize: "13px", color: "#888888"
     }).setOrigin(0, 0).setScrollFactor(0).setDepth(10);
-    this.add.text(width - 20, 70, "P2 (arrows)", {
+    this.add.text(width - 20, 70, isMobile() ? "P2" : "P2 (arrows)", {
       fontSize: "13px", color: "#888888"
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(10);
+
+    // ── Contrôles tactiles (mobile uniquement) : un pavé par joueur ──
+    if (isMobile()) {
+      const S = 68, GAP = 10, M = 12, Y = height - S - M;
+      const rowW = 3 * S + 2 * GAP;
+      const row = (x0, prefix) => ["left", "right", "up"].map((dir, i) => ({
+        id: `${prefix}-${dir}`, dir, x: x0 + i * (S + GAP), y: Y, size: S
+      }));
+      this.touchPad = createTouchPad(this, [
+        ...row(M, "p1"),
+        ...row(width - M - rowW, "p2")
+      ], {
+        onPress: id => {
+          if (id === "p1-up")      this._jump(this.player1);
+          else if (id === "p2-up") this._jump(this.player2);
+        }
+      });
+    }
 
     // ── Bouton retour menu ──
     const back = this.add.text(width / 2, 20, "← Menu", {
@@ -327,18 +350,20 @@ export class MinigameScene extends Phaser.Scene {
     if (p1.body.touching.down) p1.jumpCount = 0;
     if (p2.body.touching.down) p2.jumpCount = 0;
 
-    // ── Joueur 1 : ZQSD/WASD ──
-    const left1  = this.keys1.left.isDown;
-    const right1 = this.keys1.right.isDown;
+    const touch = this.touchPad?.state ?? {};
+
+    // ── Joueur 1 : ZQSD/WASD (ou pavé tactile gauche) ──
+    const left1  = this.keys1.left.isDown  || touch["p1-left"];
+    const right1 = this.keys1.right.isDown || touch["p1-right"];
     if (left1)       p1.setVelocityX(-MOVE_SPEED);
     else if (right1) p1.setVelocityX(MOVE_SPEED);
     else              p1.setVelocityX(0);
 
     if (Phaser.Input.Keyboard.JustDown(this.keys1.up)) this._jump(p1);
 
-    // ── Joueur 2 : flèches ──
-    const left2  = this.cursors.left.isDown;
-    const right2 = this.cursors.right.isDown;
+    // ── Joueur 2 : flèches (ou pavé tactile droit) ──
+    const left2  = this.cursors.left.isDown  || touch["p2-left"];
+    const right2 = this.cursors.right.isDown || touch["p2-right"];
     if (left2)       p2.setVelocityX(-MOVE_SPEED);
     else if (right2) p2.setVelocityX(MOVE_SPEED);
     else              p2.setVelocityX(0);
