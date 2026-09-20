@@ -11,6 +11,7 @@ import {
 } from "../globals.js";
 import { checkObjectives }   from "../utils/helpers.js";
 import { save, saveLeaderboard } from "../utils/db.js";
+import { isMobile } from "../utils/mobile.js";
 import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
@@ -255,7 +256,8 @@ export class LevelScene extends Phaser.Scene {
       });
     }, null, this);
 
-    createMobileControls(this);
+    // Boutons tactiles (uniquement sur mobile : renvoie null sur PC)
+    this.mobileControls = createMobileControls(this);
 
     // ── Tutoriel double saut (Level1 uniquement) ──
     if (this.levelKey === "Level1") {
@@ -388,6 +390,8 @@ export class LevelScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const cx = width / 2, cy = height / 2;
 
+    this.mobileControls?.setVisible(false);
+
     this.add.rectangle(cx, cy, width, height, 0x000000, 0.65).setScrollFactor(0).setDepth(20);
 
     this.add.text(cx, cy - 110, "✅ NIVEAU TERMINÉ !", {
@@ -402,7 +406,10 @@ export class LevelScene extends Phaser.Scene {
       }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
     }
 
-    const hint = this.add.text(cx, cy - 10, "Appuie sur n'importe quelle touche pour rejouer", {
+    const hintLabel = isMobile()
+      ? "Appuie sur Rejouer pour recommencer"
+      : "Appuie sur n'importe quelle touche pour rejouer";
+    const hint = this.add.text(cx, cy - 10, hintLabel, {
       fontSize: "16px", color: "#aaaaaa"
     }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
 
@@ -484,7 +491,7 @@ export class LevelScene extends Phaser.Scene {
   // ── Update ────────────────────────────────────────────
   update() {
     const p     = this.player;
-    const up    = this.cursors.up.isDown    || this.keys.up.isDown;
+    const up    = this.cursors.up.isDown    || this.keys.up.isDown || !!this.mobileControls?.state.jump;
     const left  = this.cursors.left.isDown  || this.keys.left.isDown  || this.movingLeft;
     const right = this.cursors.right.isDown || this.keys.right.isDown || this.movingRight;
 
