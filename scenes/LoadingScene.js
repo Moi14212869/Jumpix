@@ -9,6 +9,7 @@
 import { gameVolume, applyPlayerData } from "../globals.js";
 import { waitForAuthReady, signInAsGuest, loginWithEmail, firebaseErrorMessageEN, getStoredGuestUid } from "../utils/firebase.js";
 import { loadPlayerData, save, isPseudoTaken, migrateGuestData, updateLeaderboardPseudo } from "../utils/db.js";
+import { isMobile, createTextForm } from "../utils/mobile.js";
 
 export class LoadingScene extends Phaser.Scene {
   constructor() { super("LoadingScene"); }
@@ -154,11 +155,15 @@ export class LoadingScene extends Phaser.Scene {
       fontSize: "22px", color: "#00BFFF"
     });
 
-    // Blinking cursor
-    this.time.addEvent({
-      delay: 500, loop: true,
-      callback: () => { cursor.setVisible(!cursor.visible); }
-    });
+    // Blinking cursor (PC only: on mobile the native <input> has its own caret)
+    if (isMobile()) {
+      cursor.setVisible(false);
+    } else {
+      this.time.addEvent({
+        delay: 500, loop: true,
+        callback: () => { cursor.setVisible(!cursor.visible); }
+      });
+    }
 
     const errorMsg = this.add.text(cx, cy - 13, "", {
       fontSize: "15px", color: "#ff5555", align: "center", wordWrap: { width: 400 }
@@ -189,30 +194,25 @@ export class LoadingScene extends Phaser.Scene {
     loginBtn.on("pointerout",  () => loginBtn.setStyle({ backgroundColor: "#007ACC" }));
     loginBtn.on("pointerdown", () => {
       this.sound.play("menu", { volume: gameVolume });
+      // La popup de connexion s'ouvre par-dessus : on met la saisie du
+      // pseudo en pause (sinon elle continuerait à capter les touches).
+      this.pseudoForm?.suspend();
       this._showLoginPopup();
     });
 
-    // ── Keyboard input ──────────────────────────────────────
-    let pseudoValue = "";
-
-    const updateDisplay = () => {
-      inputText.setText(pseudoValue);
-      // Move cursor right after the text
+    // ── Text input (physical keyboard on PC, native <input> on mobile) ──
+    const updateCursor = () => {
       cursor.x = inputText.x + inputText.width + 2;
       cursor.y = inputText.y;
     };
 
-    this.input.keyboard.on("keydown", e => {
-      if (e.key === "Backspace") {
-        pseudoValue = pseudoValue.slice(0, -1);
-      } else if (e.key.length === 1 && pseudoValue.length < 20) {
-        pseudoValue += e.key;
-      } else if (e.key === "Enter") {
-        confirmBtn.emit("pointerdown");
-        return;
-      }
-      updateDisplay();
-      errorMsg.setText("");
+    this.pseudoForm = createTextForm(this, [
+      { id: "pseudo", box: inputBox, text: inputText, maxLength: 20, label: "Username" }
+    ], {
+      highlight: false,
+      onChange: () => { updateCursor(); errorMsg.setText(""); },
+      // Ignore Enter while a check is already running
+      onSubmit: () => { if (confirmBtn.input?.enabled !== false) confirmBtn.emit("pointerdown"); }
     });
 
     // ── Validation ──────────────────────────────────────────
@@ -235,7 +235,7 @@ export class LoadingScene extends Phaser.Scene {
     confirmBtn.on("pointerout",  () => confirmBtn.setStyle({ backgroundColor: "#00BFFF" }));
 
     confirmBtn.on("pointerdown", async () => {
-      const pseudo = pseudoValue.trim();
+      const pseudo = this.pseudoForm.get("pseudo").trim();
 
       if (pseudo.length < 2) {
         errorMsg.setText("Username must be at least 2 characters long.");
@@ -334,65 +334,38 @@ export class LoadingScene extends Phaser.Scene {
 
     const all = [overlay, box, title, emailLabel, emailBox, emailText,
                  pwLabel, pwBox, pwText, errorMsg, confirmBtn, cancelBtn];
-    const destroy = () => {
-      this.input.keyboard.removeAllListeners();
+    // keepPseudoPaused = true quand on quitte la scène juste après (connexion réussie)
+    const destroy = (keepPseudoPaused = false) => {
+      form.destroy();
       all.forEach(o => o.destroy());
+      if (keepPseudoPaused !== true) this.pseudoForm?.resume();
     };
 
     cancelBtn.on("pointerdown", () => { this.sound.play("menu", { volume: gameVolume }); destroy(); });
 
-    // ── Keyboard input ──
-    let emailValue = "", pwValue = "", activeField = "email";
-
-    emailBox.setInteractive();
-    pwBox.setInteractive();
-    emailBox.on("pointerdown", () => { activeField = "email"; this._highlightField(emailBox, pwBox); });
-    pwBox.on("pointerdown",    () => { activeField = "pw";    this._highlightField(pwBox, emailBox); });
-    this._highlightField(emailBox, pwBox); // initial focus on email
-
-    this.input.keyboard.on("keydown", e => {
-      if (e.key === "Tab") {
-        activeField = activeField === "email" ? "pw" : "email";
-        this._highlightField(
-          activeField === "email" ? emailBox : pwBox,
-          activeField === "email" ? pwBox    : emailBox
-        );
-        e.preventDefault?.();
-        return;
-      }
-      if (e.key === "Escape") { destroy(); return; }
-
-      if (activeField === "email") {
-        if (e.key === "Backspace") emailValue = emailValue.slice(0, -1);
-        else if (e.key.length === 1) emailValue += e.key;
-        emailText.setText(emailValue);
-      } else {
-        if (e.key === "Backspace") pwValue = pwValue.slice(0, -1);
-        else if (e.key.length === 1) pwValue += e.key;
-        pwText.setText("•".repeat(pwValue.length));
-      }
-
-      if (e.key === "Enter") confirmBtn.emit("pointerdown");
+    // ── Text input (physical keyboard on PC, native <input> on mobile) ──
+    const form = createTextForm(this, [
+      { id: "email", box: emailBox, text: emailText, type: "email",
+        autocomplete: "username", label: "Email" },
+      { id: "pw", box: pwBox, text: pwText, password: true,
+        autocomplete: "current-password", label: "Password" }
+    ], {
+      onSubmit: () => confirmBtn.emit("pointerdown"),
+      onCancel: () => destroy()
     });
 
     confirmBtn.on("pointerdown", async () => {
       errorMsg.setText("Logging in…").setColor("#aaaaaa");
       try {
-        await loginWithEmail(emailValue.trim(), pwValue);
+        await loginWithEmail(form.get("email").trim(), form.get("pw"));
         const data = await loadPlayerData();
         applyPlayerData(data);
-        destroy();
+        destroy(true);
         this.sound.play("select", { volume: gameVolume });
         this.scene.start("MenuScene");
       } catch (err) {
         errorMsg.setText(firebaseErrorMessageEN(err.code)).setColor("#ff5555");
       }
     });
-  }
-
-  // ── Highlights the currently active input field ──────────
-  _highlightField(active, ...inactives) {
-    active.setStrokeStyle(2, 0x00BFFF);
-    inactives.forEach(box => box.setStrokeStyle(1, 0x555555));
   }
 }
