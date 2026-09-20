@@ -676,8 +676,12 @@ export function createMobileControls(scene) {
     { id: "jump",  dir: "up",    x: width - M - S,   y: Y, size: S },
   ], {
     onPress: id => {
-      // Pas de saut pendant l'animation de victoire / d'enfoncement dans la lave
-      if (id === "jump" && !scene.transitioning && !scene.dyingInLava) scene.jumpPlayer();
+      // On ne saute pas ici : ce callback tourne AVANT scene.update(), qui
+      // remet jumpCount à 0 au contact du sol. Le saut aurait alors été
+      // "gratuit" (3 sauts au lieu de 2). On le met en file d'attente ; il est
+      // exécuté dans update(), au même endroit que le saut clavier.
+      // Pas de saut pendant l'animation de victoire / d'enfoncement dans la lave.
+      if (id === "jump" && !scene.transitioning && !scene.dyingInLava) scene.mobileJumpQueued = true;
     },
     onFrame: s => {
       scene.movingLeft  = s.left;
