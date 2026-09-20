@@ -3,6 +3,7 @@
 // =========================================================
 import { gameVolume, playerCoins } from "../globals.js";
 import { createButton } from "../utils/helpers.js";
+import { isMobile } from "../utils/mobile.js";
 export class MenuScene extends Phaser.Scene {
   constructor() { super("MenuScene"); }
   create() {
@@ -37,5 +38,13 @@ export class MenuScene extends Phaser.Scene {
       this.sound.play("menu", { volume: gameVolume });
       this.scene.start("LeaderboardScene");
     });
+    // Plein écran : mobile uniquement, et seulement si le navigateur le permet
+    // (Chrome Android oui ; Safari sur iPhone ne le supporte pas).
+    if (isMobile() && this.scale.fullscreen.available) {
+      createButton(this, 180, 40, 60, 50, "⛶", () => {
+        this.sound.play("menu", { volume: gameVolume });
+        this.scale.toggleFullscreen();
+      });
+    }
   }
 }
