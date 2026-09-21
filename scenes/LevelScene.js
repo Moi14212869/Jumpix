@@ -462,6 +462,7 @@ export class LevelScene extends Phaser.Scene {
   // la séquence de victoire : body.enable = false, puis un tween pilote
   // la position à la main).
   sinkInLava() {
+    this.sound.play("lava", { volume: gameVolume });
     if (this.dyingInLava || this.transitioning) return;
     this.dyingInLava = true;
 
