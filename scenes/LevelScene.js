@@ -15,7 +15,7 @@ import { isMobile } from "../utils/mobile.js";
 import {
   createPlatform, createIcePlatform, createRedTriangle,
   createRedCircle, createRedSquare, createBlueCircle,
-  createSnow, createMobileControls, createSnowstorm,
+  createSnow, createMobileControls, createSnowstorm, createVolcano,
   finalizeSnowLayer, createLavaBlock, createExitPortalSpiral
 } from "../utils/gameObjects.js";
 
@@ -56,6 +56,7 @@ export class LevelScene extends Phaser.Scene {
     this.icePlatforms = this.physics.add.staticGroup();
     this.snowstorms   = this.physics.add.staticGroup();
     this.lavaBlocks   = this.physics.add.staticGroup();
+    this.volcanoes    = this.physics.add.staticGroup();
 
     this.input.addPointer(2);
     this.cursors    = this.input.keyboard.createCursorKeys();
@@ -113,6 +114,13 @@ export class LevelScene extends Phaser.Scene {
       });
     }
 
+    if (level.volcanoes) {
+      level.volcanoes.forEach(v => {
+        const zone = createVolcano(this, v.x, v.y, v.smokeHeight || 120);
+        this.volcanoes.add(zone);
+      });
+    }
+
     if (level.lavaBlocks) {
       level.lavaBlocks.forEach(l => createLavaBlock(this, l.x, l.y));
     }
@@ -165,6 +173,13 @@ export class LevelScene extends Phaser.Scene {
       // Réinitialise le compteur de sauts (l'éjection compte comme un rebond)
       this.jumpCount = 0;
       // Son de saut pour le feedback
+      this.sound.play("jump", { volume: gameVolume });
+    }, null, this);
+
+    // ── Fumée de volcan : éjection vers le haut (même mécanique) ──
+    this.physics.add.overlap(this.player, this.volcanoes, (player) => {
+      player.setVelocityY(-600);
+      this.jumpCount = 0;
       this.sound.play("jump", { volume: gameVolume });
     }, null, this);
 
