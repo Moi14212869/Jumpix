@@ -9,7 +9,8 @@
 import { db, getCurrentUser } from "./firebase.js";
 import {
   doc, getDoc, setDoc, updateDoc,
-  collection, getDocs, query, orderBy, limit, where
+  collection, getDocs, query, orderBy, limit, where,
+  increment, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export const DEFAULTS = {
@@ -24,8 +25,15 @@ export const DEFAULTS = {
   skins:           {},
   completedLevels: {},
   bestTimes:       {},
-  bestRanks:       {}
+  bestRanks:       {},
+  levelPoints:     {}, // points gagnés par niveau pour le classement global (voir recomputeLevelPoints)
+  totalPoints:     0   // somme de levelPoints, utilisé pour trier le classement global
 };
+
+// ── Barème de points du classement global ─────────────────
+// Attribué au top 10 de chaque niveau (classement par temps, avec le
+// même départage par "party" que loadLeaderboard/saveLeaderboard).
+const RANK_POINTS = { 1: 15, 2: 13, 3: 10, 4: 8, 5: 6, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1 };
 
 // ── Liste des niveaux (utilisée pour parcourir tous les
 //    classements lors d'une migration ou d'une mise à jour) ──
@@ -253,6 +261,42 @@ async function sortEntriesWithTieBreak(entries) {
   return result;
 }
 
+// ── Recalcule les points du classement global pour un niveau ──
+// Attribue les points du barème RANK_POINTS au top 10 actuel du niveau
+// (sortedEntries, déjà départagé par party) et répercute la différence
+// avec l'attribution précédente sur players/{uid}.totalPoints. On stocke
+// l'attribution précédente dans leaderboards/{levelKey}.pointsAwarded
+// pour savoir qui retirer du total si son rang a changé (ex: quelqu'un
+// sorti du top 10, ou qui monte/descend dedans).
+async function recomputeLevelPoints(levelKey, sortedEntries) {
+  const top10 = sortedEntries.slice(0, 10);
+  const newAwards = {};
+  top10.forEach((entry, i) => { newAwards[entry.uid] = RANK_POINTS[i + 1]; });
+
+  const levelRef  = doc(db, "leaderboards", levelKey);
+  const levelSnap = await getDoc(levelRef);
+  const oldAwards = levelSnap.exists() ? (levelSnap.data().pointsAwarded || {}) : {};
+
+  const uids = new Set([...Object.keys(oldAwards), ...Object.keys(newAwards)]);
+
+  await Promise.all([...uids].map(async uid => {
+    const oldPts = oldAwards[uid] || 0;
+    const newPts = newAwards[uid] || 0;
+    if (oldPts === newPts) return; // pas de changement pour ce joueur
+
+    try {
+      await updateDoc(doc(db, "players", uid), {
+        totalPoints: increment(newPts - oldPts),
+        [`levelPoints.${levelKey}`]: newPts > 0 ? newPts : deleteField()
+      });
+    } catch (err) {
+      console.warn(`Points update failed for ${uid} on ${levelKey}:`, err);
+    }
+  }));
+
+  await setDoc(levelRef, { pointsAwarded: newAwards }, { merge: true });
+}
+
 export async function saveLeaderboard(levelKey, timeMs) {
   const user = getCurrentUser();
   if (!user) return null; // invité → pas de classement
@@ -281,7 +325,27 @@ export async function saveLeaderboard(levelKey, timeMs) {
   const entries    = allSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
   const sorted     = await sortEntriesWithTieBreak(entries);
   const rank       = sorted.findIndex(e => e.uid === user.uid) + 1;
+
+  // Le rang ayant pu changer (nouveau temps, ou departage par party
+  // recalculé), on met à jour les points du classement global en
+  // conséquence à chaque appel — l'opération est sans effet si rien n'a
+  // changé depuis le dernier calcul.
+  await recomputeLevelPoints(levelKey, sorted);
+
   return rank > 0 ? rank : null;
+}
+
+// ── Classement global par points (voir RANK_POINTS) ───────
+export async function loadGlobalLeaderboard() {
+  const playersRef = collection(db, "players");
+  const q          = query(playersRef, orderBy("totalPoints", "desc"), limit(100));
+  const snap       = await getDocs(q);
+  return snap.docs.map(d => ({
+    uid:         d.id,
+    pseudo:      d.data().pseudo || "Anonyme",
+    colorPlayer: d.data().colorPlayer ?? 0xAA66CC,
+    totalPoints: d.data().totalPoints ?? 0
+  }));
 }
 
 export async function loadLeaderboard(levelKey) {
