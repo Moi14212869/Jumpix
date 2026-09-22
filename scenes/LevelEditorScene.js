@@ -380,17 +380,17 @@ export class LevelEditorScene extends Phaser.Scene {
         gfx.fillStyle(0x888888, 0.25).fillRect(cx - CELL / 2, craterY - totalH, CELL, totalH);
         gfx.lineStyle(1.5, 0x888888, 0.8).strokeRect(cx - CELL / 2, craterY - totalH, CELL, totalH);
 
-        // Corps du volcan (léger débordement hors de la cellule, comme un vrai cône)
+        // Corps du volcan (tient exactement dans la cellule)
         gfx.fillStyle(0x4A3728, 1);
         gfx.beginPath();
         gfx.moveTo(cx, craterY);
-        gfx.lineTo(cx - CELL * 0.9, craterY + CELL * 0.8);
-        gfx.lineTo(cx + CELL * 0.9, craterY + CELL * 0.8);
+        gfx.lineTo(cx - CELL / 2, y + CELL);
+        gfx.lineTo(cx + CELL / 2, y + CELL);
         gfx.closePath();
         gfx.fillPath();
 
         // Cratère
-        gfx.fillStyle(0xFF6A00, 1).fillEllipse(cx, craterY, CELL * 0.5, CELL * 0.18);
+        gfx.fillStyle(0xFF6A00, 1).fillEllipse(cx, craterY, CELL * 0.3, CELL * 0.1);
         break;
       }
     }
