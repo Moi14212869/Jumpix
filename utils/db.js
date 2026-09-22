@@ -9,8 +9,7 @@
 import { db, getCurrentUser } from "./firebase.js";
 import {
   doc, getDoc, setDoc, updateDoc,
-  collection, getDocs, query, orderBy, limit, where,
-  increment, deleteField
+  collection, getDocs, query, orderBy, limit, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export const DEFAULTS = {
@@ -25,9 +24,10 @@ export const DEFAULTS = {
   skins:           {},
   completedLevels: {},
   bestTimes:       {},
-  bestRanks:       {},
-  levelPoints:     {}, // points gagnés par niveau pour le classement global (voir recomputeLevelPoints)
-  totalPoints:     0   // somme de levelPoints, utilisé pour trier le classement global
+  bestRanks:       {}
+  // Remarque : plus de totalPoints/levelPoints stockés ici — le classement
+  // global est recalculé à la lecture par loadGlobalLeaderboard() à partir
+  // des classements par niveau (voir plus bas).
 };
 
 // ── Barème de points du classement global ─────────────────
@@ -262,66 +262,6 @@ async function sortEntriesWithTieBreak(entries) {
   return result;
 }
 
-// ── Recalcule les points du classement global pour un niveau ──
-// Attribue les points du barème RANK_POINTS au top 10 actuel du niveau
-// (sortedEntries, déjà départagé par party) et répercute la différence
-// avec l'attribution précédente sur players/{uid}.totalPoints. On stocke
-// l'attribution précédente dans leaderboards/{levelKey}.pointsAwarded
-// pour savoir qui retirer du total si son rang a changé (ex: quelqu'un
-// sorti du top 10, ou qui monte/descend dedans).
-async function recomputeLevelPoints(levelKey, sortedEntries) {
-  try {
-    const top10 = sortedEntries.slice(0, 10);
-    const newAwards = {};
-    top10.forEach((entry, i) => { newAwards[entry.uid] = RANK_POINTS[i + 1]; });
-
-    const levelRef  = doc(db, "leaderboards", levelKey);
-    const levelSnap = await getDoc(levelRef);
-    const oldAwards = levelSnap.exists() ? (levelSnap.data().pointsAwarded || {}) : {};
-
-    const uids = new Set([...Object.keys(oldAwards), ...Object.keys(newAwards)]);
-
-    await Promise.all([...uids].map(async uid => {
-      const oldPts = oldAwards[uid] || 0;
-      const newPts = newAwards[uid] || 0;
-      if (oldPts === newPts) return; // pas de changement pour ce joueur
-
-      try {
-        await updateDoc(doc(db, "players", uid), {
-          totalPoints: increment(newPts - oldPts),
-          [`levelPoints.${levelKey}`]: newPts > 0 ? newPts : deleteField()
-        });
-      } catch (err) {
-        console.warn(`Points update failed for ${uid} on ${levelKey}:`, err);
-      }
-    }));
-
-    await setDoc(levelRef, { pointsAwarded: newAwards }, { merge: true });
-  } catch (err) {
-    // Ne jamais laisser un échec de calcul de points faire planter
-    // saveLeaderboard() (et donc la sauvegarde du temps / du rang) :
-    // on logue clairement l'erreur pour pouvoir la diagnostiquer
-    // (souvent un problème de règles de sécurité Firestore).
-    console.error(`recomputeLevelPoints failed for ${levelKey}:`, err);
-  }
-}
-
-// ── Recalcul ponctuel des points sur TOUS les niveaux ─────
-// Les points ne sont normalement recalculés qu'au moment où quelqu'un
-// termine un niveau (voir saveLeaderboard). Les temps enregistrés AVANT
-// l'ajout du système de points n'ont donc jamais déclenché ce calcul :
-// leurs auteurs n'apparaissent pas dans le classement global tant que
-// personne ne rejoue ces niveaux. Cette fonction parcourt tous les
-// niveaux et applique le barème RANK_POINTS aux classements déjà en
-// place, une bonne fois pour toutes. Sans danger à relancer plusieurs
-// fois (idempotente : ne modifie que ce qui a réellement changé).
-export async function backfillGlobalPoints() {
-  for (const levelKey of ALL_LEVELS) {
-    const sorted = await loadLeaderboard(levelKey);
-    if (sorted.length > 0) await recomputeLevelPoints(levelKey, sorted);
-  }
-}
-
 export async function saveLeaderboard(levelKey, timeMs) {
   const user = getCurrentUser();
   if (!user) return null; // invité → pas de classement
@@ -351,26 +291,56 @@ export async function saveLeaderboard(levelKey, timeMs) {
   const sorted     = await sortEntriesWithTieBreak(entries);
   const rank       = sorted.findIndex(e => e.uid === user.uid) + 1;
 
-  // Le rang ayant pu changer (nouveau temps, ou departage par party
-  // recalculé), on met à jour les points du classement global en
-  // conséquence à chaque appel — l'opération est sans effet si rien n'a
-  // changé depuis le dernier calcul.
-  await recomputeLevelPoints(levelKey, sorted);
-
   return rank > 0 ? rank : null;
 }
 
 // ── Classement global par points (voir RANK_POINTS) ───────
+// Calculé à la volée à partir des classements par niveau, plutôt que
+// stocké dans players/{uid}.totalPoints. Raison : mettre à jour le total
+// de points d'un AUTRE joueur (ex : quelqu'un sort du top 10 parce que tu
+// viens de battre son temps) demanderait d'écrire dans son document
+// players/{son_uid} depuis ton compte — ce que des règles de sécurité
+// Firestore correctes doivent justement interdire (sinon n'importe quel
+// client pourrait s'auto-attribuer des points en écrivant directement
+// dans son propre players/{uid}.totalPoints). Recalculer à la lecture
+// évite complètement ce problème, sans toucher aux règles.
+//
+// Coût : jusqu'à ALL_LEVELS.length requêtes Firestore par affichage du
+// classement global (une par niveau, limitée aux ~15 premiers temps).
+// Acceptable tant que le nombre de niveaux reste modéré ; à réévaluer
+// (cache, Cloud Function programmée, etc.) si ça devient un problème de
+// coût ou de latence.
 export async function loadGlobalLeaderboard() {
-  const playersRef = collection(db, "players");
-  const q          = query(playersRef, orderBy("totalPoints", "desc"), limit(100));
-  const snap       = await getDocs(q);
-  return snap.docs.map(d => ({
-    uid:         d.id,
-    pseudo:      d.data().pseudo || "Anonyme",
-    colorPlayer: d.data().colorPlayer ?? 0xAA66CC,
-    totalPoints: d.data().totalPoints ?? 0
+  const totals = {}; // uid -> { uid, pseudo, colorPlayer, totalPoints }
+
+  await Promise.all(ALL_LEVELS.map(async levelKey => {
+    const entriesRef = collection(db, "leaderboards", levelKey, "entries");
+    // Marge au-delà de 10 : le départage par "party" peut réordonner des
+    // égalités de temps proches du seuil du top 10.
+    const q    = query(entriesRef, orderBy("timeMs", "asc"), limit(15));
+    const snap = await getDocs(q);
+    const entries = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    const sorted  = await sortEntriesWithTieBreak(entries);
+
+    sorted.slice(0, 10).forEach((entry, i) => {
+      const pts = RANK_POINTS[i + 1] || 0;
+      if (pts === 0) return;
+
+      if (!totals[entry.uid]) {
+        totals[entry.uid] = {
+          uid:         entry.uid,
+          pseudo:      entry.pseudo || "Anonyme",
+          colorPlayer: entry.colorPlayer ?? 0xAA66CC,
+          totalPoints: 0
+        };
+      }
+      totals[entry.uid].totalPoints += pts;
+    });
   }));
+
+  return Object.values(totals)
+    .sort((a, b) => b.totalPoints - a.totalPoints)
+    .slice(0, 100);
 }
 
 export async function loadLeaderboard(levelKey) {
