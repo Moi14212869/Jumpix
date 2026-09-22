@@ -3,7 +3,8 @@
 // =========================================================
 // Éditeur de niveaux visuel.
 // JSON produit : { playerStart, blueCircle, platforms,
-//                  icePlatforms, spikes, lavaBlocks, redCircles, redSquares }
+//                  icePlatforms, spikes, lavaBlocks, redCircles, redSquares,
+//                  snowstorms, volcanoes }
 // =========================================================
 
 import { gameVolume, colorPlayer } from "../globals.js";
@@ -27,6 +28,7 @@ const TOOLS = [
   { id: "redCircle",   label: "Ball",         color: 0xFF4444, icon: "●" },
   { id: "redSquare",   label: "Enemy square",  color: 0xFF2222, icon: "■" },
   { id: "snowstorm",   label: "Snowstorm", color: 0x9EE7FF, icon: "❄" },
+  { id: "volcano",     label: "Volcano",    color: 0xFF6A00, icon: "🌋" },
   { id: "player",      label: "Player start", color: 0xAA66CC, icon: "P" },
   { id: "exit",        label: "Exit",        color: 0x0000FF, icon: "O" },
   { id: "eraser",      label: "Eraser",         color: 0x888888, icon: "✕" },
@@ -41,6 +43,7 @@ const DEFAULTS = {
   redCircle:  { rise: 100, direction: "up" },
   redSquare:  { rise: 100, direction: "right" },
   snowstorm:  { h: CELL * 2 }, // hauteur par défaut : 2 cellules (80px en jeu)
+  volcano:    { h: CELL * 3 }, // hauteur de fumée par défaut : 3 cellules (120px en jeu)
 };
 
 // ── Clé localStorage ─────────────────────────────────────
@@ -367,6 +370,29 @@ export class LevelEditorScene extends Phaser.Scene {
         });
         break;
       }
+      case "volcano": {
+        const hCells = Math.round((props.h || CELL * 3) / CELL);
+        const totalH = hCells * CELL;
+        const cx = x + CELL / 2;
+        const craterY = y + CELL / 2; // cratère = centre de la cellule
+
+        // Colonne de fumée (aperçu), monte au-dessus du cratère
+        gfx.fillStyle(0x888888, 0.25).fillRect(cx - CELL / 2, craterY - totalH, CELL, totalH);
+        gfx.lineStyle(1.5, 0x888888, 0.8).strokeRect(cx - CELL / 2, craterY - totalH, CELL, totalH);
+
+        // Corps du volcan (léger débordement hors de la cellule, comme un vrai cône)
+        gfx.fillStyle(0x4A3728, 1);
+        gfx.beginPath();
+        gfx.moveTo(cx, craterY);
+        gfx.lineTo(cx - CELL * 0.9, craterY + CELL * 0.8);
+        gfx.lineTo(cx + CELL * 0.9, craterY + CELL * 0.8);
+        gfx.closePath();
+        gfx.fillPath();
+
+        // Cratère
+        gfx.fillStyle(0xFF6A00, 1).fillEllipse(cx, craterY, CELL * 0.5, CELL * 0.18);
+        break;
+      }
     }
   }
 
@@ -531,8 +557,8 @@ export class LevelEditorScene extends Phaser.Scene {
       py += 26;
     }
 
-    if (type === "snowstorm") {
-      label("Height (cells):", "#cccccc");
+    if (type === "snowstorm" || type === "volcano") {
+      label(type === "volcano" ? "Smoke height (cells):" : "Height (cells):", "#cccccc");
 
       const minH = CELL;      // 1 cellule
       const maxH = CELL * 10; // 10 cellules max
@@ -543,7 +569,8 @@ export class LevelEditorScene extends Phaser.Scene {
           backgroundColor: "#334455", padding: { x: 8, y: 3 }
         }).setOrigin(0.5).setInteractive();
         b.on("pointerdown", () => {
-          props.h = Math.max(minH, Math.min(maxH, (props.h || CELL * 2) + delta * CELL));
+          const defaultH = type === "volcano" ? CELL * 3 : CELL * 2;
+          props.h = Math.max(minH, Math.min(maxH, (props.h || defaultH) + delta * CELL));
           this._renderObject(obj.gfx, obj.col, obj.row, type, props);
           this._drawPropsPanel(key);
           this._saveToStorage();
@@ -552,9 +579,10 @@ export class LevelEditorScene extends Phaser.Scene {
       };
 
       heightBtn(-1); heightBtn(+1);
-      const hCells = Math.round((props.h || CELL * 2) / CELL);
+      const defaultH = type === "volcano" ? CELL * 3 : CELL * 2;
+      const hCells = Math.round((props.h || defaultH) / CELL);
       const heightVal = this.add.text(px, py, `${hCells} (${hCells * CELL * GAME_SCALE}px)`, {
-        fontSize: "13px", color: "#9EE7FF"
+        fontSize: "13px", color: type === "volcano" ? "#FF6A00" : "#9EE7FF"
       }).setOrigin(0.5);
       this.propLabels.push(heightVal);
       py += 26;
@@ -628,6 +656,7 @@ export class LevelEditorScene extends Phaser.Scene {
       redCircles:   [],
       redSquares:   [],
       snowstorms:   [],
+      volcanoes:    [],
     };
 
     if (this.playerPos) {
@@ -745,6 +774,15 @@ export class LevelEditorScene extends Phaser.Scene {
           x: obj.col * CELL * GAME_SCALE,
           y: obj.row * CELL * GAME_SCALE,
           h: hCells * CELL * GAME_SCALE  // hauteur en px jeu (base 40px)
+        });
+      }
+
+      if (obj.type === "volcano") {
+        const hCells = Math.round((obj.props.h || CELL * 3) / CELL);
+        level.volcanoes.push({
+          x: (obj.col * CELL + CELL / 2) * GAME_SCALE, // cratère = centre de la cellule
+          y: (obj.row * CELL + CELL / 2) * GAME_SCALE,
+          smokeHeight: hCells * CELL * GAME_SCALE
         });
       }
     }
@@ -974,6 +1012,20 @@ export class LevelEditorScene extends Phaser.Scene {
       const gfx = this.add.graphics();
       this._renderObject(gfx, col, row, "snowstorm", props);
       this.objects.set(key, { type: "snowstorm", col, row, props, gfx });
+    });
+
+    // volcanoes
+    (level.volcanoes || []).forEach(v => {
+      const vx = v.x / GAME_SCALE, vy = v.y / GAME_SCALE; // centre de la cellule
+      const col = Math.floor(vx / CELL);
+      const row = Math.floor(vy / CELL);
+      if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+      const key = cellKey(col, row);
+      const hEditor = Math.round((v.smokeHeight / GAME_SCALE) / CELL) * CELL; // en px éditeur
+      const props = { h: hEditor };
+      const gfx = this.add.graphics();
+      this._renderObject(gfx, col, row, "volcano", props);
+      this.objects.set(key, { type: "volcano", col, row, props, gfx });
     });
   }
 
