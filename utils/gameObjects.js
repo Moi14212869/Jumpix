@@ -595,8 +595,8 @@ export function createSnowstorm(scene, x, y, heightInPx = 80) {
 // éjecté vers le haut exactement comme avec createSnowstorm().
 // (x, y) = centre du cratère, au sommet du cône.
 export function createVolcano(scene, x, y, smokeHeightInPx = 120) {
-  const CONE_W    = 140;  // largeur de la base du cône
-  const CONE_H    = 100;  // hauteur du cône (cratère → base)
+  const CONE_W    = 40;   // largeur du cône : tient dans 1 bloc (40px)
+  const CONE_H    = 36;   // hauteur du cône : tient dans 1 bloc (40px)
   const SMOKE_W   = 40;   // largeur de la colonne de fumée (1 bloc), centrée sur le cratère
 
   const craterX = x;
@@ -626,17 +626,17 @@ export function createVolcano(scene, x, y, smokeHeightInPx = 120) {
   // Coulée de lave sur le flanc gauche
   gfx.fillStyle(0xFF4500, 0.85);
   gfx.beginPath();
-  gfx.moveTo(craterX - 6, craterY + 10);
+  gfx.moveTo(craterX - 2, craterY + 4);
   gfx.lineTo(craterX - CONE_W * 0.22, craterY + CONE_H);
-  gfx.lineTo(craterX - CONE_W * 0.1, craterY + CONE_H);
+  gfx.lineTo(craterX - CONE_W * 0.08, craterY + CONE_H);
   gfx.closePath();
   gfx.fillPath();
 
   // Cratère (bouche du volcan)
   gfx.fillStyle(0xFF6A00, 1);
-  gfx.fillEllipse(craterX, craterY, 34, 12);
+  gfx.fillEllipse(craterX, craterY, 12, 4);
   gfx.fillStyle(0xFFD700, 0.9);
-  gfx.fillEllipse(craterX, craterY, 16, 6);
+  gfx.fillEllipse(craterX, craterY, 5, 2);
 
   gfx.setDepth(0);
 
