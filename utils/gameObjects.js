@@ -586,6 +586,136 @@ export function createSnowstorm(scene, x, y, heightInPx = 80) {
   return zone;
 }
 
+// ── Volcan (cône fixe + colonne de fumée montante, hauteur configurable) ──
+// Le volcan lui-même est purement décoratif (pas de corps physique : il est
+// censé être posé sur une plateforme déjà solide). Le cratère émet une
+// colonne de fumée qui monte vers le ciel — contrairement à la tempête de
+// neige, dont la colonne descend depuis le point d'ancrage, la fumée part
+// du sommet du cône et s'élève. Le joueur qui entre dans la fumée est
+// éjecté vers le haut exactement comme avec createSnowstorm().
+// (x, y) = centre du cratère, au sommet du cône.
+export function createVolcano(scene, x, y, smokeHeightInPx = 120) {
+  const CONE_W    = 140;  // largeur de la base du cône
+  const CONE_H    = 100;  // hauteur du cône (cratère → base)
+  const SMOKE_W   = 40;   // largeur de la colonne de fumée (1 bloc), centrée sur le cratère
+
+  const craterX = x;
+  const craterY = y;
+
+  // ── Corps du volcan (dessin statique, non solide) ──────────
+  const gfx = scene.add.graphics();
+
+  // Cône principal
+  gfx.fillStyle(0x4A3728, 1);
+  gfx.beginPath();
+  gfx.moveTo(craterX, craterY);
+  gfx.lineTo(craterX - CONE_W / 2, craterY + CONE_H);
+  gfx.lineTo(craterX + CONE_W / 2, craterY + CONE_H);
+  gfx.closePath();
+  gfx.fillPath();
+
+  // Ombrage du flanc droit
+  gfx.fillStyle(0x2E2018, 0.55);
+  gfx.beginPath();
+  gfx.moveTo(craterX, craterY);
+  gfx.lineTo(craterX, craterY + CONE_H);
+  gfx.lineTo(craterX + CONE_W / 2, craterY + CONE_H);
+  gfx.closePath();
+  gfx.fillPath();
+
+  // Coulée de lave sur le flanc gauche
+  gfx.fillStyle(0xFF4500, 0.85);
+  gfx.beginPath();
+  gfx.moveTo(craterX - 6, craterY + 10);
+  gfx.lineTo(craterX - CONE_W * 0.22, craterY + CONE_H);
+  gfx.lineTo(craterX - CONE_W * 0.1, craterY + CONE_H);
+  gfx.closePath();
+  gfx.fillPath();
+
+  // Cratère (bouche du volcan)
+  gfx.fillStyle(0xFF6A00, 1);
+  gfx.fillEllipse(craterX, craterY, 34, 12);
+  gfx.fillStyle(0xFFD700, 0.9);
+  gfx.fillEllipse(craterX, craterY, 16, 6);
+
+  gfx.setDepth(0);
+
+  // ── Zone physique de la colonne de fumée (invisible, statique) ──
+  if (!scene.textures.exists("__blank__")) {
+    const g = scene.add.graphics();
+    g.fillStyle(0x000000, 0);
+    g.fillRect(0, 0, 1, 1);
+    g.generateTexture("__blank__", 1, 1);
+    g.destroy();
+  }
+
+  // La fumée part du cratère et monte : le haut de la zone est donc
+  // au-dessus de craterY, contrairement à la tempête de neige qui descend.
+  const zoneTop = craterY - smokeHeightInPx;
+  const zone = scene.physics.add.staticImage(craterX, zoneTop + smokeHeightInPx / 2, "__blank__");
+  zone.setDisplaySize(SMOKE_W, smokeHeightInPx);
+  zone.body.setSize(SMOKE_W, smokeHeightInPx);
+  zone.refreshBody();
+  zone.setVisible(false);
+  // Tag pour l'identifier lors de l'overlap dans LevelScene
+  zone.isVolcano = true;
+
+  // ── Particules de fumée ─────────────────────────────────────
+  const keySmokeDark  = "volcano-smoke-dark";
+  const keySmokeLight = "volcano-smoke-light";
+
+  if (!scene.textures.exists(keySmokeDark)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0x4d4d4d, 1);
+    g.fillCircle(4, 4, 4);
+    g.generateTexture(keySmokeDark, 8, 8);
+    g.destroy();
+  }
+  if (!scene.textures.exists(keySmokeLight)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xAAAAAA, 1);
+    g.fillCircle(3, 3, 3);
+    g.generateTexture(keySmokeLight, 6, 6);
+    g.destroy();
+  }
+
+  // Vitesse moyenne de montée : la fumée doit traverser toute la hauteur
+  // réglable avant de disparaître, quelle que soit cette hauteur.
+  const avgSpeed   = 55; // px/s
+  const lifespanMs = (smokeHeightInPx / avgSpeed) * 1000;
+
+  const emitter = scene.add.particles(craterX, craterY, keySmokeDark, {
+    x:        { min: -SMOKE_W / 2 + 4, max: SMOKE_W / 2 - 4 },
+    y:        0,
+    lifespan: lifespanMs,
+    speedY:   { min: -avgSpeed * 0.7, max: -avgSpeed * 1.3 },
+    speedX:   { min: -15, max: 15 },
+    scale:    { start: 0.6, end: 1.9 },
+    alpha:    { start: 0.75, end: 0 },
+    quantity:  2,
+    frequency: 90,
+    blendMode: "NORMAL",
+  });
+
+  const emitter2 = scene.add.particles(craterX, craterY, keySmokeLight, {
+    x:        { min: -SMOKE_W / 2 + 2, max: SMOKE_W / 2 - 2 },
+    y:        0,
+    lifespan: lifespanMs * 0.8,
+    speedY:   { min: -avgSpeed * 0.9, max: -avgSpeed * 1.5 },
+    speedX:   { min: -25, max: 25 },
+    scale:    { start: 0.4, end: 1.3 },
+    alpha:    { start: 0.55, end: 0 },
+    quantity:  2,
+    frequency: 110,
+    blendMode: "NORMAL",
+  });
+
+  emitter.setDepth(1);
+  emitter2.setDepth(1);
+
+  return zone;
+}
+
 // ── Pavé tactile générique ────────────────────────────────
 // buttons : [{ id, dir: "left" | "right" | "up", x, y, size }]  (coordonnées jeu)
 // options : { onPress(id)  → appelé quand un doigt se pose sur un bouton,
