@@ -596,9 +596,11 @@ export function createSnowstorm(scene, x, y, heightInPx = 80) {
 // (x, y) = centre du cratère, au sommet du cône.
 export function createVolcano(scene, x, y, smokeHeightInPx = 120) {
   const CONE_W    = 40;   // largeur du cône : tient dans 1 bloc (40px)
-  const CONE_H    = 36;   // hauteur du cône : tient dans 1 bloc (40px)
+  const CONE_H    = 40;   // hauteur du cône : tient dans 1 bloc (40px)
   const SMOKE_W   = 40;   // largeur de la colonne de fumée (1 bloc), centrée sur le cratère
 
+  // (x, y) = sommet du cône (haut du bloc), comme une plateforme : le cône
+  // occupe tout le bloc de x à x+CONE_H vers le bas, pas centré dessus.
   const craterX = x;
   const craterY = y;
 
