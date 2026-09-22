@@ -43,6 +43,7 @@ const ALL_LEVELS = [
   "Level13","Level14","Level15","Level16","Level17","Level18"
 ];
 
+
 // ── Référence document du joueur connecté ────────────────
 function playerRef() {
   const user = getCurrentUser();
@@ -269,32 +270,56 @@ async function sortEntriesWithTieBreak(entries) {
 // pour savoir qui retirer du total si son rang a changé (ex: quelqu'un
 // sorti du top 10, ou qui monte/descend dedans).
 async function recomputeLevelPoints(levelKey, sortedEntries) {
-  const top10 = sortedEntries.slice(0, 10);
-  const newAwards = {};
-  top10.forEach((entry, i) => { newAwards[entry.uid] = RANK_POINTS[i + 1]; });
+  try {
+    const top10 = sortedEntries.slice(0, 10);
+    const newAwards = {};
+    top10.forEach((entry, i) => { newAwards[entry.uid] = RANK_POINTS[i + 1]; });
 
-  const levelRef  = doc(db, "leaderboards", levelKey);
-  const levelSnap = await getDoc(levelRef);
-  const oldAwards = levelSnap.exists() ? (levelSnap.data().pointsAwarded || {}) : {};
+    const levelRef  = doc(db, "leaderboards", levelKey);
+    const levelSnap = await getDoc(levelRef);
+    const oldAwards = levelSnap.exists() ? (levelSnap.data().pointsAwarded || {}) : {};
 
-  const uids = new Set([...Object.keys(oldAwards), ...Object.keys(newAwards)]);
+    const uids = new Set([...Object.keys(oldAwards), ...Object.keys(newAwards)]);
 
-  await Promise.all([...uids].map(async uid => {
-    const oldPts = oldAwards[uid] || 0;
-    const newPts = newAwards[uid] || 0;
-    if (oldPts === newPts) return; // pas de changement pour ce joueur
+    await Promise.all([...uids].map(async uid => {
+      const oldPts = oldAwards[uid] || 0;
+      const newPts = newAwards[uid] || 0;
+      if (oldPts === newPts) return; // pas de changement pour ce joueur
 
-    try {
-      await updateDoc(doc(db, "players", uid), {
-        totalPoints: increment(newPts - oldPts),
-        [`levelPoints.${levelKey}`]: newPts > 0 ? newPts : deleteField()
-      });
-    } catch (err) {
-      console.warn(`Points update failed for ${uid} on ${levelKey}:`, err);
-    }
-  }));
+      try {
+        await updateDoc(doc(db, "players", uid), {
+          totalPoints: increment(newPts - oldPts),
+          [`levelPoints.${levelKey}`]: newPts > 0 ? newPts : deleteField()
+        });
+      } catch (err) {
+        console.warn(`Points update failed for ${uid} on ${levelKey}:`, err);
+      }
+    }));
 
-  await setDoc(levelRef, { pointsAwarded: newAwards }, { merge: true });
+    await setDoc(levelRef, { pointsAwarded: newAwards }, { merge: true });
+  } catch (err) {
+    // Ne jamais laisser un échec de calcul de points faire planter
+    // saveLeaderboard() (et donc la sauvegarde du temps / du rang) :
+    // on logue clairement l'erreur pour pouvoir la diagnostiquer
+    // (souvent un problème de règles de sécurité Firestore).
+    console.error(`recomputeLevelPoints failed for ${levelKey}:`, err);
+  }
+}
+
+// ── Recalcul ponctuel des points sur TOUS les niveaux ─────
+// Les points ne sont normalement recalculés qu'au moment où quelqu'un
+// termine un niveau (voir saveLeaderboard). Les temps enregistrés AVANT
+// l'ajout du système de points n'ont donc jamais déclenché ce calcul :
+// leurs auteurs n'apparaissent pas dans le classement global tant que
+// personne ne rejoue ces niveaux. Cette fonction parcourt tous les
+// niveaux et applique le barème RANK_POINTS aux classements déjà en
+// place, une bonne fois pour toutes. Sans danger à relancer plusieurs
+// fois (idempotente : ne modifie que ce qui a réellement changé).
+export async function backfillGlobalPoints() {
+  for (const levelKey of ALL_LEVELS) {
+    const sorted = await loadLeaderboard(levelKey);
+    if (sorted.length > 0) await recomputeLevelPoints(levelKey, sorted);
+  }
 }
 
 export async function saveLeaderboard(levelKey, timeMs) {
