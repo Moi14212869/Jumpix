@@ -219,6 +219,40 @@ export async function resetAccount() {
 // Structure Firestore : leaderboards/{levelKey}/entries/{uid}
 //   { pseudo, colorPlayer, timeMs }
 
+// ── Départage des égalités de temps par nombre de parties jouées ──
+// À temps égal, le joueur avec le plus de "party" (parties jouées,
+// cf. players/{uid}.party) est classé devant. Ce tri est recalculé
+// à chaque lecture à partir des documents `players` actuels : rien
+// n'est écrit dans les entrées de classement elles-mêmes, donc le
+// départage s'applique automatiquement, y compris aux égalités déjà
+// existantes avant ce changement.
+async function sortEntriesWithTieBreak(entries) {
+  // entries doit déjà être trié par timeMs croissant (requête Firestore)
+  const result = [...entries];
+
+  let i = 0;
+  while (i < result.length) {
+    let j = i;
+    while (j < result.length && result[j].timeMs === result[i].timeMs) j++;
+
+    if (j - i > 1) {
+      const group = result.slice(i, j);
+      const parties = await Promise.all(group.map(async entry => {
+        const snap = await getDoc(doc(db, "players", entry.uid));
+        return snap.exists() ? (snap.data().party ?? 0) : 0;
+      }));
+      const withParty = group.map((entry, idx) => ({ entry, party: parties[idx] }));
+      // Plus de parties jouées = meilleur classement en cas d'égalité
+      withParty.sort((a, b) => b.party - a.party);
+      withParty.forEach(({ entry }, k) => { result[i + k] = entry; });
+    }
+
+    i = j;
+  }
+
+  return result;
+}
+
 export async function saveLeaderboard(levelKey, timeMs) {
   const user = getCurrentUser();
   if (!user) return null; // invité → pas de classement
@@ -239,11 +273,14 @@ export async function saveLeaderboard(levelKey, timeMs) {
     });
   }
 
-  // Calculer le rang actuel (après écriture)
+  // Calculer le rang actuel (après écriture), en départageant les
+  // égalités de temps par nombre de parties jouées (voir sortEntriesWithTieBreak)
   const entriesRef = collection(db, "leaderboards", levelKey, "entries");
   const q          = query(entriesRef, orderBy("timeMs", "asc"), limit(100));
   const allSnap    = await getDocs(q);
-  const rank       = allSnap.docs.findIndex(d => d.id === user.uid) + 1;
+  const entries    = allSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  const sorted     = await sortEntriesWithTieBreak(entries);
+  const rank       = sorted.findIndex(e => e.uid === user.uid) + 1;
   return rank > 0 ? rank : null;
 }
 
@@ -251,7 +288,8 @@ export async function loadLeaderboard(levelKey) {
   const entriesRef = collection(db, "leaderboards", levelKey, "entries");
   const q          = query(entriesRef, orderBy("timeMs", "asc"), limit(100));
   const snap       = await getDocs(q);
-  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  const entries    = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  return sortEntriesWithTieBreak(entries);
 }
 
 // ── Met à jour la couleur du joueur dans toutes ses entrées classement ──
