@@ -8,7 +8,7 @@ import {
   setPlayerCoins, setDead, setKill, setParty, setColorPlayer,
   applyPlayerData
 } from "../globals.js";
-import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard, loadPublicPlayerStats, isPseudoTaken
+import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard, loadGlobalLeaderboard, loadPublicPlayerStats, isPseudoTaken
 } from "../utils/db.js";
 import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage,
@@ -1267,19 +1267,26 @@ export class ObjectivesScene extends Phaser.Scene {
 //                   LEADERBOARD SCENE
 // =========================================================
 
-const ALL_LEVELS = [
-  "Level1","Level2","Level3","Level4","Level5",
-  "Level6","Level7","Level8","Level9","Level10","Level11","Level12",
-  "Level13","Level14","Level15","Level16","Level17","Level18"
+// ── Niveaux regroupés par monde (World1: 1-8, World2: 9-16, World3: 17-18) ──
+// Reprend le découpage de WorldScenes.js. World3 n'a que 2 niveaux :
+// l'onglet "Level" n'affiche donc que les niveaux qui existent réellement
+// pour chaque monde, pas 8 onglets fixes.
+const WORLDS = [
+  { name: "World 1", levels: ["Level1","Level2","Level3","Level4","Level5","Level6","Level7","Level8"] },
+  { name: "World 2", levels: ["Level9","Level10","Level11","Level12","Level13","Level14","Level15","Level16"] },
+  { name: "World 3", levels: ["Level17","Level18"] }
 ];
+const ALL_LEVELS = WORLDS.flatMap(w => w.levels);
 
 export class LeaderboardScene extends Phaser.Scene {
   constructor() { super("LeaderboardScene"); }
 
   init() {
-    this.currentTab = 0;   // index dans ALL_LEVELS
-    this.entries    = [];  // données chargées pour l'onglet actif
-    this.loading    = true;
+    this.mode             = "level"; // "level" | "global"
+    this.worldIndex       = 0;
+    this.levelIndexInWorld = 0;
+    this.entries           = [];  // données chargées pour la vue active
+    this.loading            = true;
   }
 
   create() {
@@ -1324,8 +1331,8 @@ this.input.on("pointermove", pointer => {
   }
 });
 
-    // ── Charger le premier onglet ──
-    this._loadTab(0);
+    // ── Charger la vue initiale (Level → World 1 → Level 1) ──
+    this._loadCurrentView();
   }
     _scrollLeaderboard(delta) {
   if (!this.listContainer) return;
@@ -1335,44 +1342,132 @@ this.input.on("pointermove", pointer => {
 
   this.listContainer.y = this.scrollY;
 }
-  // ── Construction des onglets niveaux ──────────────────────
-  _buildTabs() {
-    const { width } = this.scale;
-    const tabW  = Math.floor((width - 20) / ALL_LEVELS.length);
-    const tabY  = 65;
 
+  // ── Position Y du haut de la liste selon le nombre de rangées
+  //    d'onglets actuellement affichées (mode global = 1 rangée,
+  //    mode niveau = 3 rangées : Global/Level, Monde, Niveau) ──
+  _listTopY() {
+    return this.mode === "global" ? 130 : 185;
+  }
+
+  // ── Construction de toutes les rangées d'onglets ──────────
+  _buildTabs() {
     this.tabObjects.forEach(o => o.destroy());
     this.tabObjects = [];
 
-    ALL_LEVELS.forEach((lvl, i) => {
-      const x      = 10 + i * tabW + tabW / 2;
-      const active = i === this.currentTab;
+    this._buildModeTabs();
+    if (this.mode === "level") {
+      this._buildWorldTabs();
+      this._buildLevelTabs();
+    }
+  }
 
-      const bg = this.add.rectangle(x, tabY, tabW - 4, 28,
+  // ── Rangée 1 : choix Global / Level ───────────────────────
+  _buildModeTabs() {
+    const { width } = this.scale;
+    const modes = [
+      { key: "global", label: "🌍 Global" },
+      { key: "level",  label: "🎯 Level"  }
+    ];
+    const tabW = Math.floor((width - 20) / modes.length);
+    const tabY = 65;
+
+    modes.forEach((m, i) => {
+      const x      = 10 + i * tabW + tabW / 2;
+      const active = m.key === this.mode;
+
+      const bg = this.add.rectangle(x, tabY, tabW - 6, 32,
         active ? 0x00BFFF : 0x223344
       ).setInteractive();
-
-      // Avec 18 onglets, les libellés doivent rester compacts pour tenir dans la largeur.
-      const label = this.add.text(x, tabY, lvl.replace("Level", ""), {
-        fontSize: "13px", color: active ? "#000000" : "#aaaaaa", fontStyle: active ? "bold" : "normal"
+      const label = this.add.text(x, tabY, m.label, {
+        fontSize: "16px", color: active ? "#000000" : "#aaaaaa", fontStyle: active ? "bold" : "normal"
       }).setOrigin(0.5);
 
       bg.on("pointerdown", () => {
-        if (i !== this.currentTab) {
-          this.currentTab = i;
+        if (m.key !== this.mode) {
+          this.sound.play("select", { volume: gameVolume });
+          this.mode = m.key;
           this._buildTabs();
-          this._loadTab(i);
+          this._loadCurrentView();
         }
       });
-      bg.on("pointerover",  () => { if (i !== this.currentTab) bg.setFillStyle(0x335566); });
-      bg.on("pointerout",   () => { if (i !== this.currentTab) bg.setFillStyle(0x223344); });
+      bg.on("pointerover", () => { if (m.key !== this.mode) bg.setFillStyle(0x335566); });
+      bg.on("pointerout",  () => { if (m.key !== this.mode) bg.setFillStyle(0x223344); });
 
       this.tabObjects.push(bg, label);
     });
   }
 
-  // ── Chargement + affichage d'un onglet ────────────────────
-  async _loadTab(index) {
+  // ── Rangée 2 (mode "level" seulement) : choix du monde ────
+  _buildWorldTabs() {
+    const { width } = this.scale;
+    const tabW = Math.floor((width - 20) / WORLDS.length);
+    const tabY = 97;
+
+    WORLDS.forEach((w, i) => {
+      const x      = 10 + i * tabW + tabW / 2;
+      const active = i === this.worldIndex;
+
+      const bg = this.add.rectangle(x, tabY, tabW - 6, 28,
+        active ? 0x00BFFF : 0x1a2838
+      ).setInteractive();
+      const label = this.add.text(x, tabY, w.name, {
+        fontSize: "14px", color: active ? "#000000" : "#aaaaaa", fontStyle: active ? "bold" : "normal"
+      }).setOrigin(0.5);
+
+      bg.on("pointerdown", () => {
+        if (i !== this.worldIndex) {
+          this.sound.play("select", { volume: gameVolume });
+          this.worldIndex = i;
+          this.levelIndexInWorld = 0;
+          this._buildTabs();
+          this._loadCurrentView();
+        }
+      });
+      bg.on("pointerover", () => { if (i !== this.worldIndex) bg.setFillStyle(0x28405a); });
+      bg.on("pointerout",  () => { if (i !== this.worldIndex) bg.setFillStyle(0x1a2838); });
+
+      this.tabObjects.push(bg, label);
+    });
+  }
+
+  // ── Rangée 3 (mode "level" seulement) : choix du niveau dans
+  //    le monde actif — n'affiche que les niveaux qui existent
+  //    réellement pour ce monde (ex : World 3 n'en a que 2) ──
+  _buildLevelTabs() {
+    const { width } = this.scale;
+    const levels = WORLDS[this.worldIndex].levels;
+    const tabW   = Math.floor((width - 20) / levels.length);
+    const tabY   = 129;
+
+    levels.forEach((lvl, i) => {
+      const x      = 10 + i * tabW + tabW / 2;
+      const active = i === this.levelIndexInWorld;
+
+      const bg = this.add.rectangle(x, tabY, tabW - 4, 26,
+        active ? 0x00BFFF : 0x223344
+      ).setInteractive();
+      const label = this.add.text(x, tabY, lvl.replace("Level", ""), {
+        fontSize: "13px", color: active ? "#000000" : "#aaaaaa", fontStyle: active ? "bold" : "normal"
+      }).setOrigin(0.5);
+
+      bg.on("pointerdown", () => {
+        if (i !== this.levelIndexInWorld) {
+          this.sound.play("select", { volume: gameVolume });
+          this.levelIndexInWorld = i;
+          this._buildTabs();
+          this._loadCurrentView();
+        }
+      });
+      bg.on("pointerover", () => { if (i !== this.levelIndexInWorld) bg.setFillStyle(0x335566); });
+      bg.on("pointerout",  () => { if (i !== this.levelIndexInWorld) bg.setFillStyle(0x223344); });
+
+      this.tabObjects.push(bg, label);
+    });
+  }
+
+  // ── Chargement de la vue active (classement niveau ou global) ──
+  async _loadCurrentView() {
     const { width } = this.scale;
 
     // Vider la liste
@@ -1386,88 +1481,22 @@ this.input.on("pointermove", pointer => {
     this.listContainer.add(loadTxt);
 
     try {
-      const entries = await loadLeaderboard(ALL_LEVELS[index]);
-      this.listContainer.removeAll(true);
-
-      if (entries.length === 0) {
-        this.listContainer.add(
-          this.add.text(width / 2, 300, "No times recorded", {
-            fontSize: "20px", color: "#666666"
-          }).setOrigin(0.5)
-        );
-        return;
-      }
-
-      // En-tête colonnes
-      const headerY = 105;
-      this.listContainer.add([
-        this.add.text(55,        headerY, "#",      { fontSize: "14px", color: "#888888" }).setOrigin(0.5),
-        this.add.text(110,       headerY, "Skin",   { fontSize: "14px", color: "#888888" }).setOrigin(0.5),
-        this.add.text(310,       headerY, "Player", { fontSize: "14px", color: "#888888" }).setOrigin(0, 0.5),
-        this.add.text(width - 20, headerY, "Time", { fontSize: "14px", color: "#888888" }).setOrigin(1, 0.5),
-      ]);
-      this.add.rectangle(width / 2, headerY + 16, width - 20, 1, 0x333333);
-
-      const rowH   = 44;
-      const startY = 135;
-      const myUid  = getCurrentUser()?.uid ?? null;
-
-      entries.forEach((entry, i) => {
-        const y      = startY + i * rowH;
-        const isMe   = entry.uid === myUid;
-        const rowCol = isMe ? "#FFD700" : (i % 2 === 0 ? "#ffffff" : "#cccccc");
-        const bgCol  = isMe ? 0x2a2000 : (i % 2 === 0 ? 0x111122 : 0x0d0d1a);
-
-        // Fond de ligne (cliquable → ouvre les stats du joueur)
-        const rowBg = this.add.rectangle(width / 2, y + rowH / 2, width, rowH, bgCol)
-          .setInteractive({ useHandCursor: true });
-        rowBg.on("pointerover", () => rowBg.setFillStyle(isMe ? 0x3a2a00 : 0x223344));
-        rowBg.on("pointerout",  () => rowBg.setFillStyle(bgCol));
-        // pointerup + test de distance : sur mobile, poser le doigt pour faire
-        // défiler la liste ne doit pas ouvrir la popup du joueur.
-        rowBg.on("pointerup", pointer => {
-          if (pointer.getDistance() > 10) return;
-          this.sound.play("select", { volume: gameVolume });
-          this._showPlayerStatsPopup(entry);
+      if (this.mode === "global") {
+        const entries = await loadGlobalLeaderboard();
+        this._renderEntries(entries, {
+          valueLabel: "Points",
+          emptyLabel: "No points recorded",
+          formatValue: entry => `${entry.totalPoints ?? 0} pts`
         });
-        this.listContainer.add(rowBg);
-
-        // Rang
-        const rankStr  = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
-        const rankSize = i < 3 ? "20px" : "16px";
-        this.listContainer.add(
-          this.add.text(55, y + rowH / 2, rankStr, { fontSize: rankSize, color: rowCol }).setOrigin(0.5)
-        );
-
-        // Skin (petit carré coloré)
-        const skinColor = typeof entry.colorPlayer === "number"
-          ? entry.colorPlayer : parseInt(entry.colorPlayer) || 0xAA66CC;
-        this.listContainer.add(
-          this.add.rectangle(110, y + rowH / 2, 28, 28, skinColor)
-        );
-
-        // Pseudo
-        const pseudo = entry.pseudo || "Anonymous";
-        this.listContainer.add(
-          this.add.text(140, y + rowH / 2, pseudo, {
-            fontSize: "18px", color: isMe ? "#FFD700" : rowCol, fontStyle: isMe ? "bold" : "normal"
-          }).setOrigin(0, 0.5)
-        );
-
-        // Temps
-        const secs = (entry.timeMs / 1000).toFixed(2) + "s";
-        this.listContainer.add(
-          this.add.text(width - 20, y + rowH / 2, secs, {
-            fontSize: "18px", color: i === 0 ? "#FFD700" : rowCol
-          }).setOrigin(1, 0.5)
-        );
-      });
-const contentHeight = startY + entries.length * rowH;
-const visibleHeight = this.scale.height - 140;
-
-this.maxScroll = Math.max(0, contentHeight - visibleHeight);
-this.scrollY = 0;
-this.listContainer.y = 0;
+      } else {
+        const levelKey = WORLDS[this.worldIndex].levels[this.levelIndexInWorld];
+        const entries  = await loadLeaderboard(levelKey);
+        this._renderEntries(entries, {
+          valueLabel: "Time",
+          emptyLabel: "No times recorded",
+          formatValue: entry => `${(entry.timeMs / 1000).toFixed(2)}s`
+        });
+      }
     } catch (err) {
       this.listContainer.removeAll(true);
       this.listContainer.add(
@@ -1477,6 +1506,96 @@ this.listContainer.y = 0;
       );
       console.error("Leaderboard error:", err);
     }
+  }
+
+  // ── Rendu générique d'une liste de classement (niveau ou global) ──
+  // `formatValue(entry)` fournit le texte de la colonne de droite
+  // (temps ou points) ; le reste de la mise en page est identique.
+  _renderEntries(entries, { valueLabel, emptyLabel, formatValue }) {
+    const { width } = this.scale;
+
+    this.listContainer.removeAll(true);
+
+    if (entries.length === 0) {
+      this.listContainer.add(
+        this.add.text(width / 2, 300, emptyLabel, {
+          fontSize: "20px", color: "#666666"
+        }).setOrigin(0.5)
+      );
+      this.maxScroll = 0;
+      return;
+    }
+
+    // En-tête colonnes
+    const headerY = this._listTopY() - 30;
+    this.listContainer.add([
+      this.add.text(55,        headerY, "#",        { fontSize: "14px", color: "#888888" }).setOrigin(0.5),
+      this.add.text(110,       headerY, "Skin",     { fontSize: "14px", color: "#888888" }).setOrigin(0.5),
+      this.add.text(310,       headerY, "Player",   { fontSize: "14px", color: "#888888" }).setOrigin(0, 0.5),
+      this.add.text(width - 20, headerY, valueLabel, { fontSize: "14px", color: "#888888" }).setOrigin(1, 0.5),
+    ]);
+    this.add.rectangle(width / 2, headerY + 16, width - 20, 1, 0x333333);
+
+    const rowH   = 44;
+    const startY = this._listTopY();
+    const myUid  = getCurrentUser()?.uid ?? null;
+
+    entries.forEach((entry, i) => {
+      const y      = startY + i * rowH;
+      const isMe   = entry.uid === myUid;
+      const rowCol = isMe ? "#FFD700" : (i % 2 === 0 ? "#ffffff" : "#cccccc");
+      const bgCol  = isMe ? 0x2a2000 : (i % 2 === 0 ? 0x111122 : 0x0d0d1a);
+
+      // Fond de ligne (cliquable → ouvre les stats du joueur)
+      const rowBg = this.add.rectangle(width / 2, y + rowH / 2, width, rowH, bgCol)
+        .setInteractive({ useHandCursor: true });
+      rowBg.on("pointerover", () => rowBg.setFillStyle(isMe ? 0x3a2a00 : 0x223344));
+      rowBg.on("pointerout",  () => rowBg.setFillStyle(bgCol));
+      // pointerup + test de distance : sur mobile, poser le doigt pour faire
+      // défiler la liste ne doit pas ouvrir la popup du joueur.
+      rowBg.on("pointerup", pointer => {
+        if (pointer.getDistance() > 10) return;
+        this.sound.play("select", { volume: gameVolume });
+        this._showPlayerStatsPopup(entry);
+      });
+      this.listContainer.add(rowBg);
+
+      // Rang
+      const rankStr  = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+      const rankSize = i < 3 ? "20px" : "16px";
+      this.listContainer.add(
+        this.add.text(55, y + rowH / 2, rankStr, { fontSize: rankSize, color: rowCol }).setOrigin(0.5)
+      );
+
+      // Skin (petit carré coloré)
+      const skinColor = typeof entry.colorPlayer === "number"
+        ? entry.colorPlayer : parseInt(entry.colorPlayer) || 0xAA66CC;
+      this.listContainer.add(
+        this.add.rectangle(110, y + rowH / 2, 28, 28, skinColor)
+      );
+
+      // Pseudo
+      const pseudo = entry.pseudo || "Anonymous";
+      this.listContainer.add(
+        this.add.text(140, y + rowH / 2, pseudo, {
+          fontSize: "18px", color: isMe ? "#FFD700" : rowCol, fontStyle: isMe ? "bold" : "normal"
+        }).setOrigin(0, 0.5)
+      );
+
+      // Valeur (temps ou points selon la vue)
+      this.listContainer.add(
+        this.add.text(width - 20, y + rowH / 2, formatValue(entry), {
+          fontSize: "18px", color: i === 0 ? "#FFD700" : rowCol
+        }).setOrigin(1, 0.5)
+      );
+    });
+
+    const contentHeight = startY + entries.length * rowH;
+    const visibleHeight = this.scale.height - startY + 30;
+
+    this.maxScroll = Math.max(0, contentHeight - visibleHeight);
+    this.scrollY = 0;
+    this.listContainer.y = 0;
   }
 
   // ── Popup stats d'un joueur (clic sur une ligne) ──────────
