@@ -8,7 +8,7 @@ import {
   setPlayerCoins, setDead, setKill, setParty, setColorPlayer,
   applyPlayerData
 } from "../globals.js";
-import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard, loadGlobalLeaderboard, loadPublicPlayerStats, isPseudoTaken
+import { save, resetAccount, loadPlayerData, isLoggedIn, getPseudo, DEFAULTS, updateLeaderboardColor, loadLeaderboard, loadGlobalLeaderboard, backfillGlobalPoints, loadPublicPlayerStats, isPseudoTaken
 } from "../utils/db.js";
 import {
   registerWithEmail, loginWithEmail, logout, firebaseErrorMessage,
@@ -1309,9 +1309,38 @@ export class LeaderboardScene extends Phaser.Scene {
       this.scene.start("MenuScene");
     });
 
+    // ── Recalcul ponctuel des points (classement global) ──
+    // Utile une seule fois après l'ajout du système de points : les temps
+    // déjà enregistrés avant cet ajout n'ont jamais déclenché de calcul
+    // de points tant que personne n'a rejoué ces niveaux. Ce bouton
+    // applique le barème à tous les classements déjà en place.
+    // Sans danger à cliquer plusieurs fois.
+    const recalcBtn = this.add.text(width - 10, 10, "↻ Recalculate points", {
+      fontSize: "13px", color: "#ffffff",
+      backgroundColor: "#333333", padding: { x: 8, y: 6 }
+    }).setOrigin(1, 0).setInteractive();
+    recalcBtn.on("pointerdown", async () => {
+      if (this._recalculating) return;
+      this._recalculating = true;
+      const original = recalcBtn.text;
+      recalcBtn.setText("Recalculating…");
+      recalcBtn.disableInteractive();
+      try {
+        await backfillGlobalPoints();
+        await this._loadCurrentView();
+      } catch (err) {
+        console.error("backfillGlobalPoints error:", err);
+      } finally {
+        recalcBtn.setText(original);
+        recalcBtn.setInteractive();
+        this._recalculating = false;
+      }
+    });
+
     // ── Onglets ──
     this.tabObjects = [];
     this._buildTabs();
+
 
     // ── Zone liste (conteneur scrollable) ──
     this.listContainer = this.add.container(0, 0);
