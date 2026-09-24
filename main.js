@@ -28,7 +28,7 @@ const config = {
   input: { activePointers: 4 },
   physics: {
     default: "arcade",
-    arcade: { gravity: { y: 650 }, debug: true }
+    arcade: { gravity: { y: 650 }, debug: false }
   },
   scale: {
     mode: Phaser.Scale.FIT,
